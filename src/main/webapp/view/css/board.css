@@ -1,0 +1,397 @@
+/* 게시판 스타일 */
+.board-wrapper {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.board-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.board-nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.board-nav a {
+    padding: 0.5rem 1rem;
+    background: #f5f5f5;
+    border-radius: 5px;
+    color: #333;
+}
+
+.board-nav a.active, .board-nav a:hover {
+    background: #ffcc80;
+}
+
+.board-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.board-table th, .board-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.board-table th {
+    background: #ffcc80;
+    color: #333;
+    font-weight: bold;
+}
+
+.board-table tr:hover {
+    background: #fff8e1;
+}
+
+.board-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.board-pagination a {
+    display: inline-block;
+    padding: 0.5rem 0.8rem;
+    border-radius: 5px;
+    background: #f5f5f5;
+    color: #333;
+}
+
+.board-pagination a.active, .board-pagination a:hover {
+    background: #ffcc80;
+}
+
+.board-content {
+  margin-bottom: 20px;
+}
+
+.notice-area {
+  background: #fff8e1;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.notice-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.notice-badge {
+  background: #ff7043;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 5px;
+  margin-right: 10px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.notice-date {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.comment-count {
+  color: #ff7043;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.file-icon {
+  margin-left: 5px;
+  font-size: 0.9em;
+}
+
+.anonymous-notice {
+  background: #f3e5f5;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.anonymous-notice p {
+  margin: 5px 0;
+  font-size: 0.9rem;
+}
+
+/* 모달 스타일 */
+.modal {
+  position: fixed;
+  z-index: 999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  overflow: auto;
+}
+
+.modal-content {
+  background: #fff;
+  margin: 5% auto;
+  padding: 30px;
+  border-radius: 10px;
+  width: 80%;
+  max-width: 800px;
+  animation: modal-open 0.3s ease;
+}
+
+@keyframes modal-open {
+  from {opacity: 0; transform: translateY(-20px);}
+  to {opacity: 1; transform: translateY(0);}
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-family: inherit;
+}
+
+.form-group textarea {
+  resize: none; /* 크기 조절 기능 제거 */
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+/* 게시판 하단 영역 스타일 */
+.board-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.board-pagination {
+  display: flex;
+  gap: 5px;
+}
+
+.search-bar {
+  display: flex;
+  gap: 5px;
+}
+
+.search-bar input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 200px;
+}
+
+@media (max-width: 768px) {
+  .board-bottom {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .board-pagination {
+    margin-bottom: 10px;
+  }
+}
+
+/* 한줄 게시판 스타일 */
+.oneline-board {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.oneline-post {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.oneline-post:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+.post-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.post-content {
+  margin-bottom: 10px;
+}
+
+.post-content p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.post-info {
+  display: flex;
+  gap: 15px;
+  font-size: 0.85em;
+  color: #888;
+}
+
+.comment-count {
+  color: #ff7043;
+}
+
+/* 댓글 입력창도 수정 */
+.comment-form textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: none; /* 크기 조절 기능 제거 */
+}
+
+/* 게시글 상세보기 모달 스타일 */
+.post-detail-content {
+  padding: 10px 0;
+}
+
+.post-detail-header {
+  margin-bottom: 20px;
+}
+
+.post-detail-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.95em;
+  color: #666;
+}
+
+.post-detail-title {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.5em;
+}
+
+.post-detail-body {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.post-detail-stats {
+  text-align: right;
+  font-size: 0.9em;
+  color: #888;
+  margin-bottom: 20px;
+}
+
+.post-comments {
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.post-comments h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.2em;
+}
+
+.comment-list {
+  margin-bottom: 20px;
+}
+
+.comment {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+}
+
+.comment-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 0.85em;
+  color: #666;
+}
+
+.comment-content p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.comment-more {
+  text-align: center;
+  margin: 10px 0;
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comment-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+}
+
+.comment-form button {
+  align-self: flex-end;
+}

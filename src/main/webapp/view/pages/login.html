@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로그인 - KIRINI</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/login.css">
+  <script src="../js/main.js" defer></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/login.js" defer></script>
+</head>
+<body>
+  <!-- 헤더 플레이스홀더 -->
+  <div id="header-placeholder"></div>
+
+  <div class="login-container">
+    <h2 class="login-title">로그인</h2>
+    <form class="login-form" id="login-form">
+      <div>
+        <label for="email">이메일</label>
+        <input type="email" id="email" name="email" placeholder="이메일 주소 입력" required>
+      </div>
+      <div>
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" placeholder="비밀번호 입력" required>
+      </div>
+      <div class="remember-me">
+        <input type="checkbox" id="remember-me" name="remember-me">
+        <label for="remember-me">로그인 상태 유지</label>
+      </div>
+      <button type="submit" class="login-button">로그인</button>
+    </form>
+    
+    <div class="login-options">
+      <a href="#">아이디 찾기</a>
+      <a href="#">비밀번호 찾기</a>
+    </div>
+    
+    <div class="social-login">
+      <p>간편 로그인</p>
+      <div class="social-buttons">
+        <button class="social-button" title="구글 로그인">
+          <img src="../img/google.png" alt="구글" width="24" height="24" onerror="this.src='https://via.placeholder.com/24x24?text=G'">
+        </button>
+        <button class="social-button" title="네이버 로그인">
+          <img src="../img/naver.png" alt="네이버" width="24" height="24" onerror="this.src='https://via.placeholder.com/24x24?text=N'">
+        </button>
+        <button class="social-button" title="카카오 로그인">
+          <img src="../img/kakao.png" alt="카카오" width="24" height="24" onerror="this.src='https://via.placeholder.com/24x24?text=K'">
+        </button>
+      </div>
+    </div>
+    
+    <div class="signup-prompt">
+      <p>아직 계정이 없으신가요? <a href="signup.html">회원가입</a></p>
+    </div>
+  </div>
+
+  <!-- 푸터 플레이스홀더 -->
+  <div id="footer-placeholder"></div>
+</body>
+</html>

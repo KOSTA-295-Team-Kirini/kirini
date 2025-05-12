@@ -1,0 +1,157 @@
+/* 로그인 페이지 스타일 */
+.login-container {
+  max-width: 400px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.login-title {
+  text-align: center;
+  color: #ff7043;
+  margin-bottom: 1.5rem;
+}
+
+.login-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #555;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.login-form input:focus {
+  border-color: #ff9800;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.remember-me input {
+  margin: 0;
+  margin-right: 0.5rem;
+  width: auto;
+}
+
+.login-button {
+  background: #ff9800;
+  color: white;
+  border: none;
+  padding: 1rem 0;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  width: 100%;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+.login-button:hover {
+  background: #ff7043;
+}
+
+.login-options {
+  margin-top: 2rem;
+  text-align: center;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+}
+
+.login-options a {
+  color: #ff7043;
+  text-decoration: none;
+}
+
+.login-options a:hover {
+  text-decoration: underline;
+}
+
+.social-login {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.social-login p {
+  margin-bottom: 1rem;
+  color: #666;
+  position: relative;
+}
+
+.social-login p::before,
+.social-login p::after {
+  content: "";
+  display: inline-block;
+  width: 24%;
+  height: 1px;
+  background: #ddd;
+  margin: 0 10px;
+  vertical-align: middle;
+}
+
+.social-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.social-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.social-button:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+}
+
+.signup-prompt {
+  margin-top: 2rem;
+  text-align: center;
+  color: #666;
+}
+
+.signup-prompt a {
+  color: #ff7043;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.signup-prompt a:hover {
+  text-decoration: underline;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 600px) {
+  .login-container {
+    margin: 2rem auto;
+    padding: 1.5rem;
+  }
+  .login-title {
+    font-size: 1.5rem;
+  }
+}
