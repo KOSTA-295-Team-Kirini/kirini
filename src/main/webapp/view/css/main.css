@@ -1,0 +1,79 @@
+/* 메인 페이지 스타일 */
+
+/* 히어로 섹션 스타일 */
+.hero {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #fff3e0;
+    background-image: linear-gradient(rgba(255, 243, 224, 0.8), rgba(255, 243, 224, 0.8)), url('../kosta_kirini/img/keyboard-bg.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    color: #ff7043;
+    margin-bottom: 1rem;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.hero-logo {
+    width: 200px;
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 메인 섹션 스타일 */
+.sections {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding: 2rem;
+    gap: 1.5rem;
+}
+
+.card {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    text-align: center;
+    flex: 1;
+    min-width: 250px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.card h2 {
+    font-size: 1.4rem;
+    color: #ff8a65;
+    margin-bottom: 1rem;
+}
+
+.card p {
+    margin-bottom: 1.5rem;
+    color: #666;
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+    .sections {
+        flex-direction: column;
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+}
