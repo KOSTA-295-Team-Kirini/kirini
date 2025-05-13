@@ -38,6 +38,91 @@
   box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
 }
 
+/* 비밀번호 필드 컨테이너 스타일 */
+.password-field {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 42px; /* 고정 높이로 설정 */
+  margin-bottom: 0.5rem;
+}
+
+.password-field input {
+  flex: 1;
+  padding-right: 38px; /* 눈동자 아이콘을 위한 공간 */
+  height: 42px; /* 입력 필드 높이 고정 */
+  margin-bottom: 0; /* 기존 마진 제거 */
+}
+
+/* 비밀번호 표시/숨김 아이콘 스타일 */
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%; /* 부모 요소 기준 중앙 정렬 */
+  transform: translateY(-50%); /* 수직 중앙 정렬 */
+  cursor: pointer;
+  color: #777;
+  user-select: none;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  pointer-events: auto; /* 클릭 이벤트 보장 */
+  z-index: 2; /* 입력 필드 위에 표시 */
+}
+
+.password-toggle:hover {
+  color: #ff7043;
+}
+
+/* 활성화된 비밀번호 토글 버튼 */
+.password-toggle.active {
+  color: #ff7043;
+  background-color: rgba(255, 112, 67, 0.1); /* 배경색 살짝 추가 */
+  border-radius: 50%; /* 원형 배경 */
+}
+
+/* 눈 아이콘 스타일 */
+.eye-icon {
+  stroke: currentColor;
+  transition: all 0.2s;
+  transform: scale(0.9); /* 아이콘 크기 조금 더 줄이기 */
+  /* vertical-align 제거 */
+  display: block; /* 인라인에서 블록으로 변경 */
+}
+
+/* 활성화된 눈 아이콘 스타일 (비밀번호가 보이는 상태) */
+.eye-active {
+  stroke: #ff7043; /* 메인 테마 색상 */
+  stroke-width: 2.5; /* 약간 두껍게 */
+}
+
+/* 눈 슬래시 스타일 (비밀번호 숨김 모드) */
+.eye-slash {
+  position: relative;
+}
+
+.eye-slash:after {
+  content: '';
+  position: absolute;
+  width: 24px;
+  height: 2px;
+  background-color: currentColor;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%) rotate(45deg);
+  transition: all 0.2s;
+}
+
+.eye-active.eye-slash:after {
+  background-color: #ff7043; /* 활성화된 상태의 슬래시 색상 */
+  height: 2.5px; /* 조금 더 두껍게 */
+}
+
 .input-group {
   margin-bottom: 1.5rem; /* 1rem에서 1.5rem으로 증가 */
 }
@@ -73,12 +158,20 @@
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
-  transition: background 0.3s;
+  transition: all 0.3s;
   /* margin-left 제거 */
 }
 
 .check-button:hover {
   background: #ff7043;
+}
+
+/* 중복확인 완료된 버튼 스타일 */
+.check-button.completed {
+  background: #cccccc;
+  color: #666666;
+  cursor: default;
+  pointer-events: none; /* 마우스 이벤트 비활성화 */
 }
 
 /* flex-row 클래스 추가 - 이메일과 버튼을 중앙 정렬하기 위한 스타일 */

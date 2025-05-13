@@ -45,9 +45,36 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(response => response.text())
       .then(data => {
         headerPlaceholder.innerHTML = data;
+          // 회원가입 페이지인 경우 특별 처리 - 항상 GUEST 모드로 설정
+        const isSignupPage = currentPath.toLowerCase().includes('/signup.html');
+        
         // 헤더가 로드된 후 권한 기반 UI 업데이트 적용
-        if (typeof Auth !== 'undefined') {
-          Auth.applyRoleVisibility();
+        if (typeof Auth !== 'undefined') {          // 회원가입 페이지에서는 로그인 상태를 무시하고 항상 게스트 UI만 표시
+          if (isSignupPage) {
+            // 회원가입 페이지인 경우 body에 signup-page 클래스 추가
+            document.body.classList.add('signup-page');
+            
+            // 모든 auth-section 비활성화
+            document.querySelectorAll('.auth-section').forEach(section => {
+              section.classList.remove('active');
+              section.style.display = 'none';
+            });
+              // guest-section만 활성화 - CSS에서 body.signup-page 선택자로 관리
+            const guestSection = document.querySelector('.guest-section');
+            if (guestSection) {
+              guestSection.classList.add('active');
+            }
+            
+            // 모든 로그인 관련 요소 숨김
+            document.querySelectorAll('.user-only, .user-only-not-admin, .admin-only, .manager-only, .manager-admin-only').forEach(el => {
+              el.style.display = 'none';
+            });
+            
+            console.log("회원가입 페이지: 강제 GUEST 모드 적용됨");
+          } else {
+            // 일반 페이지는 정상적인 권한 확인 진행
+            Auth.applyRoleVisibility();
+          }
         } else if (typeof AuthRoles !== 'undefined') {
           // 이전 버전 호환성 유지
           AuthRoles.applyRoleVisibility();
@@ -55,8 +82,10 @@ document.addEventListener('DOMContentLoaded', function() {
           console.error('Auth is not defined. Make sure auth.js is loaded.');
         }
         
-        // 헤더가 완전히 로드된 후 사용자 정보 즉시 표시
-        updateUserInfo();
+        // 헤더가 완전히 로드된 후 사용자 정보 즉시 표시 (회원가입 페이지 제외)
+        if (!isSignupPage) {
+          updateUserInfo();
+        }
       })
       .catch(error => {
         console.error('Error loading header:', error);
@@ -76,7 +105,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 글로벌 함수 호출
     handleLogout();
   }
-
   // 사용자 정보 업데이트 함수
   function updateUserInfo() {
     console.log('사용자 정보 업데이트 시작');
@@ -85,31 +113,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const userName = localStorage.getItem('userName') || sessionStorage.getItem('userName') || '사용자';
     console.log('로드된 사용자 이름:', userName);
     
-    // 일반 사용자 이름 표시하기
-    const usernameDisplayUser = document.getElementById('username-display-user');
-    if (usernameDisplayUser) {
-      usernameDisplayUser.textContent = userName;
-      // 부모 요소에 loaded 클래스 추가
-      usernameDisplayUser.parentElement.classList.add('loaded');
-      console.log('일반 사용자 이름 표시 완료');
+    // 현재 사용자 역할 확인
+    let currentRole = 'GUEST';
+    if (typeof Auth !== 'undefined') {
+      currentRole = Auth.getCurrentRole();
+    } else {
+      // Auth 객체가 없을 경우
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true' || sessionStorage.getItem('isLoggedIn') === 'true';
+      if (isLoggedIn) {
+        currentRole = localStorage.getItem('userRole') || sessionStorage.getItem('userRole') || 'USER';
+      }
     }
     
-    // 매니저 사용자 이름 표시하기
-    const usernameDisplayManager = document.getElementById('username-display-manager');
-    if (usernameDisplayManager) {
-      usernameDisplayManager.textContent = userName;
-      // 부모 요소에 loaded 클래스 추가
-      usernameDisplayManager.parentElement.classList.add('loaded');
-      console.log('매니저 이름 표시 완료');
-    }
-    
-    // 관리자 사용자 이름 표시하기
-    const usernameDisplayAdmin = document.getElementById('username-display-admin');
-    if (usernameDisplayAdmin) {
-      usernameDisplayAdmin.textContent = userName;
-      // 부모 요소에 loaded 클래스 추가
-      usernameDisplayAdmin.parentElement.classList.add('loaded');
-      console.log('관리자 이름 표시 완료');
+    // 역할에 따라 관련된 이름 표시만 업데이트
+    if (currentRole === 'USER') {
+      // 일반 사용자 이름만 표시
+      const usernameDisplayUser = document.getElementById('username-display-user');
+      if (usernameDisplayUser) {
+        usernameDisplayUser.textContent = userName;
+        usernameDisplayUser.parentElement.classList.add('loaded');
+        console.log('일반 사용자 이름 표시 완료');
+      }
+    } else if (currentRole === 'MANAGER') {
+      // 매니저 이름만 표시
+      const usernameDisplayManager = document.getElementById('username-display-manager');
+      if (usernameDisplayManager) {
+        usernameDisplayManager.textContent = userName;
+        usernameDisplayManager.parentElement.classList.add('loaded');
+        console.log('매니저 이름 표시 완료');
+      }
+    } else if (currentRole === 'ADMIN') {
+      // 관리자 이름만 표시
+      const usernameDisplayAdmin = document.getElementById('username-display-admin');
+      if (usernameDisplayAdmin) {
+        usernameDisplayAdmin.textContent = userName;
+        usernameDisplayAdmin.parentElement.classList.add('loaded');
+        console.log('관리자 이름 표시 완료');
+      }
     }
     
     // 로그아웃 버튼 이벤트 리스너 설정

@@ -32,18 +32,30 @@
         </div>
         <span class="input-hint">커뮤니티에서 사용할 닉네임을 입력해주세요.</span>
         <span class="input-error" id="nickname-error">닉네임은 2-10자 이내여야 합니다.</span>
-      </div>
-      
-      <div class="input-group">
+      </div>      <div class="input-group">
         <label for="password">비밀번호</label>
-        <input type="password" id="password" name="password" placeholder="비밀번호 입력 (8자 이상)" required>
+        <div class="password-field">
+          <input type="password" id="password" name="password" placeholder="비밀번호 입력 (8자 이상)" required>          <span class="password-toggle" id="password-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="eye-icon">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </span>
+        </div>
         <span class="input-hint">영문, 숫자, 특수문자 조합 8자 이상 입력해주세요.</span>
-        <span class="input-error" id="password-error">비밀번호는 8자 이상이어야 합니다.</span>
+        <span class="input-error" id="password-error">비밀번호는 영문, 숫자, 특수문자(!@#$%^&*) 조합으로 8자 이상 입력해야 합니다.</span>
       </div>
       
       <div class="input-group">
         <label for="password-confirm">비밀번호 확인</label>
-        <input type="password" id="password-confirm" name="password-confirm" placeholder="비밀번호 재입력" required>
+        <div class="password-field">
+          <input type="password" id="password-confirm" name="password-confirm" placeholder="비밀번호 재입력" required>          <span class="password-toggle" id="password-confirm-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="eye-icon">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </span>
+        </div>
         <span class="input-error" id="password-confirm-error">비밀번호가 일치하지 않습니다.</span>
       </div>
 

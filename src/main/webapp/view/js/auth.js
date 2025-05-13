@@ -62,9 +62,43 @@ const Auth = {
   // 게스트(비로그인) 여부 확인
   isGuest: function() {
     return this.getCurrentRole() === this.ROLES.GUEST;
-  },
-  // 특정 요소를 권한에 따라 표시/숨김 처리
+  },  // 특정 요소를 권한에 따라 표시/숨김 처리
   applyRoleVisibility: function() {
+    // 권한별 섹션 처리 - 모든 섹션 비활성화 후 현재 권한에 맞는 섹션만 활성화
+    document.querySelectorAll('.auth-section').forEach(section => {
+      section.classList.remove('active');
+      section.style.display = 'none';
+    });
+    
+    // 현재 권한에 맞는 섹션 활성화
+    if (this.isAdmin()) {
+      const adminSection = document.querySelector('.admin-section');
+      if (adminSection) {
+        adminSection.classList.add('active');
+        adminSection.style.display = '';
+      }
+    } else if (this.isManager()) {
+      const managerSection = document.querySelector('.manager-section');
+      if (managerSection) {
+        managerSection.classList.add('active');
+        managerSection.style.display = '';
+      }
+    } else if (this.isRegularUser()) {
+      const userSection = document.querySelector('.user-section');
+      if (userSection) {
+        userSection.classList.add('active');
+        userSection.style.display = '';
+      }
+    } else {
+      // 게스트인 경우
+      const guestSection = document.querySelector('.guest-section');
+      if (guestSection) {
+        guestSection.classList.add('active');
+        guestSection.style.display = '';
+      }
+    }
+    
+    // 개별 요소 처리 (기존 방식 유지 - 하위 호환성)
     // 관리자 전용 요소
     document.querySelectorAll('.admin-only').forEach(element => {
       element.style.display = this.isAdmin() ? '' : 'none';

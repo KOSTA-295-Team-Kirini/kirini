@@ -6,19 +6,27 @@
     <div class="logo"><a href="../pages/index.html">🦒 KIRINI</a></div>
     <nav class="top-nav">
       <!-- 비로그인 사용자만 볼 수 있는 메뉴 -->
-      <a href="../pages/login.html" class="login-btn guest-only">로그인</a>
+      <div class="auth-section guest-section">
+        <a href="../pages/login.html" class="login-btn guest-only" id="login-btn">로그인</a>
+      </div>
       
       <!-- 일반 사용자만 볼 수 있는 메뉴 (관리자, 매니저가 아닌 사용자) -->
-      <span class="user-greeting user-only-not-admin hidden-until-load"><span id="username-display-user"></span>님</span>
-      <a href="javascript:void(0)" class="logout-btn user-only-not-admin" id="logout-btn-user" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
+      <div class="auth-section user-section" style="display: none;">
+        <span class="user-greeting user-only-not-admin hidden-until-load"><span id="username-display-user"></span>님</span>
+        <a href="javascript:void(0)" class="logout-btn user-only-not-admin" id="logout-btn-user" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
+      </div>
       
       <!-- 매니저만 볼 수 있는 메뉴 -->
-      <span class="user-greeting manager-only hidden-until-load"><span id="username-display-manager"></span>님</span>
-      <a href="javascript:void(0)" class="logout-btn manager-only" id="logout-btn-manager" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
+      <div class="auth-section manager-section" style="display: none;">
+        <span class="user-greeting manager-only hidden-until-load"><span id="username-display-manager"></span>님</span>
+        <a href="javascript:void(0)" class="logout-btn manager-only" id="logout-btn-manager" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
+      </div>
       
       <!-- 관리자만 볼 수 있는 메뉴 -->
-      <span class="user-greeting admin-only hidden-until-load"><span id="username-display-admin"></span>님</span>
-      <a href="javascript:void(0)" class="logout-btn admin-only" id="logout-btn-admin" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
+      <div class="auth-section admin-section" style="display: none;">
+        <span class="user-greeting admin-only hidden-until-load"><span id="username-display-admin"></span>님</span>
+        <a href="javascript:void(0)" class="logout-btn admin-only" id="logout-btn-admin" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
+      </div>
     </nav>
   </div>
   
