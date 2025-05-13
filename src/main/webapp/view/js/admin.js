@@ -1,4 +1,30 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // 권한 체크 및 리디렉션
+  if (typeof Auth !== 'undefined') {
+    // 관리자나 매니저가 아니면 홈페이지로 리디렉션
+    if (!Auth.isManagerOrAdmin()) {
+      window.location.href = '../pages/index.html';
+      return;
+    }
+    
+    // 첫 로딩시에 적절한 초기 탭 선택
+    if (Auth.isManager() && !Auth.isAdmin()) {
+      // 매니저의 경우 사용자 권한 탭을 기본 탭으로 설정
+      const firstManagerTab = document.querySelector('.admin-tab.manager-admin-only');
+      if (firstManagerTab) {
+        document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+        firstManagerTab.classList.add('active');
+        
+        // 해당 섹션 활성화
+        const tabId = firstManagerTab.dataset.tab;
+        document.querySelectorAll('.admin-section').forEach(section => {
+          section.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+      }
+    }
+  }
+  
   // 탭 전환 기능
   document.querySelectorAll('.admin-tab').forEach(tab => {
     tab.addEventListener('click', () => {

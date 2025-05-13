@@ -2,8 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>관리자 페이지 - KIRINI</title>  <link rel="stylesheet" href="../css/admin.css">  <script src="../js/main.js" defer></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />  <title>관리 내역 - KIRINI</title>
+  <link rel="stylesheet" href="../css/admin.css">
+  <script src="../js/main.js" defer></script>
   <script src="../js/auth.js"></script>
   <script src="../js/components.js"></script>
   <script src="../js/admin.js" defer></script>
@@ -11,22 +12,24 @@
 <body>
   <!-- 헤더 플레이스홀더 -->
   <div id="header-placeholder"></div>
-
   <section class="page-title">
-    <h1>🔧 관리자 페이지</h1>
-    <p>KIRINI 웹사이트의 모든 관리 기능을 한 곳에서 사용할 수 있습니다.</p>
+    <h1>🔧 관리 내역</h1>
+    <p>KIRINI 웹사이트의 관리 기능을 권한에 따라 이용할 수 있습니다.</p>
   </section>
   
   <div class="admin-container">
     <div class="admin-tabs">
-      <button class="admin-tab active" data-tab="terms">키보드 용어 관리</button>
-      <button class="admin-tab" data-tab="keyboard-info">키보드 정보 관리</button>
-      <button class="admin-tab" data-tab="categories">키보드 카테고리 관리</button>
-      <button class="admin-tab" data-tab="tags">키보드 태그 관리</button>
-      <button class="admin-tab" data-tab="tag-requests">태그 승인 요청</button>
-      <button class="admin-tab" data-tab="users">불량 이용자 관리</button>
-      <button class="admin-tab" data-tab="reports">신고 내역</button>
-      <button class="admin-tab" data-tab="deleted-posts">삭제된 게시글 관리</button>
+      <!-- 관리자만 볼 수 있는 탭 -->
+      <button class="admin-tab admin-only active" data-tab="terms">키보드 용어 관리</button>
+      <button class="admin-tab admin-only" data-tab="keyboard-info">키보드 정보 관리</button>
+      <button class="admin-tab admin-only" data-tab="categories">키보드 카테고리 관리</button>
+      <button class="admin-tab admin-only" data-tab="tags">키보드 태그 관리</button>
+      <button class="admin-tab admin-only" data-tab="tag-requests">태그 승인 요청</button>
+      
+      <!-- 매니저와 관리자가 모두 볼 수 있는 탭 -->
+      <button class="admin-tab manager-admin-only" data-tab="users">불량 이용자 관리</button>
+      <button class="admin-tab manager-admin-only" data-tab="reports">신고 내역</button>
+      <button class="admin-tab manager-admin-only" data-tab="deleted-posts">삭제된 게시글 관리</button>
     </div>
 
     <!-- 키보드 용어 관리 섹션 -->

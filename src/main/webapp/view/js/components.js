@@ -50,11 +50,16 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(() => {
     // localStorage 또는 sessionStorage에서 사용자 이름 가져오기
     const userName = localStorage.getItem('userName') || sessionStorage.getItem('userName') || '사용자';
-    
-    // 일반 사용자 이름 표시하기
+      // 일반 사용자 이름 표시하기
     const usernameDisplayUser = document.getElementById('username-display-user');
     if (usernameDisplayUser) {
       usernameDisplayUser.textContent = userName;
+    }
+    
+    // 매니저 사용자 이름 표시하기
+    const usernameDisplayManager = document.getElementById('username-display-manager');
+    if (usernameDisplayManager) {
+      usernameDisplayManager.textContent = userName;
     }
     
     // 관리자 사용자 이름 표시하기
@@ -62,11 +67,16 @@ document.addEventListener('DOMContentLoaded', function() {
     if (usernameDisplayAdmin) {
       usernameDisplayAdmin.textContent = userName;
     }
-    
-    // 일반 사용자 로그아웃 버튼 기능 추가
+      // 일반 사용자 로그아웃 버튼 기능 추가
     const logoutBtnUser = document.getElementById('logout-btn-user');
     if (logoutBtnUser) {
       logoutBtnUser.addEventListener('click', handleLogout);
+    }
+    
+    // 매니저 로그아웃 버튼 기능 추가
+    const logoutBtnManager = document.getElementById('logout-btn-manager');
+    if (logoutBtnManager) {
+      logoutBtnManager.addEventListener('click', handleLogout);
     }
     
     // 관리자 로그아웃 버튼 기능 추가

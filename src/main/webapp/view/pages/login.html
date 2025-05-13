@@ -30,6 +30,30 @@
         <input type="checkbox" id="remember-me" name="remember-me">
         <label for="remember-me">로그인 상태 유지</label>
       </div>
+      <!-- 개발 모드: 권한 선택 (실제 서비스에서는 비활성화) -->
+      <div class="dev-mode">
+        <div class="dev-mode-toggle">
+          <input type="checkbox" id="dev-mode" name="dev-mode">
+          <label for="dev-mode">개발 테스트 모드</label>
+        </div>
+        <div class="role-selector" style="display: none;">
+          <p>권한 선택 (개발 테스트용):</p>
+          <div class="role-options">
+            <div class="role-option">
+              <input type="radio" id="role-user" name="role" value="USER" checked>
+              <label for="role-user">일반 회원</label>
+            </div>
+            <div class="role-option">
+              <input type="radio" id="role-manager" name="role" value="MANAGER">
+              <label for="role-manager">매니저</label>
+            </div>
+            <div class="role-option">
+              <input type="radio" id="role-admin" name="role" value="ADMIN">
+              <label for="role-admin">관리자</label>
+            </div>
+          </div>
+        </div>
+      </div>
       <button type="submit" class="login-button">로그인</button>
     </form>
     

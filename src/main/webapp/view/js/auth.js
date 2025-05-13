@@ -9,6 +9,7 @@ const Auth = {
   ROLES: {
     GUEST: 'GUEST',
     USER: 'USER',
+    MANAGER: 'MANAGER',
     ADMIN: 'ADMIN'
   },
   
@@ -31,37 +32,62 @@ const Auth = {
     
     return role;
   },
-  
-  // 관리자 여부 확인
+    // 관리자 여부 확인
   isAdmin: function() {
     return this.getCurrentRole() === this.ROLES.ADMIN;
+  },
+  
+  // 매니저 여부 확인
+  isManager: function() {
+    return this.getCurrentRole() === this.ROLES.MANAGER;
+  },
+  
+  // 매니저 또는 관리자 여부 확인
+  isManagerOrAdmin: function() {
+    const role = this.getCurrentRole();
+    return role === this.ROLES.MANAGER || role === this.ROLES.ADMIN;
   },
   
   // 로그인 사용자 여부 확인
   isUser: function() {
     const role = this.getCurrentRole();
-    return role === this.ROLES.USER || role === this.ROLES.ADMIN;
+    return role === this.ROLES.USER || role === this.ROLES.MANAGER || role === this.ROLES.ADMIN;
+  },
+  
+  // 일반 사용자 여부 확인 (관리자, 매니저 제외)
+  isRegularUser: function() {
+    return this.getCurrentRole() === this.ROLES.USER;
   },
   
   // 게스트(비로그인) 여부 확인
   isGuest: function() {
     return this.getCurrentRole() === this.ROLES.GUEST;
   },
-    // 특정 요소를 권한에 따라 표시/숨김 처리
+  // 특정 요소를 권한에 따라 표시/숨김 처리
   applyRoleVisibility: function() {
     // 관리자 전용 요소
     document.querySelectorAll('.admin-only').forEach(element => {
       element.style.display = this.isAdmin() ? '' : 'none';
     });
     
-    // 로그인 사용자 전용 요소 (관리자 포함)
+    // 매니저 전용 요소
+    document.querySelectorAll('.manager-only').forEach(element => {
+      element.style.display = this.isManager() ? '' : 'none';
+    });
+    
+    // 매니저 또는 관리자 요소 (권한 관리자)
+    document.querySelectorAll('.manager-admin-only').forEach(element => {
+      element.style.display = this.isManagerOrAdmin() ? '' : 'none';
+    });
+    
+    // 로그인 사용자 전용 요소 (일반 사용자, 매니저, 관리자 포함)
     document.querySelectorAll('.user-only').forEach(element => {
       element.style.display = this.isUser() ? '' : 'none';
     });
     
-    // 일반 사용자 전용 요소 (관리자 제외)
+    // 일반 사용자 전용 요소 (관리자, 매니저 제외)
     document.querySelectorAll('.user-only-not-admin').forEach(element => {
-      element.style.display = (this.getCurrentRole() === this.ROLES.USER) ? '' : 'none';
+      element.style.display = this.isRegularUser() ? '' : 'none';
     });
     
     // 비로그인 사용자 전용 요소

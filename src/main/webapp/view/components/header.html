@@ -10,9 +10,13 @@
       <!-- 비로그인 사용자만 볼 수 있는 메뉴 -->
       <a href="../pages/login.html" class="login-btn guest-only">로그인</a>
       
-      <!-- 일반 사용자만 볼 수 있는 메뉴 (관리자가 아닌 사용자) -->
+      <!-- 일반 사용자만 볼 수 있는 메뉴 (관리자, 매니저가 아닌 사용자) -->
       <span class="user-greeting user-only-not-admin"><span id="username-display-user">사용자</span>님</span>
       <a href="javascript:void(0)" class="logout-btn user-only-not-admin" id="logout-btn-user">로그아웃</a>
+      
+      <!-- 매니저만 볼 수 있는 메뉴 -->
+      <span class="user-greeting manager-only"><span id="username-display-manager">매니저</span>님</span>
+      <a href="javascript:void(0)" class="logout-btn manager-only" id="logout-btn-manager">로그아웃</a>
       
       <!-- 관리자만 볼 수 있는 메뉴 -->
       <span class="user-greeting admin-only"><span id="username-display-admin">관리자</span>님</span>
@@ -28,8 +32,9 @@
       <a href="../pages/board.html">소식/게시판</a>
       <a href="../pages/qna.html">Q&A</a>
       <a href="../pages/mypage.html" class="user-only-not-admin">마이페이지</a>
+      <a href="../pages/mypage.html" class="manager-only">마이페이지</a>
       <a href="../pages/mypage.html" class="admin-only">마이페이지</a>
-      <a href="../pages/admin.html" class="admin-only">관리자 페이지</a>
+      <a href="../pages/admin.html" class="manager-admin-only">관리 내역</a>
     </nav>
   </div>
 </header>

@@ -1,4 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // 개발 모드 토글 기능 추가
+  const devModeCheckbox = document.getElementById('dev-mode');
+  const roleSelector = document.querySelector('.role-selector');
+  
+  if (devModeCheckbox && roleSelector) {
+    devModeCheckbox.addEventListener('change', function() {
+      roleSelector.style.display = this.checked ? 'block' : 'none';
+    });
+  }
+  
   document.getElementById('login-form').addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -27,8 +37,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // 로그인 상태 유지 체크 여부 확인
     const rememberMe = document.getElementById('remember-me').checked;
     
-    // 역할 설정 (테스트용)
-    const role = email.toLowerCase().includes('admin') ? 'ADMIN' : 'USER';
+    // 역할 설정
+    let role = 'USER';
+    
+    // 개발 모드에서는 선택한 라디오 버튼의 값을 사용
+    const devMode = document.getElementById('dev-mode');
+    
+    if (devMode && devMode.checked) {
+      const selectedRole = document.querySelector('input[name="role"]:checked');
+      if (selectedRole) {
+        role = selectedRole.value;
+      }
+    } else {
+      // 기본 방식: 이메일로 역할 추론 (실제 시스템에서는 서버에서 처리)
+      if (email.toLowerCase().includes('admin')) {
+        role = 'ADMIN';
+      } else if (email.toLowerCase().includes('manager')) {
+        role = 'MANAGER';
+      } else {
+        role = 'USER';
+      }
+    }
       // Auth 객체가 있으면 사용, 없으면 직접 저장
     if (typeof Auth !== 'undefined') {
       Auth.setRole(role);
@@ -50,8 +79,24 @@ document.addEventListener('DOMContentLoaded', function() {
         sessionStorage.setItem('userRole', role);
       }
     }
+      // 역할에 따른 메시지 표시
+    let roleDisplayName = '';
     
-    alert(`${role === 'ADMIN' ? '관리자' : '사용자'}로 로그인되었습니다.`);
+    switch (role) {
+      case 'ADMIN':
+        roleDisplayName = '관리자';
+        break;
+      case 'MANAGER':
+        roleDisplayName = '매니저';
+        break;
+      case 'USER':
+        roleDisplayName = '일반 회원';
+        break;
+      default:
+        roleDisplayName = '사용자';
+    }
+    
+    alert(`${roleDisplayName}로 로그인되었습니다.`);
     
     // 성공 시 메인 페이지로 리디렉션
     window.location.href = '../pages/index.html';
