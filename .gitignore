@@ -78,7 +78,7 @@ local.properties
 *.log
 .mtj.tmp/
 *.jar
-*.war
+#*.war # 배포를 위해 임시 허용
 *.nar
 *.ear
 *.zip
