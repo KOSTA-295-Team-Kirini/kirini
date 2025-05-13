@@ -164,6 +164,35 @@ public class UserDAO {
         return false;
     }
     
+    /**
+     * 이메일로 사용자 정보 조회
+     * @param email 이메일
+     * @return 사용자 정보 객체
+     */
+    public UserDTO getUserByEmail(String email) throws SQLException {
+        UserDTO user = null;
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DBConnectionUtil.getConnection();
+            String sql = "SELECT * FROM user WHERE user_email = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, email);
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                user = mapResultSetToUser(rs);
+            }
+            return user;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException e) {}
+            if (pstmt != null) try { pstmt.close(); } catch (SQLException e) {}
+            if (conn != null) try { conn.close(); } catch (SQLException e) {}
+        }
+    }
+    
     // 사용자 로그인
     public UserDTO login(String username, String password) throws SQLException {
         UserDTO user = null;

@@ -122,6 +122,20 @@ public class UserService {
     }
     
     /**
+     * 이메일로 사용자 정보 조회
+     * @param email 이메일
+     * @return 사용자 정보 객체, 없으면 null
+     */
+    public UserDTO getUserByEmail(String email) {
+        try {
+            return userDAO.getUserByEmail(email);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
      * 사용자 정보 업데이트
      * @param user 업데이트할 사용자 정보
      * @return 업데이트 성공 시 true, 실패 시 false
@@ -150,6 +164,19 @@ public class UserService {
             e.printStackTrace();
             return false;
         }
+    }
+    
+    /**
+     * 비밀번호 검증
+     * @param inputPassword 입력받은 비밀번호
+     * @param storedPassword 저장된 암호화 비밀번호
+     * @return 일치 여부
+     */
+    public boolean verifyPassword(String inputPassword, String storedPassword) {
+        // 입력 비밀번호 암호화
+        String hashedInput = hashPassword(inputPassword);
+        // 저장된 암호화 비밀번호와 비교
+        return hashedInput.equals(storedPassword);
     }
     
     /**

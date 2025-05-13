@@ -1,42 +1,95 @@
 // HTML 컴포넌트 로드 함수
-document.addEventListener('DOMContentLoaded', function() {
-  // 현재 페이지의 경로를 확인합니다
+document.addEventListener("DOMContentLoaded", function () {
+  // 헤더 및 푸터 플레이스홀더 가져오기
+  const headerPlaceholder = document.getElementById("header-placeholder");
+  const footerPlaceholder = document.getElementById("footer-placeholder");
+
+  // 현재 페이지의 경로 확인
   const currentPath = window.location.pathname;
-  
-  // 헤더 플레이스홀더 엘리먼트를 가져옵니다
-  const headerPlaceholder = document.getElementById('header-placeholder');
-  
-  // 푸터 플레이스홀더 엘리먼트를 가져옵니다
-  const footerPlaceholder = document.getElementById('footer-placeholder');
-  
-  // 상대 경로를 결정합니다 (현재 경로가 /pages/로 시작하면 상위 디렉토리로 이동해야 함)
-  const relativePath = currentPath.includes('/pages/') ? '../' : '';
-  
-  // 관리자 페이지인지 확인합니다 (URL에 admin.html이 포함되어 있는지)
-  const isAdminPage = currentPath.includes('admin.html');
-  
+
+  // 베이스 URL 구하기 - Eclipse에서 컨텍스트 루트와 함께 작동하도록 함
+  let basePath = "";
+
+  // 경로가 '/pages/' 포함되거나 '/Kirini/'와 같은 컨텍스트 루트 뒤에 있는 경우
+  if (currentPath.includes("/pages/")) {
+    basePath = "../";
+  } else if (currentPath.match(/\/[^\/]+\/pages\//)) {
+    // Eclipse 컨텍스트 루트 환경에서: /ProjectName/pages/
+    const pathParts = currentPath.split("/");
+    const pagesIndex = pathParts.indexOf("pages");
+    if (pagesIndex > 0) {
+      basePath = "../";
+    }
+  }
+
+  // 관리자 페이지 확인
+  const isAdminPage = currentPath.includes("admin.html");
+
+  // XMLHttpRequest 사용 - fetch API 대신 (더 넓은 호환성)
+  function loadComponent(url, placeholder) {
+    const xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          placeholder.innerHTML = xhr.responseText;
+        } else {
+          console.error("컴포넌트 로드 오류:", url, xhr.status);
+          // 오류 시 직접 경로 시도
+          tryDirectPath(url, placeholder);
+        }
+      }
+    };
+    xhr.open("GET", url, true);
+    xhr.send();
+  }
+
+  // 직접 경로 시도 (fallback)
+  function tryDirectPath(url, placeholder) {
+    const directXhr = new XMLHttpRequest();
+    directXhr.onreadystatechange = function () {
+      if (directXhr.readyState === 4 && directXhr.status === 200) {
+        placeholder.innerHTML = directXhr.responseText;
+      }
+    };
+
+    // url에서 basePath 제거하고 직접 경로 시도
+    const directUrl = url.replace(basePath, "");
+    directXhr.open("GET", directUrl, true);
+    directXhr.send();
+  }
+
+  // 헤더 로드
   if (headerPlaceholder) {
-    // 관리자 페이지라면 admin_header.html을 로드, 그렇지 않으면 일반 header.html 로드
-    const headerFile = isAdminPage ? 'components/admin_header.html' : 'components/header.html';
-    
-    fetch(`${relativePath}${headerFile}`)
-      .then(response => response.text())
-      .then(data => {
-        headerPlaceholder.innerHTML = data;
-      })
-      .catch(error => {
-        console.error('Error loading header:', error);
-      });
+    const headerFile = isAdminPage
+      ? `${basePath}components/admin_header.html`
+      : `${basePath}components/header.html`;
+    loadComponent(headerFile, headerPlaceholder);
   }
-  
+
+  // 푸터 로드
   if (footerPlaceholder) {
-    fetch(`${relativePath}components/footer.html`)
-      .then(response => response.text())
-      .then(data => {
-        footerPlaceholder.innerHTML = data;
-      })
-      .catch(error => {
-        console.error('Error loading footer:', error);
-      });
+    const footerFile = `${basePath}components/footer.html`;
+
+    // 로드 완료 콜백 수정
+    const xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          footerPlaceholder.innerHTML = xhr.responseText;
+
+          // 모든 컴포넌트 로드 완료 시 이벤트 발생
+          console.log("컴포넌트 로드 완료");
+          document.dispatchEvent(new CustomEvent("componentsLoaded"));
+        } else {
+          console.error("푸터 로드 오류:", footerFile);
+        }
+      }
+    };
+    xhr.open("GET", footerFile, true);
+    xhr.send();
   }
+
+  // 콘솔에 현재 환경 정보 출력 (디버깅용)
+  console.log("현재 경로:", currentPath);
+  console.log("사용된 베이스 경로:", basePath);
 });
