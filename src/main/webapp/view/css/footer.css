@@ -37,7 +37,7 @@ footer {
     margin: 0.3rem 0 0.1rem 0;
 }
 
-.footer-links a {
+.footer-links a, .footer-link {
     color: #555;
     text-decoration: underline;
     margin: 0 0.5rem;
