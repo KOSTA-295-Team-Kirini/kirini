@@ -5,6 +5,7 @@ import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import presentation.controller.dispatcher.ModelAndView;
 
 /**
  * 모든 컨트롤러가 구현해야 하는 인터페이스
@@ -32,4 +33,8 @@ public interface Controller {
      */
     void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException;
+    
+    // 향후 확장을 위한 메서드 (지금은 구현하지 않아도 됨)
+    // ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) 
+    //        throws Exception;
 }

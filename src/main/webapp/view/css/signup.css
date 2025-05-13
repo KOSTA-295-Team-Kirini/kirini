@@ -1,7 +1,7 @@
 /* 회원가입 페이지 스타일 */
 
 .signup-container {
-  max-width: 500px;
+  max-width: 650px; /* 가로 크기 증가 (500px에서 650px로) */
   margin: 3rem auto;
   padding: 2rem;
   background: white;
@@ -25,7 +25,7 @@
 .signup-form input {
   width: 100%;
   padding: 0.8rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem; /* 1rem에서 0.5rem으로 줄임 */
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
@@ -39,7 +39,7 @@
 }
 
 .input-group {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem; /* 1rem에서 1.5rem으로 증가 */
 }
 
 .input-hint {
@@ -47,7 +47,13 @@
   font-size: 0.85rem;
   color: #999;
   margin-top: 0.3rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem; /* 1rem에서 0.5rem으로 줄임 */
+}
+
+/* 비밀번호 입력칸 아래 힌트 마진 조정 */
+#password + .input-hint {
+  margin-top: 0.3rem; /* 2px에서 0.3rem으로 변경 */
+  margin-bottom: 0.3rem;
 }
 
 .input-error {
@@ -55,8 +61,10 @@
   font-size: 0.85rem;
   color: #ff3333;
   margin-top: 0.3rem;
+  margin-bottom: 0.3rem; /* 여백 추가 */
 }
 
+/* 버튼 스타일 조정 - margin-left 제거 (gap으로 대체) */
 .check-button {
   background: #ff9800;
   color: white;
@@ -66,11 +74,24 @@
   cursor: pointer;
   font-weight: bold;
   transition: background 0.3s;
-  margin-left: 0.5rem;
+  /* margin-left 제거 */
 }
 
 .check-button:hover {
   background: #ff7043;
+}
+
+/* flex-row 클래스 추가 - 이메일과 버튼을 중앙 정렬하기 위한 스타일 */
+.flex-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* 요소 사이의 간격 설정 */
+  margin-bottom: 0.5rem;
+}
+
+.flex-row input {
+  flex: 1;
+  margin-bottom: 0; /* 여기서는 마진 제거 */
 }
 
 .signup-button {
@@ -97,7 +118,7 @@
 }
 
 .terms-box {
-  margin: 1.5rem 0;
+  margin: 1.5rem 0 1rem 0; /* 아래 여백 수정 */
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 1rem;
@@ -111,18 +132,30 @@
 .terms-agree {
   display: flex;
   align-items: center;
+  justify-content: flex-start; /* 왼쪽 정렬 */
   margin: 1rem 0;
 }
 
 .terms-agree input {
   margin: 0;
   margin-right: 0.5rem;
-  width: auto;
+  width: 16px; /* 체크박스 크기 조정 */
+  height: 16px; /* 체크박스 크기 조정 */
+  vertical-align: middle; /* 수직 정렬 */
+}
+
+.terms-agree label {
+  margin-bottom: 0; /* 기본 레이블 스타일 오버라이드 */
+  font-size: 0.95rem; /* 폰트 크기 살짝 조정 */
+  vertical-align: middle; /* 수직 정렬 */
+  position: relative;
+  top: 1px; /* 미세 조정으로 정확한 수직 위치 맞추기 */
 }
 
 .flex-row {
   display: flex;
   align-items: center;
+  justify-content: center; /* 가로 중앙 정렬 */
 }
 
 .flex-row input {
@@ -143,52 +176,6 @@
 
 .login-prompt a:hover {
   text-decoration: underline;
-}
-
-.social-signup {
-  margin-top: 2rem;
-  text-align: center;
-}
-
-.social-signup p {
-  margin-bottom: 1rem;
-  color: #666;
-  position: relative;
-}
-
-.social-signup p::before,
-.social-signup p::after {
-  content: "";
-  display: inline-block;
-  width: 24%;
-  height: 1px;
-  background: #ddd;
-  margin: 0 10px;
-  vertical-align: middle;
-}
-
-.social-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.social-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: 1px solid #ddd;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.social-button:hover {
-  background: #f5f5f5;
-  transform: translateY(-2px);
 }
 
 /* 반응형 스타일 */

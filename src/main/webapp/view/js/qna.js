@@ -3,6 +3,24 @@ document.addEventListener('DOMContentLoaded', function() {
   // Q&A 상세 내용 표시 기능
   const qnaLinks = document.querySelectorAll('.qna-title a');
   
+  // 모든 질문/내 질문 탭 기능
+  const tabButtons = document.querySelectorAll('.qna-detail-buttons .left-buttons .btn');
+  
+  tabButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // 현재 활성화된 버튼의 active 클래스 제거
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      
+      // 클릭한 버튼에 active 클래스 추가
+      this.classList.add('active');
+      
+      // 실제 구현에서는 여기서 AJAX 요청 등을 통해 해당 탭의 데이터를 불러올 수 있습니다.
+      console.log('탭 클릭:', this.textContent);
+    });
+  });
+  
   qnaLinks.forEach(link => {
     link.addEventListener('click', function(e) {
       e.preventDefault();
@@ -27,29 +45,31 @@ document.addEventListener('DOMContentLoaded', function() {
           detailElement.style.transition = 'opacity 0.3s ease';
           detailElement.style.opacity = 1;
         }, 10);
-        
-        // 스크롤 이동
+          // 스크롤 이동
         detailElement.scrollIntoView({behavior: 'smooth', block: 'start'});
-        
-        // 닫기 버튼 추가
-        if (!detailElement.querySelector('.close-detail')) {
-          const closeButton = document.createElement('button');
-          closeButton.classList.add('close-detail', 'btn');
-          closeButton.textContent = '닫기';
-          
-          closeButton.addEventListener('click', function() {
-            detailElement.style.opacity = 0;
-            setTimeout(() => {
-              detailElement.style.display = 'none';
-            }, 300);
-          });
-          
-          detailElement.appendChild(closeButton);
-        }
       }
     });
   });
-    // 필터 버튼에 대한 이벤트 리스너
+  
+  // Q&A 상세 내용 닫기 버튼 기능
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('qna-detail-close')) {
+      // 닫기 버튼 클릭 시
+      const detailElement = e.target.closest('.qna-detail');
+      if (detailElement) {
+        // 부드럽게 사라지는 효과
+        detailElement.style.transition = 'opacity 0.3s ease';
+        detailElement.style.opacity = 0;
+        
+        // 애니메이션 후 숨김 처리
+        setTimeout(() => {
+          detailElement.style.display = 'none';
+        }, 300);
+      }
+    }
+  });
+  
+  // 필터 버튼에 대한 이벤트 리스너
   const filterButtons = document.querySelectorAll('.qna-filter .filter-buttons .btn');
   filterButtons.forEach(button => {
     button.addEventListener('click', function() {

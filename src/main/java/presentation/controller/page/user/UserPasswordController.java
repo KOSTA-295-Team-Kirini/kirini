@@ -1,12 +1,14 @@
-package presentation.controller.page;
+package presentation.controller.page.user;
 
 import java.io.IOException;
+
 import business.service.user.UserService;
 import dto.user.UserDTO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import presentation.controller.page.Controller;
 
 /**
  * 비밀번호 찾기/변경 기능 컨트롤러

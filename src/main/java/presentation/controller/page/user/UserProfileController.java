@@ -1,4 +1,4 @@
-package presentation.controller.page;
+package presentation.controller.page.user;
 
 import java.io.IOException;
 
@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import presentation.controller.page.Controller;
 
 /**
  * 사용자 프로필 관리 컨트롤러
