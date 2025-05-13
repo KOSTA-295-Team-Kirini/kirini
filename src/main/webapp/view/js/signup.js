@@ -1,5 +1,27 @@
-// 폼 요소들 가져오기
+// 컴포넌트 로드 완료 이벤트 리스너
+document.addEventListener("componentsLoaded", initializeSignupForm);
+
+// 컴포넌트 로드와 관계없이 DOMContentLoaded도 처리
 document.addEventListener("DOMContentLoaded", function () {
+  // components.js가 없거나 5초 내에 로드되지 않으면 직접 초기화
+  setTimeout(function () {
+    if (!window.componentsInitialized) {
+      console.log("컴포넌트 로드 타임아웃, 직접 초기화");
+      window.componentsInitialized = true;
+      initializeSignupForm();
+    }
+  }, 2000); // 2초 대기
+});
+
+// 회원가입 폼 초기화 함수
+function initializeSignupForm() {
+  // 이미 초기화되었으면 중복 실행 방지
+  if (window.componentsInitialized) return;
+  window.componentsInitialized = true;
+
+  console.log("회원가입 폼 초기화");
+
+  // 기존 DOMContentLoaded 내부 코드
   const form = document.getElementById("signup-form");
   const emailInput = document.getElementById("email");
   const nicknameInput = document.getElementById("nickname");
@@ -60,7 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // 서버로 데이터 전송
-    fetch("/kirini/signup", {
+    fetch("/kirini/signup.do", {
       method: "POST",
       body: formData,
     })
@@ -198,7 +220,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 서버에 중복 확인 요청
     fetch(
-      `/kirini/signup?action=checkEmail&email=${encodeURIComponent(
+      `/kirini/signup.do?action=checkEmail&email=${encodeURIComponent(
         emailInput.value
       )}`
     )
@@ -238,7 +260,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 서버에 중복 확인 요청
     fetch(
-      `/kirini/signup?action=checkNickname&nickname=${encodeURIComponent(
+      `/kirini/signup.do?action=checkNickname&nickname=${encodeURIComponent(
         nicknameInput.value
       )}`
     )
@@ -291,4 +313,4 @@ document.addEventListener("DOMContentLoaded", function () {
       validationState.agree
     );
   }
-});
+}

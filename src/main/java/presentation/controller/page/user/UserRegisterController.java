@@ -1,4 +1,4 @@
-package presentation.controller.page;
+package presentation.controller.page.user;
 
 import java.io.IOException;
 
@@ -7,6 +7,7 @@ import dto.user.UserDTO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import presentation.controller.page.Controller;
 
 /**
  * 사용자 회원가입 관련 요청을 처리하는 컨트롤러

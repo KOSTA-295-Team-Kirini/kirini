@@ -1,4 +1,4 @@
-package presentation.controller.page;
+package presentation.controller.page.admin;
 
 import java.io.IOException;
 import java.util.List;
@@ -16,6 +16,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import presentation.controller.page.Controller;
 
 public class AdminPageController implements Controller {
     private AdminPenaltyService penaltyService;
