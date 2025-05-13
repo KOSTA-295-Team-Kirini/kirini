@@ -14,22 +14,29 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 관리자 페이지인지 확인합니다 (URL에 admin.html이 포함되어 있는지)
   const isAdminPage = currentPath.includes('admin.html');
-  
-  if (headerPlaceholder) {
-    // 관리자 페이지라면 admin_header.html을 로드, 그렇지 않으면 일반 header.html 로드
-    const headerFile = isAdminPage ? 'components/admin_header.html' : 'components/header.html';
-    
-    fetch(`${relativePath}${headerFile}`)
+    if (headerPlaceholder) {
+    // 모든 경우에 header.html 로드
+    // 권한에 따라 보이는 부분은 auth_roles.js에서 처리
+    const headerFile = 'components/header.html';
+      fetch(`${relativePath}${headerFile}`)
       .then(response => response.text())
       .then(data => {
         headerPlaceholder.innerHTML = data;
+            // 헤더가 로드된 후 권한 기반 UI 업데이트 적용
+        if (typeof Auth !== 'undefined') {
+          Auth.applyRoleVisibility();
+        } else if (typeof AuthRoles !== 'undefined') {
+          // 이전 버전 호환성 유지
+          AuthRoles.applyRoleVisibility();
+        } else {
+          console.error('Auth is not defined. Make sure auth.js is loaded.');
+        }
       })
       .catch(error => {
         console.error('Error loading header:', error);
       });
   }
-  
-  if (footerPlaceholder) {
+    if (footerPlaceholder) {
     fetch(`${relativePath}components/footer.html`)
       .then(response => response.text())
       .then(data => {
@@ -39,4 +46,60 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Error loading footer:', error);
       });
   }
+  // 로그인된 사용자의 이름 표시 및 로그아웃 기능 - 헤더 로드 이후 실행
+  setTimeout(() => {
+    // localStorage 또는 sessionStorage에서 사용자 이름 가져오기
+    const userName = localStorage.getItem('userName') || sessionStorage.getItem('userName') || '사용자';
+    
+    // 일반 사용자 이름 표시하기
+    const usernameDisplayUser = document.getElementById('username-display-user');
+    if (usernameDisplayUser) {
+      usernameDisplayUser.textContent = userName;
+    }
+    
+    // 관리자 사용자 이름 표시하기
+    const usernameDisplayAdmin = document.getElementById('username-display-admin');
+    if (usernameDisplayAdmin) {
+      usernameDisplayAdmin.textContent = userName;
+    }
+    
+    // 일반 사용자 로그아웃 버튼 기능 추가
+    const logoutBtnUser = document.getElementById('logout-btn-user');
+    if (logoutBtnUser) {
+      logoutBtnUser.addEventListener('click', handleLogout);
+    }
+    
+    // 관리자 로그아웃 버튼 기능 추가
+    const logoutBtnAdmin = document.getElementById('logout-btn-admin');
+    if (logoutBtnAdmin) {
+      logoutBtnAdmin.addEventListener('click', handleLogout);
+    }
+      // 이전 버전 호환성을 위한 기존 로그아웃 버튼 처리
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', handleLogout);
+    }
+    
+    // 로그아웃 처리 함수
+    function handleLogout() {
+      // Auth 객체를 사용하거나 직접 로그아웃 처리
+      if (typeof Auth !== 'undefined' && Auth.logout) {
+        Auth.logout();
+      } else {
+        // 로그인 상태 및 사용자 역할 제거
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userRole');
+        sessionStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('userName');
+        sessionStorage.removeItem('userRole');
+        
+        // 로그아웃 메시지
+        alert('로그아웃 되었습니다.');
+        
+        // 메인 페이지로 리디렉션
+        window.location.href = '../pages/index.html';
+      }
+    }
+  }, 100); // 헤더 로드 후 약간의 지연 시간을 두고 실행
 });

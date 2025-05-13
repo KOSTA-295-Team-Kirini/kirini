@@ -1,13 +1,29 @@
-<!-- KIRINI 사이트 공통 헤더 -->
+<!-- KIRINI 사이트 공통 헤더: 권한별로 다르게 표시됨 -->
 <link rel="stylesheet" href="../css/header.css">
+<link rel="stylesheet" href="../css/user_header.css">
+<link rel="stylesheet" href="../css/admin_header.css">
 
 <header>
-  <div class="logo"><a href="../index.html">🦒 KIRINI</a></div>
+  <div class="logo"><a href="../pages/index.html">🦒 KIRINI</a></div>
   <nav>
+    <!-- 모든 사용자에게 공통으로 표시되는 메뉴 -->
     <a href="../pages/dictionary.html">용어집</a>
     <a href="../pages/keyboard_info.html">키보드정보</a>
     <a href="../pages/board.html">소식/게시판</a>
     <a href="../pages/qna.html">Q&A</a>
-    <a href="../pages/login.html" class="login-btn">로그인</a>
+    
+    <!-- 비로그인 사용자만 볼 수 있는 메뉴 -->
+    <a href="../pages/login.html" class="login-btn guest-only">로그인</a>
+    
+    <!-- 일반 사용자만 볼 수 있는 메뉴 (관리자가 아닌 사용자) -->
+    <a href="../pages/mypage.html" class="user-only-not-admin">마이페이지</a>
+    <span class="user-only-not-admin"><span id="username-display-user">사용자</span>님</span>
+    <a href="javascript:void(0)" class="logout-btn user-only-not-admin" id="logout-btn-user">로그아웃</a>
+    
+    <!-- 관리자만 볼 수 있는 메뉴 -->
+    <a href="../pages/mypage.html" class="admin-only">마이페이지</a>
+    <a href="../pages/admin.html" class="admin-only">관리자 페이지</a>
+    <span class="admin-only"><span id="username-display-admin">관리자</span>님</span>
+    <a href="javascript:void(0)" class="logout-btn admin-only" id="logout-btn-admin">로그아웃</a>
   </nav>
 </header>
