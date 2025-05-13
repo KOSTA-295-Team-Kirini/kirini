@@ -1,7 +1,5 @@
 <!-- KIRINI 사이트 공통 헤더: 권한별로 다르게 표시됨 -->
 <link rel="stylesheet" href="../css/header.css">
-<link rel="stylesheet" href="../css/user_header.css">
-<link rel="stylesheet" href="../css/admin_header.css">
 
 <header>
   <div class="header-top-row">
@@ -11,16 +9,16 @@
       <a href="../pages/login.html" class="login-btn guest-only">로그인</a>
       
       <!-- 일반 사용자만 볼 수 있는 메뉴 (관리자, 매니저가 아닌 사용자) -->
-      <span class="user-greeting user-only-not-admin"><span id="username-display-user">사용자</span>님</span>
-      <a href="javascript:void(0)" class="logout-btn user-only-not-admin" id="logout-btn-user">로그아웃</a>
+      <span class="user-greeting user-only-not-admin hidden-until-load"><span id="username-display-user"></span>님</span>
+      <a href="javascript:void(0)" class="logout-btn user-only-not-admin" id="logout-btn-user" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
       
       <!-- 매니저만 볼 수 있는 메뉴 -->
-      <span class="user-greeting manager-only"><span id="username-display-manager">매니저</span>님</span>
-      <a href="javascript:void(0)" class="logout-btn manager-only" id="logout-btn-manager">로그아웃</a>
+      <span class="user-greeting manager-only hidden-until-load"><span id="username-display-manager"></span>님</span>
+      <a href="javascript:void(0)" class="logout-btn manager-only" id="logout-btn-manager" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
       
       <!-- 관리자만 볼 수 있는 메뉴 -->
-      <span class="user-greeting admin-only"><span id="username-display-admin">관리자</span>님</span>
-      <a href="javascript:void(0)" class="logout-btn admin-only" id="logout-btn-admin">로그아웃</a>
+      <span class="user-greeting admin-only hidden-until-load"><span id="username-display-admin"></span>님</span>
+      <a href="javascript:void(0)" class="logout-btn admin-only" id="logout-btn-admin" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
     </nav>
   </div>
   

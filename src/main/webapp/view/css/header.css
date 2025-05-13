@@ -115,6 +115,15 @@ nav a::after {
     font-weight: 500;
 }
 
+/* 초기 로딩시 사용자 이름 표시 숨기기 */
+.hidden-until-load {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.hidden-until-load.loaded {
+    opacity: 1;
+}
+
 /* 반응형 스타일 - 헤더 관련 */
 @media (max-width: 768px) {
     header {
