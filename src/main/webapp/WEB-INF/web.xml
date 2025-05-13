@@ -10,6 +10,8 @@
     <welcome-file>default.htm</welcome-file>
   </welcome-file-list>
 
+  <!-- 이 부분을 제거하거나 주석 처리 -->
+  <!--
   <servlet>
     <servlet-name>dispatcher</servlet-name>
     <servlet-class>presentation.controller.dispatcher.DispatcherServlet</servlet-class>
@@ -20,6 +22,7 @@
     <servlet-name>dispatcher</servlet-name>
     <url-pattern>*.do</url-pattern>
   </servlet-mapping>
+  -->
 
   <listener>
     <listener-class>presentation.controller.mapper.HandlerMappingListener</listener-class>
