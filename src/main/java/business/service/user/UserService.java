@@ -18,17 +18,16 @@ public class UserService {
         userDAO = new UserDAO();
     }
     
+    
     /**
      * 사용자 로그인
-     * @param username 사용자 아이디
+     * @param email 이메일
      * @param password 비밀번호
      * @return 로그인 성공 시 UserDTO 객체, 실패 시 null
      */
-    public UserDTO login(String username, String password) {
+    public UserDTO login(String email, String password) {
         try {
-            // 비밀번호 암호화
-            String hashedPassword = hashPassword(password);
-            return userDAO.login(username, hashedPassword);
+            return userDAO.login(email, password);
         } catch (SQLException e) {
             e.printStackTrace();
             return null;

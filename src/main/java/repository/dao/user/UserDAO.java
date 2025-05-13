@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,36 +16,35 @@ public class UserDAO {
     private PreparedStatement pstmt = null;
     private ResultSet rs = null;
     
-    // 사용자 등록
+    // 사용자 등록 - 3가지 필드만 사용
     public boolean registerUser(UserDTO user) throws SQLException {
         Connection conn = null;
         PreparedStatement pstmt = null;
-        System.out.println("????");
+        
         try {
             conn = DBConnectionUtil.getConnection();
             System.out.println("DB 연결 성공: " + conn);
             
             // 디버깅용 로그
-            System.out.println("회원가입 정보: " + user.getUsername() + ", " + user.getEmail() + ", " + user.getNickname());
+            System.out.println("회원가입 정보: " + user.getEmail() + ", " + user.getNickname());
             
-            // 데이터베이스 스키마에 맞는 SQL 쿼리
-            String sql = "INSERT INTO user (user_id, user_password, user_name, user_email, " +
+            // 데이터베이스 스키마에 맞는 SQL 쿼리 - user_id 제외
+            String sql = "INSERT INTO user (user_password, user_name, user_email, " +
                          "user_introduce, user_authority, user_point) " +
-                         "VALUES (?, ?, ?, ?, ?, 'normal', 0)";
+                         "VALUES (?, ?, ?, ?, 'normal', 0)";
             
             pstmt = conn.prepareStatement(sql);
             
-            // DTO → DB 필드 매핑 
-            pstmt.setString(1, user.getUsername());    // DTO: username → DB: user_id
-            pstmt.setString(2, user.getPassword());    // DTO: password → DB: user_password
-            pstmt.setString(3, user.getNickname());    // DTO: nickname → DB: user_name
-            pstmt.setString(4, user.getEmail());       // DTO: email → DB: user_email
+            // DTO → DB 필드 매핑 (user_id 제외)
+            pstmt.setString(1, user.getPassword());    // DTO: password → DB: user_password
+            pstmt.setString(2, user.getNickname());    // DTO: nickname → DB: user_name
+            pstmt.setString(3, user.getEmail());       // DTO: email → DB: user_email
             
-            // introduce 필드 안전하게 처리 - 핵심 수정 부분!
+            // introduce 필드 안전하게 처리
             if (user.getIntroduce() == null) {
-                pstmt.setString(5, ""); // NULL 대신 빈 문자열 사용
+                pstmt.setString(4, ""); // NULL 대신 빈 문자열 사용
             } else {
-                pstmt.setString(5, user.getIntroduce());
+                pstmt.setString(4, user.getIntroduce());
             }
             
             // SQL 실행 및 결과 확인
@@ -193,8 +191,8 @@ public class UserDAO {
         }
     }
     
-    // 사용자 로그인
-    public UserDTO login(String username, String password) throws SQLException {
+    // 이메일과 비밀번호로 로그인하는 메서드
+    public UserDTO login(String email, String password) throws SQLException {
         UserDTO user = null;
         Connection conn = null;
         PreparedStatement pstmt = null;
@@ -202,25 +200,21 @@ public class UserDAO {
         
         try {
             conn = DBConnectionUtil.getConnection();
-            
-            // 올바른 테이블명과 컬럼명 사용
-            String sql = "SELECT * FROM user WHERE user_id = ? AND user_password = ?";
-            
+            String sql = "SELECT * FROM user WHERE user_email = ? AND user_password = ?";
             pstmt = conn.prepareStatement(sql);
-            pstmt.setString(1, username);
+            pstmt.setString(1, email);
             pstmt.setString(2, password);
-            
             rs = pstmt.executeQuery();
             
             if (rs.next()) {
+                // mapResultSetToUser() 사용으로 코드 중복 제거
                 user = mapResultSetToUser(rs);
+                updateLastLoginDate(user.getUserId());
             }
             
             return user;
         } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException e) {}
-            if (pstmt != null) try { pstmt.close(); } catch (SQLException e) {}
-            if (conn != null) try { conn.close(); } catch (SQLException e) {}
+            DBConnectionUtil.close(rs, pstmt, conn);
         }
     }
     
@@ -306,7 +300,7 @@ public class UserDAO {
         UserDTO user = new UserDTO();
         
         // 핵심 매핑 (필드명 불일치 해결)
-        user.setUserId(rs.getLong("user_uid"));        // DB: user_uid → DTO: userId
+        user.setUserId(rs.getLong("user_uid"));  // 또는 user_id로 통일
         user.setUsername(rs.getString("user_id"));     // DB: user_id → DTO: username
         user.setPassword(rs.getString("user_password")); // DB: user_password → DTO: password
         user.setEmail(rs.getString("user_email"));     // DB: user_email → DTO: email
@@ -316,7 +310,7 @@ public class UserDAO {
         String authority = rs.getString("user_authority");
         if ("admin".equals(authority)) {
             user.setUserLevel(3);  // 관리자
-        } else if ("armband".equals(authority)) {
+        } else if ("manager".equals(authority)) {
             user.setUserLevel(2);  // 매니저
         } else {
             user.setUserLevel(1);  // 일반 회원 (normal)

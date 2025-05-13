@@ -30,10 +30,7 @@ public class UserLoginController implements Controller {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // 디버깅용 로그
-        System.out.println("로그인 요청 수신:");
-        System.out.println("email: " + request.getParameter("email"));
-        
+        // 필요한 파라미터 가져오기
         String email = request.getParameter("email");
         String password = request.getParameter("password");
         
@@ -41,7 +38,7 @@ public class UserLoginController implements Controller {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         
-        // 필수 파라미터 확인
+        // 유효성 검사
         if (email == null || password == null || 
             email.trim().isEmpty() || password.trim().isEmpty()) {
             response.getWriter().write("{\"success\": false, \"message\": \"이메일과 비밀번호를 입력해주세요.\"}");
@@ -49,32 +46,23 @@ public class UserLoginController implements Controller {
         }
         
         try {
-            // 이메일로 사용자 정보 조회
-            UserDTO user = userService.getUserByEmail(email);
+            // 이메일과 비밀번호로 로그인
+            UserDTO user = userService.login(email, password);
             
-            if (user == null) {
-                response.getWriter().write("{\"success\": false, \"message\": \"등록되지 않은 이메일입니다.\"}");
-                return;
+            if (user != null) {
+                // 로그인 성공 처리
+                HttpSession session = request.getSession();
+                session.setAttribute("user", user);
+                session.setAttribute("userId", user.getUserId());
+                session.setAttribute("userEmail", user.getEmail());
+                session.setAttribute("userNickname", user.getNickname());
+                session.setAttribute("userLevel", user.getUserLevel());
+                
+                response.getWriter().write("{\"success\": true, \"message\": \"로그인 성공\", \"redirect\": \"index.html\"}");
+            } else {
+                // 로그인 실패 처리
+                response.getWriter().write("{\"success\": false, \"message\": \"이메일 또는 비밀번호가 일치하지 않습니다.\"}");
             }
-            
-            // 비밀번호 검증
-            boolean isPasswordValid = userService.verifyPassword(password, user.getPassword());
-            
-            if (!isPasswordValid) {
-                response.getWriter().write("{\"success\": false, \"message\": \"비밀번호가 일치하지 않습니다.\"}");
-                return;
-            }
-            
-            // 로그인 성공 처리
-            HttpSession session = request.getSession();
-            session.setAttribute("user", user);
-            session.setAttribute("userId", user.getUserId());
-            session.setAttribute("userEmail", user.getEmail());
-            session.setAttribute("userNickname", user.getNickname());
-            
-            // 성공 응답
-            response.getWriter().write("{\"success\": true, \"message\": \"로그인 성공\", \"redirect\": \"/kirini/view/index.html\"}");
-            
         } catch (Exception e) {
             e.printStackTrace();
             response.getWriter().write("{\"success\": false, \"message\": \"로그인 처리 중 오류가 발생했습니다.\"}");

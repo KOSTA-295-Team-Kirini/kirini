@@ -1,8 +1,11 @@
-package dto.board;
+package dto.admin;
 
 import java.sql.Date;
 
-public class ReportDTO {
+/**
+ * 관리자용 신고 정보를 담는 데이터 전송 객체
+ */
+public class AdminReportDTO {
     private long reportUid;           // 신고 고유 ID (report_uid)
     private long reportUserUid;       // 신고자 ID (report_user_uid)
     private String reportTargetType;  // 신고 대상 유형 (report_target_type)
@@ -16,7 +19,20 @@ public class ReportDTO {
     private String targetUsername;    // 신고 대상자 이름 (users 테이블에서 조인)
     
     // 기본 생성자
-    public ReportDTO() {
+    public AdminReportDTO() {
+    }
+    
+    // ReportDTO로부터 변환하는 생성자
+    public AdminReportDTO(dto.board.ReportDTO reportDTO) {
+        this.reportUid = reportDTO.getReportUid();
+        this.reportUserUid = reportDTO.getReportUserUid();
+        this.reportTargetType = reportDTO.getReportTargetType();
+        this.reportReason = reportDTO.getReportReason();
+        this.reportStatus = reportDTO.getReportStatus();
+        this.reportCreatetime = reportDTO.getReportCreatetime();
+        this.targetUserUid = reportDTO.getTargetUserUid();
+        this.reporterUsername = reportDTO.getReporterUsername();
+        this.targetUsername = reportDTO.getTargetUsername();
     }
     
     // Getter, Setter 메서드
@@ -90,5 +106,13 @@ public class ReportDTO {
     
     public void setTargetUsername(String targetUsername) {
         this.targetUsername = targetUsername;
+    }
+    
+    @Override
+    public String toString() {
+        return "AdminReportDTO [reportUid=" + reportUid + ", reportUserUid=" + reportUserUid + ", reportTargetType="
+                + reportTargetType + ", reportReason=" + reportReason + ", reportStatus=" + reportStatus
+                + ", reportCreatetime=" + reportCreatetime + ", targetUserUid=" + targetUserUid + ", reporterUsername="
+                + reporterUsername + ", targetUsername=" + targetUsername + "]";
     }
 }
