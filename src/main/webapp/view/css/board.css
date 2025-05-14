@@ -3,6 +3,9 @@
     max-width: 1400px; /* 가로 크기 증가 */
     margin: 2rem auto;
     padding: 0 1rem;
+    flex: 1 0 auto; /* flex-grow: 1, flex-shrink: 0, flex-basis: auto */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .board-header {

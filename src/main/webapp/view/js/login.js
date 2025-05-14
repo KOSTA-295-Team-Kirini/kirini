@@ -57,14 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         role = 'USER';
       }
-    }
-      // Auth 객체가 있으면 사용, 없으면 직접 저장
+    }    // Auth 객체가 있으면 사용, 없으면 직접 저장
     if (typeof Auth !== 'undefined') {
-      Auth.setRole(role);
-      
-      // 사용자 이름은 Auth에서 직접 관리하지 않으므로 별도 저장
-      const storage = rememberMe ? localStorage : sessionStorage;
-      storage.setItem('userName', userName);
+      // 수정된 setRole 함수 호출: userName 파라미터 전달
+      Auth.setRole(role, userName);
     } else {
       // 기존 방식으로 로그인 정보 저장 (Auth 객체 없을 경우 호환성 유지)
       if (rememberMe) {

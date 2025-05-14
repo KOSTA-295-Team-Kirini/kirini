@@ -35,7 +35,6 @@ a:hover {
 }
 
 .container {
-    max-width: 1400px; /* 가로 크기 증가 */
     margin: 0 auto;
     padding: 0 20px;
     width: 100%;
@@ -56,21 +55,4 @@ a:hover {
 .btn:hover {
     background: #ffb74d;
     transform: scale(1.05);
-}
-
-/* 공통 컨테이너 스타일 */
-
-/* 공통 컨테이너 스타일 기본값 */
-.dictionary-container, 
-.board-container,
-.admin-container,
-.mypage-container,
-.service-container,
-.container {
-    flex: 1 0 auto;
-    width: 100%;
-    box-sizing: border-box;
-    max-width: 1000px;
-    margin: 2rem auto;
-    padding: 0 1rem;
 }
