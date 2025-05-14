@@ -117,45 +117,26 @@ public class UserRegisterController implements Controller {
      */
     private void registerUserFromSignup(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // 디버깅용 로그 추가
-        System.out.println("수신한 파라미터들:");
-        System.out.println("email: " + request.getParameter("email"));
-        System.out.println("nickname: " + request.getParameter("nickname"));
-        System.out.println("password: " + request.getParameter("password"));
-        System.out.println("password-confirm: " + request.getParameter("password-confirm"));
-        System.out.println("passwordConfirm: " + request.getParameter("passwordConfirm"));
-        System.out.println("agree: " + request.getParameter("agree"));
-
-        // 필드명 처리 유연하게 수정
-        String email = request.getParameter("email");
-        String nickname = request.getParameter("nickname");
-        String password = request.getParameter("password");
-
-        // 두 가지 필드명 모두 시도
+        // 필요한 파라미터 가져오기
+        String email = request.getParameter("email");         // user_email
+        String nickname = request.getParameter("nickname");   // user_name
+        String password = request.getParameter("password");   // user_password
+        
+        // 비밀번호 확인
         String confirmPassword = request.getParameter("passwordConfirm");
         if (confirmPassword == null) {
             confirmPassword = request.getParameter("password-confirm");
         }
-
-        String agree = request.getParameter("agree");
-
+        
         // 유효성 검사
-        if (email == null || nickname == null || password == null || confirmPassword == null || agree == null) {
-            response.getWriter().write("{\"success\": false, \"message\": \"필수 정보가 누락되었습니다.\"}");
+        if (email == null || nickname == null || password == null || 
+            (confirmPassword != null && !password.equals(confirmPassword))) {
+            response.getWriter().write("{\"success\": false, \"message\": \"입력 정보를 확인해주세요.\"}");
             return;
         }
         
-        // 비밀번호 일치 확인
-        if (!password.equals(confirmPassword)) {
-            response.getWriter().write("{\"success\": false, \"message\": \"비밀번호가 일치하지 않습니다.\"}");
-            return;
-        }
-        
-        // username 생성 (이메일에서 @ 앞부분 사용)
-        String username = email.split("@")[0];
-        
-        // 회원 등록
-        UserDTO user = new UserDTO(username, password, email, nickname);
+        // 회원 등록 - 필요한 3개 필드만 사용
+        UserDTO user = new UserDTO(password, email, nickname);
         boolean success = userService.registerUser(user);
         
         response.setContentType("application/json");

@@ -31,6 +31,14 @@ public class HandlerMapping {
         controllerMap.put("login", new UserLoginController());
         controllerMap.put("signup", new UserRegisterController());
         
+        // 관리자 컨트롤러 추가
+        controllerMap.put("admin", new AdminPageController());
+        controllerMap.put("admin/users", new AdminPageController());
+        controllerMap.put("admin/reports", new AdminPageController());
+        controllerMap.put("admin/posts", new AdminPageController());
+        controllerMap.put("admin/guides", new AdminPageController());
+        controllerMap.put("admin/keyboards", new AdminPageController());
+        
         // 새로운 기능은 여기에 추가
     }
     

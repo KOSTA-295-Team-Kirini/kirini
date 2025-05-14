@@ -18,15 +18,14 @@ public class UserDTO {
     public UserDTO() {
     }
     
-    // 로그인용 생성자
-    public UserDTO(String username, String password) {
-        this.username = username;
+    // 로그인용 생성자 - username 대신 email 사용
+    public UserDTO(String email, String password) {
+        this.email = email;
         this.password = password;
     }
     
-    // 회원가입용 생성자
-    public UserDTO(String username, String password, String email, String nickname) {
-        this.username = username;
+    // 회원가입용 생성자 - username 필드 제거, 필요한 3개 필드만 사용
+    public UserDTO(String password, String email, String nickname) {
         this.password = password;
         this.email = email;
         this.nickname = nickname;
@@ -50,8 +49,8 @@ public class UserDTO {
     }
     
     // UserRegisterController.java에서 사용
-    public static UserDTO createUserForRegistration(String username, String password, String email, String nickname) {
-        return new UserDTO(username, password, email, nickname);
+    public static UserDTO createUserForRegistration(String password, String email, String nickname) {
+        return new UserDTO(password, email, nickname);
     }
     
     // Getters and Setters
