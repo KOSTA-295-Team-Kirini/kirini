@@ -199,6 +199,33 @@
   border: 2px solid #ff9800; /* 게시글과 목록 구분을 위한 테두리 추가 */
 }
 
+/* 답변 버튼 로딩 상태 스타일 */
+.answer-form .btn.loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.answer-form .btn.loading::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  margin-left: -10px;
+  margin-top: -10px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .qna-detail-buttons {
   display: flex;
   justify-content: space-between;

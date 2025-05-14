@@ -11,6 +11,110 @@ document.addEventListener('DOMContentLoaded', function() {
   const closeButtons = document.querySelectorAll('.close');
   const submitBtn = document.getElementById('submit-post');
   
+  // 답변 등록 버튼 기능 추가
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('answer-submit-btn')) {
+      const answerForm = e.target.closest('.answer-form');
+      const textarea = answerForm.querySelector('textarea');
+      const answerContent = textarea.value.trim();
+      const questionId = answerForm.getAttribute('data-question-id');
+      
+      // 답변 내용 검증
+      if (!answerContent) {
+        showNotification('답변 내용을 입력해주세요.', 'error');
+        return;
+      }
+      
+      // 로딩 표시 (버튼 비활성화 및 텍스트 변경)
+      e.target.disabled = true;
+      e.target.textContent = '등록 중...';
+      e.target.classList.add('loading');
+      
+      // FormData 객체 생성
+      const formData = new FormData();
+      formData.append('content', answerContent);
+      formData.append('questionId', questionId || '0'); // 질문 ID가 없으면 기본값 0 사용
+      
+      // 서버로 데이터 전송 (실제 구현 시 경로 수정 필요)
+      fetch('/qna/answer/create', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('서버 응답 오류');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // 성공 처리
+        showNotification('답변이 성공적으로 등록되었습니다!', 'success');
+        
+        // 답변 목록에 새 답변 추가 (임시 구현)
+        addNewAnswerToList(answerContent, questionId);
+        
+        // 입력 필드 초기화
+        textarea.value = '';
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('답변 등록 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+      })
+      .finally(() => {
+        // 버튼 상태 복원
+        e.target.disabled = false;
+        e.target.textContent = '답변 등록';
+        e.target.classList.remove('loading');
+      });
+    }
+  });
+  
+  // 새로운 답변을 화면에 추가하는 함수
+  function addNewAnswerToList(content, questionId) {
+    const answersContainer = document.querySelector(`#qna-${questionId} .qna-detail-answers`);
+    
+    if (!answersContainer) {
+      // 질문 ID를 찾을 수 없는 경우 (단순히 현재 열린 상세 화면을 찾음)
+      const openedDetail = document.querySelector('.qna-detail[style*="display: block"]');
+      if (openedDetail) {
+        const answersSection = openedDetail.querySelector('.qna-detail-answers');
+        
+        if (answersSection) {
+          // 현재 사용자 정보 (실제 구현에서는 로그인한 사용자 정보를 사용)
+          const username = '사용자';
+          const today = new Date();
+          const dateString = today.getFullYear() + '-' + 
+                           String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(today.getDate()).padStart(2, '0');
+          
+          // 새 답변 요소 생성
+          const newAnswer = document.createElement('div');
+          newAnswer.className = 'answer';
+          newAnswer.innerHTML = `
+            <div class="answer-meta">
+              <span>작성자: ${username}</span>
+              <span>작성일: ${dateString}</span>
+            </div>
+            <div class="answer-content">
+              <p>${content}</p>
+            </div>
+          `;
+          
+          // 답변 폼 앞에 새 답변 삽입
+          const answerForm = answersSection.querySelector('.answer-form');
+          answersSection.insertBefore(newAnswer, answerForm);
+          
+          // 답변 수 업데이트
+          const answersTitle = answersSection.querySelector('h3');
+          if (answersTitle) {
+            const currentCount = parseInt(answersTitle.textContent.match(/\d+/) || 0);
+            answersTitle.textContent = `답변 (${currentCount + 1})`;
+          }
+        }
+      }
+    }
+  }
+  
   // 글쓰기 버튼 클릭 시 모달 표시
   writeBtn.addEventListener('click', function() {
     writeModal.style.display = 'block';
