@@ -1,65 +1,73 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>로그인 - KIRINI</title>
-    <link rel="stylesheet" href="../css/style.css" />
-    <link rel="stylesheet" href="../css/login.css" />
-    <script src="../js/main.js" defer></script>
-    <script src="../js/components.js"></script>
-    <script src="../js/login.js" defer></script>
-  </head>
-  <body>
-    <!-- 헤더 플레이스홀더 -->
-    <div id="header-placeholder"></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로그인 - KIRINI</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/login.css">
+  <script src="../js/main.js" defer></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/login.js" defer></script>
+</head>
+<body>
+  <!-- 헤더 플레이스홀더 -->
+  <div id="header-placeholder"></div>
 
-    <div class="login-container">
-      <h2 class="login-title">로그인</h2>
-      <form
-        class="login-form"
-        id="login-form"
-        action="/kirini/login.do"
-        method="post"
-      >
-        <div>
-          <label for="email">이메일</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="이메일 주소 입력"
-            required
-          />
-        </div>
-        <div>
-          <label for="password">비밀번호</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="비밀번호 입력"
-            required
-          />
-        </div>
-        <div class="remember-me">
-          <input type="checkbox" id="remember-me" name="remember-me" />
-          <label for="remember-me">로그인 상태 유지</label>
-        </div>
-        <button type="submit" class="login-button">로그인</button>
-      </form>
-
-      <div class="login-options">
-        <a href="#">아이디 찾기</a>
-        <a href="#">비밀번호 찾기</a>
+  <div class="login-container">
+    <h2 class="login-title">로그인</h2>
+    <form class="login-form" id="login-form">
+      <div>
+        <label for="email">이메일</label>
+        <input type="email" id="email" name="email" placeholder="이메일 주소 입력" required>
       </div>
-
-      <div class="signup-prompt">
-        <p>아직 계정이 없으신가요? <a href="signup.html">회원가입</a></p>
+      <div>
+        <label for="password">비밀번호</label>
+        <input type="password" id="password" name="password" placeholder="비밀번호 입력" required>
       </div>
+      <div class="remember-me">
+        <input type="checkbox" id="remember-me" name="remember-me">
+        <label for="remember-me">로그인 상태 유지</label>
+      </div>
+      <!-- 개발 모드: 권한 선택 (실제 서비스에서는 비활성화) -->
+      <div class="dev-mode">
+        <div class="dev-mode-toggle">
+          <input type="checkbox" id="dev-mode" name="dev-mode">
+          <label for="dev-mode">개발 테스트 모드</label>
+        </div>
+        <div class="role-selector" style="display: none;">
+          <p>권한 선택 (개발 테스트용):</p>
+          <div class="role-options">
+            <div class="role-option">
+              <input type="radio" id="role-user" name="role" value="USER" checked>
+              <label for="role-user">일반 회원</label>
+            </div>
+            <div class="role-option">
+              <input type="radio" id="role-manager" name="role" value="MANAGER">
+              <label for="role-manager">매니저</label>
+            </div>
+            <div class="role-option">
+              <input type="radio" id="role-admin" name="role" value="ADMIN">
+              <label for="role-admin">관리자</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="login-button">로그인</button>
+    </form>
+    
+    <div class="login-options">
+      <a href="#">아이디 찾기</a>
+      <a href="#">비밀번호 찾기</a>
     </div>
+    
+    <div class="signup-prompt">
+      <p>아직 계정이 없으신가요? <a href="signup.html">회원가입</a></p>
+    </div>
+  </div>
 
-    <!-- 푸터 플레이스홀더 -->
-    <div id="footer-placeholder"></div>
-  </body>
+  <!-- 푸터 플레이스홀더 -->
+  <div id="footer-placeholder"></div>
+</body>
 </html>

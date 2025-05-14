@@ -5,6 +5,209 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 모든 질문/내 질문 탭 기능
   const tabButtons = document.querySelectorAll('.qna-detail-buttons .left-buttons .btn');
+  // 글쓰기 모달 기능
+  const writeBtn = document.getElementById('write-btn');
+  const writeModal = document.getElementById('write-modal');
+  const closeButtons = document.querySelectorAll('.close');
+  const submitBtn = document.getElementById('submit-post');
+  
+  // 답변 등록 버튼 기능 추가
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('answer-submit-btn')) {
+      const answerForm = e.target.closest('.answer-form');
+      const textarea = answerForm.querySelector('textarea');
+      const answerContent = textarea.value.trim();
+      const questionId = answerForm.getAttribute('data-question-id');
+      
+      // 답변 내용 검증
+      if (!answerContent) {
+        showNotification('답변 내용을 입력해주세요.', 'error');
+        return;
+      }
+      
+      // 로딩 표시 (버튼 비활성화 및 텍스트 변경)
+      e.target.disabled = true;
+      e.target.textContent = '등록 중...';
+      e.target.classList.add('loading');
+      
+      // FormData 객체 생성
+      const formData = new FormData();
+      formData.append('content', answerContent);
+      formData.append('questionId', questionId || '0'); // 질문 ID가 없으면 기본값 0 사용
+      
+      // 서버로 데이터 전송 (실제 구현 시 경로 수정 필요)
+      fetch('/qna/answer/create', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('서버 응답 오류');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // 성공 처리
+        showNotification('답변이 성공적으로 등록되었습니다!', 'success');
+        
+        // 답변 목록에 새 답변 추가 (임시 구현)
+        addNewAnswerToList(answerContent, questionId);
+        
+        // 입력 필드 초기화
+        textarea.value = '';
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('답변 등록 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+      })
+      .finally(() => {
+        // 버튼 상태 복원
+        e.target.disabled = false;
+        e.target.textContent = '답변 등록';
+        e.target.classList.remove('loading');
+      });
+    }
+  });
+  
+  // 새로운 답변을 화면에 추가하는 함수
+  function addNewAnswerToList(content, questionId) {
+    const answersContainer = document.querySelector(`#qna-${questionId} .qna-detail-answers`);
+    
+    if (!answersContainer) {
+      // 질문 ID를 찾을 수 없는 경우 (단순히 현재 열린 상세 화면을 찾음)
+      const openedDetail = document.querySelector('.qna-detail[style*="display: block"]');
+      if (openedDetail) {
+        const answersSection = openedDetail.querySelector('.qna-detail-answers');
+        
+        if (answersSection) {
+          // 현재 사용자 정보 (실제 구현에서는 로그인한 사용자 정보를 사용)
+          const username = '사용자';
+          const today = new Date();
+          const dateString = today.getFullYear() + '-' + 
+                           String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(today.getDate()).padStart(2, '0');
+          
+          // 새 답변 요소 생성
+          const newAnswer = document.createElement('div');
+          newAnswer.className = 'answer';
+          newAnswer.innerHTML = `
+            <div class="answer-meta">
+              <span>작성자: ${username}</span>
+              <span>작성일: ${dateString}</span>
+            </div>
+            <div class="answer-content">
+              <p>${content}</p>
+            </div>
+          `;
+          
+          // 답변 폼 앞에 새 답변 삽입
+          const answerForm = answersSection.querySelector('.answer-form');
+          answersSection.insertBefore(newAnswer, answerForm);
+          
+          // 답변 수 업데이트
+          const answersTitle = answersSection.querySelector('h3');
+          if (answersTitle) {
+            const currentCount = parseInt(answersTitle.textContent.match(/\d+/) || 0);
+            answersTitle.textContent = `답변 (${currentCount + 1})`;
+          }
+        }
+      }
+    }
+  }
+  
+  // 글쓰기 버튼 클릭 시 모달 표시
+  writeBtn.addEventListener('click', function() {
+    writeModal.style.display = 'block';
+  });
+  
+  // 닫기 버튼 클릭 시 모달 닫기
+  closeButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      writeModal.style.display = 'none';
+    });
+  });
+  
+  // 질문 등록 버튼 클릭 시 처리
+  if (submitBtn) {
+    submitBtn.addEventListener('click', function() {
+      // 입력 필드에서 값 가져오기
+      const title = document.getElementById('post-title').value.trim();
+      const content = document.getElementById('post-content').value.trim();
+      const fileInput = document.getElementById('post-file');
+      
+      // 입력 값 검증
+      if (!title) {
+        showNotification('제목을 입력해주세요.', 'error');
+        return;
+      }
+      
+      if (!content) {
+        showNotification('내용을 입력해주세요.', 'error');
+        return;
+      }
+      
+      // 로딩 표시 (버튼 비활성화 및 텍스트 변경)
+      submitBtn.disabled = true;
+      submitBtn.textContent = '등록 중...';
+      submitBtn.classList.add('loading');
+      
+      // FormData 객체 생성
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('content', content);
+      
+      // 파일이 첨부된 경우 추가
+      if (fileInput.files.length > 0) {
+        formData.append('file', fileInput.files[0]);
+      }
+      
+      // 서버로 데이터 전송
+      fetch('/qna/create', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('서버 응답 오류');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // 성공 처리
+        showNotification('질문이 성공적으로 등록되었습니다!', 'success');
+        
+        // 입력 필드 초기화
+        document.getElementById('post-title').value = '';
+        document.getElementById('post-content').value = '';
+        document.getElementById('post-file').value = '';
+        
+        // 모달 닫기
+        writeModal.style.display = 'none';
+        
+        // 0.5초 후에 페이지 새로고침 (사용자에게 성공 메시지를 보여주기 위한 지연)
+        setTimeout(() => {
+          location.reload();
+        }, 500);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showNotification('질문 등록 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+      })
+      .finally(() => {
+        // 버튼 상태 복원
+        submitBtn.disabled = false;
+        submitBtn.textContent = '질문 등록하기';
+        submitBtn.classList.remove('loading');
+      });
+    });
+  }
+  
+  // 모달 외부 클릭 시 닫기
+  window.addEventListener('click', function(e) {
+    if (e.target === writeModal) {
+      writeModal.style.display = 'none';
+    }
+  });
   
   tabButtons.forEach(button => {
     button.addEventListener('click', function(e) {
@@ -148,14 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!foundResults) {
       showSearchNotification('검색 결과가 없습니다', 'info');
     }
-  }    // 질문하기 버튼 기능
-  const askButton = document.querySelector('.ask-question');
-  if (askButton) {
-    askButton.addEventListener('click', function() {
-      // 실제 구현에서는 모달이나 새 페이지로 이동
-      alert('질문 작성 페이지로 이동합니다.');
-    });
-  }
+  }  // 질문하기 버튼 기능은 제거 (모달로 대체됨)
   
   // 검색 알림 표시 함수
   function showSearchNotification(message, type) {
@@ -183,5 +379,65 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
       }, 3000);
     }
+  }
+
+  // 알림 표시 함수 (등록, 에러 등의 알림에 사용)
+  function showNotification(message, type) {
+    // 이미 있는 알림 제거
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+      existingNotification.remove();
+    }
+    
+    // 알림 요소 생성
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    // 알림 스타일 설정
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.padding = '15px 25px';
+    notification.style.borderRadius = '5px';
+    notification.style.zIndex = '9999';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.3s ease';
+    notification.style.boxShadow = '0 3px 10px rgba(0,0,0,0.2)';
+    
+    // 타입에 따른 스타일 설정
+    switch (type) {
+      case 'success':
+        notification.style.backgroundColor = '#2196F3';
+        notification.style.color = 'white';
+        break;
+      case 'error':
+        notification.style.backgroundColor = '#F44336';
+        notification.style.color = 'white';
+        break;
+      case 'warning':
+        notification.style.backgroundColor = '#FF9800';
+        notification.style.color = 'white';
+        break;
+      default:
+        notification.style.backgroundColor = '#4CAF50';
+        notification.style.color = 'white';
+    }
+    
+    // 문서에 알림 추가
+    document.body.appendChild(notification);
+    
+    // 알림 표시 애니메이션
+    setTimeout(() => {
+      notification.style.opacity = '1';
+    }, 10);
+    
+    // 3초 후 자동으로 알림 숨기기
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    }, 3000);
   }
 });

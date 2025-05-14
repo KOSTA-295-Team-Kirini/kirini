@@ -1,13 +1,46 @@
-<!-- KIRINI 사이트 공통 헤더 -->
+<!-- KIRINI 사이트 공통 헤더: 권한별로 다르게 표시됨 -->
 <link rel="stylesheet" href="../css/header.css">
 
 <header>
-  <div class="logo"><a href="../index.html">🦒 KIRINI</a></div>
-  <nav>
-    <a href="../pages/dictionary.html">용어집</a>
-    <a href="../pages/keyboard_info.html">키보드정보</a>
-    <a href="../pages/board.html">소식/게시판</a>
-    <a href="../pages/qna.html">Q&A</a>
-    <a href="../pages/login.html" class="login-btn">로그인</a>
-  </nav>
+  <div class="header-top-row">
+    <div class="logo"><a href="../pages/index.html">🦒 KIRINI</a></div>
+    <nav class="top-nav">
+      <!-- 비로그인 사용자만 볼 수 있는 메뉴 -->
+      <div class="auth-section guest-section">
+        <a href="../pages/login.html" class="login-btn guest-only" id="login-btn">로그인</a>
+      </div>
+      
+      <!-- 일반 사용자만 볼 수 있는 메뉴 (관리자, 매니저가 아닌 사용자) -->
+      <div class="auth-section user-section" style="display: none;">
+        <span class="user-greeting user-only-not-admin hidden-until-load"><span id="username-display-user"></span>님</span>
+        <a href="javascript:void(0)" class="logout-btn user-only-not-admin" id="logout-btn-user" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
+      </div>
+      
+      <!-- 매니저만 볼 수 있는 메뉴 -->
+      <div class="auth-section manager-section" style="display: none;">
+        <span class="user-greeting manager-only hidden-until-load"><span id="username-display-manager"></span>님</span>
+        <a href="javascript:void(0)" class="logout-btn manager-only" id="logout-btn-manager" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
+      </div>
+      
+      <!-- 관리자만 볼 수 있는 메뉴 -->
+      <div class="auth-section admin-section" style="display: none;">
+        <span class="user-greeting admin-only hidden-until-load"><span id="username-display-admin"></span>님</span>
+        <a href="javascript:void(0)" class="logout-btn admin-only" id="logout-btn-admin" onclick="if(typeof handleLogout==='function')handleLogout()">로그아웃</a>
+      </div>
+    </nav>
+  </div>
+  
+  <div class="header-bottom-row">
+    <nav class="bottom-nav">
+      <!-- 모든 사용자에게 공통으로 표시되는 메뉴 -->
+      <a href="../pages/dictionary.html">용어집</a>
+      <a href="../pages/keyboard_info.html">키보드정보</a>
+      <a href="../pages/board.html">소식/게시판</a>
+      <a href="../pages/qna.html">Q&A</a>
+      <a href="../pages/mypage.html" class="user-only-not-admin">마이페이지</a>
+      <a href="../pages/mypage.html" class="manager-only">마이페이지</a>
+      <a href="../pages/mypage.html" class="admin-only">마이페이지</a>
+      <a href="../pages/admin.html" class="manager-admin-only">관리 내역</a>
+    </nav>
+  </div>
 </header>
