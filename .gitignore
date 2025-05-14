@@ -5,7 +5,7 @@
 
 ##Eclipse-egit auto generated .gitignore
 **/.gitignore
-
+.github/
 
 ### Eclipse ###
 .metadata

@@ -16,9 +16,8 @@
 }
 .mypage-tabs {
   display: flex;
-  border-bottom: 2px solid #ffcc80;
-  margin-bottom: 2rem;
 }
+
 .mypage-tab {
   padding: 1rem 1.5rem;
   background: #ffecb3;
@@ -26,6 +25,7 @@
   cursor: pointer;
   font-weight: bold;
   transition: all 0.3s;
+  border-radius: 8px 8px 0 0; /* 위쪽 둥근 모서리 추가 */
 }
 .mypage-tab.active {
   background: #ffcc80;
@@ -33,9 +33,10 @@
 }
 .mypage-content {
   background: white;
-  border-radius: 8px;
+  border-radius: 0 8px 8px 8px; /* 위쪽 테두리와 자연스럽게 이어지도록 수정 */
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   padding: 2rem;
+  border: 2px solid #ffcc80; /* 테두리 추가 */
 }
 .mypage-section {
   display: none;
@@ -51,6 +52,10 @@
 }
 .form-group {
   margin-bottom: 1.5rem;
+  max-width: 1000px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 .form-group label {
   display: block;
@@ -63,7 +68,15 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   font-family: inherit;
+  box-sizing: border-box;
 }
+
+.form-group textarea {
+  resize: none;
+  max-width: 100%;
+  min-height: 150px;
+}
+
 .btn {
   padding: 0.8rem 1.5rem;
   background: #ff9800;
@@ -279,4 +292,14 @@
 .customize-name {
   font-size: 0.9rem;
   font-weight: bold;
+}
+
+/* mypage.css */
+.mypage-wrapper {
+    flex: 1 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    max-width: 1000px;
 }
