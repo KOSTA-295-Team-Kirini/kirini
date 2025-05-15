@@ -3,8 +3,10 @@ package business.service.freeboard;
 import java.sql.SQLException;
 import java.util.List;
 
+import dto.board.AttachmentDTO;
 import dto.board.FreeboardDTO;
 import repository.dao.board.FreeboardDAO;
+import repository.dao.board.FreeboardException;
 
 public class FreeboardService {
     private final FreeboardDAO freeboardDAO;
@@ -173,10 +175,17 @@ public class FreeboardService {
             
             // 신고 정보 저장
             return freeboardDAO.reportFreeboard(postId, reporterId, reason, category);
-        } catch (SQLException e) {
+        } catch (SQLException | FreeboardException e) {
             e.printStackTrace();
             return false;
         }
+    }
+    
+    /**
+     * 게시글 신고 (스팸 광고)
+     */
+    public boolean reportFreeboardById(long postId, long targetUserId, long reporterId, String reason) {
+        return reportFreeboard(postId, reporterId, reason, "spam_ad");
     }
     
     /**
@@ -247,6 +256,30 @@ public class FreeboardService {
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        }
+    }
+    
+    /**
+     * 첨부파일 추가
+     */
+    public boolean addAttachment(long postId, String fileName, String filePath, long fileSize) {
+        try {
+            return freeboardDAO.addAttachment(postId, fileName, filePath, fileSize);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 첨부파일 조회
+     */
+    public AttachmentDTO getAttachmentById(long attachId) {
+        try {
+            return freeboardDAO.getAttachmentById(attachId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

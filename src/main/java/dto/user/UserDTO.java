@@ -13,7 +13,8 @@ public class UserDTO {
     private LocalDateTime lastLoginDate;
     private boolean isActive;
     private String introduce; // 사용자 자기소개
-    
+    private String userStatus;
+
     // 기본 생성자
     public UserDTO() {
     }
@@ -132,6 +133,14 @@ public class UserDTO {
     
     public void setIntroduce(String introduce) {
         this.introduce = introduce;
+    }
+    
+    public String getUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(String userStatus) {
+        this.userStatus = userStatus;
     }
     
     @Override

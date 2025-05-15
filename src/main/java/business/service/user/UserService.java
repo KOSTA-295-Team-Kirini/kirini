@@ -225,4 +225,35 @@ public class UserService {
             return password; // 암호화 실패 시 원본 반환 (실제로는 더 나은 오류 처리 필요)
         }
     }
+    
+    /**
+     * 사용자의 제한 상태 확인
+     * @param userId 사용자 ID
+     * @return 제한된 상태이면 true, 아니면 false
+     */
+    public boolean isUserRestricted(long userId) {
+        try {
+            return userDAO.isUserRestricted(userId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // 에러 발생 시 안전하게 false 반환
+        }
+    }
+
+    /**
+     * 로그인 시 사용자 상태 확인
+     * @param email 이메일
+     * @param password 비밀번호
+     * @return UserDTO 객체 또는 null (상태 정보 포함)
+     * @throws UserStatusException 사용자 계정이 제한된 경우
+     */
+    public UserDTO loginWithStatusCheck(String email, String password) throws UserStatusException {
+        UserDTO user = login(email, password);
+        
+        if (user != null && isUserRestricted(user.getUserId())) {
+            throw new UserStatusException("계정이 제한 상태입니다. 관리자에게 문의하세요.");
+        }
+        
+        return user;
+    }
 }

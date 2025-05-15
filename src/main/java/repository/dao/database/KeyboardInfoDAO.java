@@ -1,4 +1,4 @@
-package repository.dao.keyboard;
+package repository.dao.database;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

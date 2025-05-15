@@ -8,9 +8,10 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import dto.board.ChatboardDTO;
 import util.db.DBConnectionUtil;
-import org.apache.log4j.Logger;
 
 public class ChatboardDAO {
     private static final Logger logger = Logger.getLogger(ChatboardDAO.class);

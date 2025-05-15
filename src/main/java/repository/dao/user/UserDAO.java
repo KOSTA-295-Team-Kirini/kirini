@@ -323,6 +323,7 @@ public class UserDAO {
         
         // 추가 필드 매핑
         user.setIntroduce(rs.getString("user_introduce"));
+        user.setUserStatus(rs.getString("user_status"));
         
         return user;
     }
@@ -340,6 +341,25 @@ public class UserDAO {
                 users.add(mapResultSetToUser(rs));
             }
             return users;
+        } finally {
+            DBConnectionUtil.close(rs, pstmt, conn);
+        }
+    }
+    
+    // 사용자 제한 여부 확인
+    public boolean isUserRestricted(long userId) throws SQLException {
+        String sql = "SELECT user_status FROM user WHERE user_uid = ?";
+        try {
+            conn = DBConnectionUtil.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, userId);
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                String status = rs.getString("user_status");
+                return "restricted".equals(status) || "suspended".equals(status) || "banned".equals(status);
+            }
+            return false;
         } finally {
             DBConnectionUtil.close(rs, pstmt, conn);
         }

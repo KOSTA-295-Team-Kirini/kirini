@@ -3,6 +3,10 @@ package presentation.controller.page.board;
 import java.io.IOException;
 import java.util.List;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 import business.service.chatboard.ChatboardService;
 import dto.board.ChatboardDTO;
 import dto.user.UserDTO;
@@ -12,9 +16,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import presentation.controller.page.Controller;
 import util.web.IpUtil;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonArray;
 
 public class ChatboardController implements Controller {
     private final ChatboardService chatboardService;

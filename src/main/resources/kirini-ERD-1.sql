@@ -1,3 +1,5 @@
+drop database kirini_db;
+
 create database kirini_db;
 
 use kirini_db;
@@ -148,6 +150,7 @@ CREATE TABLE `user` (
 	`user_authority`	enum('normal', 'armband', 'admin')	NULL,
 	`user_point`	int	NULL,
 	`user_icon`	text	NULL,
+	`user_status`	ENUM('active', 'restricted', 'suspended', 'banned')	NOT NULL DEFAULT 'active',
 	PRIMARY KEY (`user_uid`)
 );
 
@@ -232,6 +235,17 @@ CREATE TABLE `inquiry` (
 	`inquiry_category`	enum('question','feedback')	NOT NULL,
 	`inquiry_read_status`	enum('read','unread')	NOT NULL,
 	PRIMARY KEY (`inquiry_uid`)
+);
+
+CREATE TABLE `freeboard_attach` (
+  `attach_uid` int NOT NULL AUTO_INCREMENT,
+  `freeboard_uid` int NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `file_path` varchar(500) NOT NULL,
+  `file_size` int NOT NULL,
+  `upload_date` datetime NOT NULL,
+  PRIMARY KEY (`attach_uid`),
+  FOREIGN KEY (`freeboard_uid`) REFERENCES `freeboard` (`freeboard_uid`)
 );
 
 -- keyboard_score
