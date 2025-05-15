@@ -14,5 +14,89 @@ public class KeyboardInfoDTO {
     private String connectType;
     private List<String> tags;
     
-    // Getter, Setter, 생성자 등
+    // 기본 생성자
+    public KeyboardInfoDTO() {
+    }
+    
+    // Getter 메서드들
+    public long getKeyboardId() {
+        return keyboardId;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public String getManufacturer() {
+        return manufacturer;
+    }
+    
+    public String getDescription() {
+        return description;
+    }
+    
+    public String getImageUrl() {
+        return imageUrl;
+    }
+    
+    public double getAverageScore() {
+        return averageScore;
+    }
+    
+    public String getSwitchType() {
+        return switchType;
+    }
+    
+    public String getLayoutType() {
+        return layoutType;
+    }
+    
+    public String getConnectType() {
+        return connectType;
+    }
+    
+    public List<String> getTags() {
+        return tags;
+    }
+    
+    // Setter 메서드들
+    public void setKeyboardId(long keyboardId) {
+        this.keyboardId = keyboardId;
+    }
+    
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public void setManufacturer(String manufacturer) {
+        this.manufacturer = manufacturer;
+    }
+    
+    public void setDescription(String description) {
+        this.description = description;
+    }
+    
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+    
+    public void setAverageScore(double averageScore) {
+        this.averageScore = averageScore;
+    }
+    
+    public void setSwitchType(String switchType) {
+        this.switchType = switchType;
+    }
+    
+    public void setLayoutType(String layoutType) {
+        this.layoutType = layoutType;
+    }
+    
+    public void setConnectType(String connectType) {
+        this.connectType = connectType;
+    }
+    
+    public void setTags(List<String> tags) {
+        this.tags = tags;
+    }
 }
