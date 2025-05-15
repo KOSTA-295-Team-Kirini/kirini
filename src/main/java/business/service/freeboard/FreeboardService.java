@@ -4,9 +4,9 @@ import java.sql.SQLException;
 import java.util.List;
 
 import dto.board.AttachmentDTO;
+import dto.board.FreeboardCommentDTO;
 import dto.board.FreeboardDTO;
 import repository.dao.board.FreeboardDAO;
-import repository.dao.board.FreeboardException;
 
 public class FreeboardService {
     private final FreeboardDAO freeboardDAO;
@@ -175,17 +175,10 @@ public class FreeboardService {
             
             // 신고 정보 저장
             return freeboardDAO.reportFreeboard(postId, reporterId, reason, category);
-        } catch (SQLException | FreeboardException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
-    }
-    
-    /**
-     * 게시글 신고 (스팸 광고)
-     */
-    public boolean reportFreeboardById(long postId, long targetUserId, long reporterId, String reason) {
-        return reportFreeboard(postId, reporterId, reason, "spam_ad");
     }
     
     /**
@@ -277,6 +270,98 @@ public class FreeboardService {
     public AttachmentDTO getAttachmentById(long attachId) {
         try {
             return freeboardDAO.getAttachmentById(attachId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * 게시글의 댓글 목록 조회
+     */
+    public List<FreeboardCommentDTO> getCommentsByPostId(long postId) {
+        try {
+            return freeboardDAO.getCommentsByPostId(postId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * 댓글 추가
+     */
+    public boolean addComment(FreeboardCommentDTO comment) {
+        try {
+            // 내용 빈 값 체크
+            if (comment.getFreeboardCommentContents() == null || comment.getFreeboardCommentContents().trim().isEmpty()) {
+                return false;
+            }
+            
+            return freeboardDAO.addComment(comment);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * 댓글 수정
+     */
+    public boolean updateComment(FreeboardCommentDTO comment, long userId, String userAuthority) {
+        try {
+            // 수정 권한 확인
+            FreeboardCommentDTO existingComment = freeboardDAO.getCommentById(comment.getFreeboardCommentUid());
+            if (existingComment == null) {
+                return false;
+            }
+            
+            // 내용 빈 값 체크
+            if (comment.getFreeboardCommentContents() == null || comment.getFreeboardCommentContents().trim().isEmpty()) {
+                return false;
+            }
+            
+            // 자신의 댓글이거나 관리자 권한인 경우만 수정 가능
+            if (existingComment.getUserUid() == userId || "admin".equals(userAuthority) || "armband".equals(userAuthority)) {
+                return freeboardDAO.updateComment(comment);
+            }
+            
+            return false;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * 댓글 삭제
+     */
+    public boolean deleteComment(long commentId, long userId, String userAuthority) {
+        try {
+            // 삭제 권한 확인
+            FreeboardCommentDTO existingComment = freeboardDAO.getCommentById(commentId);
+            if (existingComment == null) {
+                return false;
+            }
+            
+            // 자신의 댓글이거나 관리자 권한인 경우만 삭제 가능
+            if (existingComment.getUserUid() == userId || "admin".equals(userAuthority) || "armband".equals(userAuthority)) {
+                return freeboardDAO.deleteComment(commentId, userId);
+            }
+            
+            return false;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * 댓글 상세 조회
+     */
+    public FreeboardCommentDTO getCommentById(long commentId) {
+        try {
+            return freeboardDAO.getCommentById(commentId);
         } catch (SQLException e) {
             e.printStackTrace();
             return null;

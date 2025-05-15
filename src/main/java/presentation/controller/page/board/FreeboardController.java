@@ -4,13 +4,21 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import com.google.gson.Gson;
 
 import business.service.freeboard.FreeboardService;
 import dto.board.AttachmentDTO;
+import dto.board.FreeboardCommentDTO;
 import dto.board.FreeboardDTO;
 import dto.user.UserDTO;
 import jakarta.servlet.ServletException;
@@ -20,8 +28,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import presentation.controller.page.Controller;
+import util.FileUtil;
+import util.config.AppConfig;
 import util.web.IpUtil;
-import util.file.FileUtil;
 
 @MultipartConfig(
     fileSizeThreshold = 1024 * 1024,    // 1 MB
@@ -29,6 +38,7 @@ import util.file.FileUtil;
     maxRequestSize = 1024 * 1024 * 50   // 50 MB
 )
 public class FreeboardController implements Controller {
+    private static final Logger logger = Logger.getLogger(FreeboardController.class.getName());
     private final FreeboardService freeboardService;
     
     public FreeboardController() {
@@ -92,6 +102,18 @@ public class FreeboardController implements Controller {
         } else if (action.equals("uploadAttachment")) {
             // 첨부파일 업로드
             uploadAttachment(request, response);
+        } else if (action.equals("addComment")) {
+            // 댓글 추가
+            addComment(request, response);
+        } else if (action.equals("updateComment")) {
+            // 댓글 수정
+            updateComment(request, response);
+        } else if (action.equals("deleteComment")) {
+            // 댓글 삭제
+            deleteComment(request, response);
+        } else if (action.equals("getComments")) {
+            // 댓글 목록 조회
+            getCommentsByPostId(request, response);
         } else {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
@@ -611,6 +633,250 @@ public class FreeboardController implements Controller {
         } catch (Exception e) {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "다운로드 중 오류가 발생했습니다: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 댓글 기능 관련 메서드 - 게시글에 달린 댓글 목록 조회
+     */
+    private void getCommentsByPostId(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        String postIdStr = request.getParameter("postId");
+        
+        try {
+            long postId = Long.parseLong(postIdStr);
+            List<FreeboardCommentDTO> comments = freeboardService.getCommentsByPostId(postId);
+            
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("comments", comments);
+            
+            PrintWriter out = response.getWriter();
+            out.print(new Gson().toJson(result));
+            out.flush();
+            
+        } catch (NumberFormatException e) {
+            logger.warning("Invalid post ID format: " + postIdStr);
+            sendJsonResponse(response, false, "잘못된 게시글 ID입니다.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "댓글 목록 조회 실패", e);
+            sendJsonResponse(response, false, "댓글 목록 조회 중 오류가 발생했습니다.");
+        }
+    }
+    
+    /**
+     * 댓글 기능 관련 메서드 - 새 댓글 등록
+     */
+    private void addComment(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        // 로그인 체크
+        HttpSession session = request.getSession();
+        UserDTO user = (UserDTO) session.getAttribute("user");
+        
+        if (user == null) {
+            sendJsonResponse(response, false, "로그인이 필요합니다.");
+            return;
+        }
+        
+        // 파라미터 받기
+        String postIdStr = request.getParameter("postId");
+        String content = request.getParameter("content");
+        
+        // 필수 값 체크
+        if (content == null || content.trim().isEmpty()) {
+            sendJsonResponse(response, false, "댓글 내용을 입력해주세요.");
+            return;
+        }
+        
+        try {
+            long postId = Long.parseLong(postIdStr);
+            String clientIp = IpUtil.getClientIpAddr(request);
+            
+            // 댓글 객체 생성
+            FreeboardCommentDTO comment = new FreeboardCommentDTO(
+                    postId, 
+                    user.getUserUid(), 
+                    content, 
+                    clientIp);
+            
+            // 댓글 등록
+            boolean success = freeboardService.addComment(comment);
+            
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", success);
+            
+            if (success) {
+                result.put("message", "댓글이 등록되었습니다.");
+                // 최신 댓글 목록 조회해서 함께 보내기
+                result.put("comments", freeboardService.getCommentsByPostId(postId));
+            } else {
+                result.put("message", "댓글 등록에 실패했습니다.");
+            }
+            
+            PrintWriter out = response.getWriter();
+            out.print(new Gson().toJson(result));
+            out.flush();
+            
+        } catch (NumberFormatException e) {
+            logger.warning("Invalid post ID format: " + postIdStr);
+            sendJsonResponse(response, false, "잘못된 게시글 ID입니다.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "댓글 등록 실패", e);
+            sendJsonResponse(response, false, "댓글 등록 중 오류가 발생했습니다.");
+        }
+    }
+    
+    /**
+     * 댓글 기능 관련 메서드 - 댓글 수정
+     */
+    private void updateComment(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        // 로그인 체크
+        HttpSession session = request.getSession();
+        UserDTO user = (UserDTO) session.getAttribute("user");
+        
+        if (user == null) {
+            sendJsonResponse(response, false, "로그인이 필요합니다.");
+            return;
+        }
+        
+        // 파라미터 받기
+        String commentIdStr = request.getParameter("commentId");
+        String content = request.getParameter("content");
+        
+        // 필수 값 체크
+        if (content == null || content.trim().isEmpty()) {
+            sendJsonResponse(response, false, "댓글 내용을 입력해주세요.");
+            return;
+        }
+        
+        try {
+            long commentId = Long.parseLong(commentIdStr);
+            
+            // 기존 댓글 조회
+            FreeboardCommentDTO existingComment = freeboardService.getCommentById(commentId);
+            
+            if (existingComment == null) {
+                sendJsonResponse(response, false, "댓글을 찾을 수 없습니다.");
+                return;
+            }
+            
+            // 수정할 내용 설정
+            existingComment.setFreeboardCommentContents(content);
+            
+            // 댓글 수정
+            boolean success = freeboardService.updateComment(existingComment, user.getUserUid(), user.getUserAuthority());
+            
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", success);
+            
+            if (success) {
+                result.put("message", "댓글이 수정되었습니다.");
+                // 최신 댓글 목록 조회해서 함께 보내기
+                result.put("comments", freeboardService.getCommentsByPostId(existingComment.getFreeboardUid()));
+            } else {
+                result.put("message", "댓글 수정에 실패했습니다. 본인이 작성한 댓글만 수정할 수 있습니다.");
+            }
+            
+            PrintWriter out = response.getWriter();
+            out.print(new Gson().toJson(result));
+            out.flush();
+            
+        } catch (NumberFormatException e) {
+            logger.warning("Invalid comment ID format: " + commentIdStr);
+            sendJsonResponse(response, false, "잘못된 댓글 ID입니다.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "댓글 수정 실패", e);
+            sendJsonResponse(response, false, "댓글 수정 중 오류가 발생했습니다.");
+        }
+    }
+    
+    /**
+     * 댓글 기능 관련 메서드 - 댓글 삭제
+     */
+    private void deleteComment(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        // 로그인 체크
+        HttpSession session = request.getSession();
+        UserDTO user = (UserDTO) session.getAttribute("user");
+        
+        if (user == null) {
+            sendJsonResponse(response, false, "로그인이 필요합니다.");
+            return;
+        }
+        
+        // 파라미터 받기
+        String commentIdStr = request.getParameter("commentId");
+        
+        try {
+            long commentId = Long.parseLong(commentIdStr);
+            
+            // 기존 댓글 조회 (삭제 후 게시글 ID가 필요하기 때문에 미리 조회)
+            FreeboardCommentDTO existingComment = freeboardService.getCommentById(commentId);
+            
+            if (existingComment == null) {
+                sendJsonResponse(response, false, "댓글을 찾을 수 없습니다.");
+                return;
+            }
+            
+            // 댓글 삭제
+            boolean success = freeboardService.deleteComment(commentId, user.getUserUid(), user.getUserAuthority());
+            
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", success);
+            
+            if (success) {
+                result.put("message", "댓글이 삭제되었습니다.");
+                // 최신 댓글 목록 조회해서 함께 보내기
+                result.put("comments", freeboardService.getCommentsByPostId(existingComment.getFreeboardUid()));
+            } else {
+                result.put("message", "댓글 삭제에 실패했습니다. 본인이 작성한 댓글만 삭제할 수 있습니다.");
+            }
+            
+            PrintWriter out = response.getWriter();
+            out.print(new Gson().toJson(result));
+            out.flush();
+            
+        } catch (NumberFormatException e) {
+            logger.warning("Invalid comment ID format: " + commentIdStr);
+            sendJsonResponse(response, false, "잘못된 댓글 ID입니다.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "댓글 삭제 실패", e);
+            sendJsonResponse(response, false, "댓글 삭제 중 오류가 발생했습니다.");
+        }
+    }
+    
+    /**
+     * JSON 응답 생성 유틸 메서드
+     */
+    private void sendJsonResponse(HttpServletResponse response, boolean success, String message) 
+            throws IOException {
+        
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", success);
+        result.put("message", message);
+        
+        PrintWriter out = response.getWriter();
+        out.print(new Gson().toJson(result));
+        out.flush();
     }
     
     /**

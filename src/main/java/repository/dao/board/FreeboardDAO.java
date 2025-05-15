@@ -10,15 +10,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import dto.board.AttachmentDTO;
 import dto.board.FreeboardDTO;
+import dto.board.FreeboardCommentDTO;
 import util.db.DBConnectionUtil;
+import util.logging.LoggerConfig;
 
 public class FreeboardDAO {
     private Connection conn = null;
     private PreparedStatement pstmt = null;
     private ResultSet rs = null;
+
+    private static final Logger logger = LoggerConfig.getLogger(FreeboardDAO.class);
 
     // 공지사항 목록을 위한 캐싱 메서드
     private static final Map<String, Object> cache = new ConcurrentHashMap<>();
@@ -125,34 +130,60 @@ public class FreeboardDAO {
     
     // 게시글 등록
     public boolean postFreeboard(FreeboardDTO post) throws SQLException {
-        String sql = "INSERT INTO freeboard (freeboard_title, freeboard_contents, freeboard_read, " + 
-                     "freeboard_recommend, freeboard_writetime, freeboard_author_ip, " +
-                     "freeboard_notify, freeboard_deleted, user_uid) " +
-                     "VALUES (?, ?, 0, 0, NOW(), ?, ?, ?, ?)";
+        String sql = "INSERT INTO freeboard (freeboard_title, freeboard_contents, freeboard_read, " +
+                    "freeboard_recommend, freeboard_writetime, freeboard_author_ip, " +
+                    "freeboard_notify, freeboard_deleted, user_uid) " +
+                    "VALUES (?, ?, 0, 0, NOW(), ?, 'common', 'maintained', ?)";
         
         try {
             conn = getConnection();
+            conn.setAutoCommit(false); // 트랜잭션 시작
+            
             pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             pstmt.setString(1, post.getFreeboardTitle());
             pstmt.setString(2, post.getFreeboardContents());
             pstmt.setString(3, post.getFreeboardAuthorIp());
-            pstmt.setString(4, post.getFreeboardNotify());
-            pstmt.setString(5, post.getFreeboardDeleted());
-            pstmt.setLong(6, post.getUserUid());
+            pstmt.setLong(4, post.getUserUid());
             
             int result = pstmt.executeUpdate();
+            boolean success = result > 0;
             
-            if (result > 0) {
-                // 생성된 기본 키(ID) 가져오기
+            if (success) {
+                // 생성된 게시글 ID 가져오기
                 try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         post.setFreeboardUid(generatedKeys.getLong(1));
                     }
                 }
-                return true;
+                conn.commit();
+                logger.info("게시글 등록 성공: ID=" + post.getFreeboardUid() + ", 작성자=" + post.getUserUid());
+            } else {
+                conn.rollback();
+                logger.warning("게시글 등록 실패: 영향받은 행 없음");
             }
-            return false;
+            
+            return success;
+        } catch (SQLException e) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException ex) {
+                    logger.severe("롤백 중 오류 발생: " + ex.getMessage());
+                }
+            }
+            
+            String errorCode = "DB_ERROR_" + System.currentTimeMillis();
+            logger.severe("게시글 등록 중 오류 발생 [" + errorCode + "]: " + e.getMessage());
+            logger.severe("SQL 상태: " + e.getSQLState() + ", 에러코드: " + e.getErrorCode());
+            throw e;
         } finally {
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                } catch (SQLException e) {
+                    logger.severe("AutoCommit 설정 복구 중 오류: " + e.getMessage());
+                }
+            }
             closeResources();
         }
     }
@@ -756,6 +787,209 @@ public class FreeboardDAO {
                 return attachment;
             }
             return null;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    // 자유게시판 댓글 관련 메서드
+    
+    /**
+     * 게시글의 모든 댓글 조회
+     */
+    public List<FreeboardCommentDTO> getCommentsByPostId(long postId) throws SQLException {
+        List<FreeboardCommentDTO> comments = new ArrayList<>();
+        String sql = "SELECT c.*, u.user_name FROM freeboard_comment c " +
+                    "JOIN user u ON c.user_uid = u.user_uid " +
+                    "WHERE c.freeboard_uid = ? " +
+                    "ORDER BY c.freeboard_comment_writetime ASC";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, postId);
+            rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                FreeboardCommentDTO comment = new FreeboardCommentDTO();
+                comment.setFreeboardCommentUid(rs.getLong("freeboard_comment_uid"));
+                comment.setFreeboardCommentContents(rs.getString("freeboard_comment_contents"));
+                comment.setFreeboardCommentWritetime(rs.getTimestamp("freeboard_comment_writetime").toLocalDateTime());
+                
+                if (rs.getTimestamp("freeboard_comment_modifytime") != null) {
+                    comment.setFreeboardCommentModifytime(rs.getTimestamp("freeboard_comment_modifytime").toLocalDateTime());
+                }
+                
+                comment.setFreeboardCommentAuthorIp(rs.getString("freeboard_comment_author_ip"));
+                comment.setFreeboardUid(rs.getLong("freeboard_uid"));
+                comment.setUserUid(rs.getLong("user_uid"));
+                comment.setUserName(rs.getString("user_name"));
+                
+                comments.add(comment);
+            }
+        } finally {
+            closeResources();
+        }
+        
+        return comments;
+    }
+    
+    /**
+     * 새 댓글 등록
+     */
+    public boolean addComment(FreeboardCommentDTO comment) throws SQLException {
+        String sql = "INSERT INTO freeboard_comment " +
+                    "(freeboard_comment_contents, freeboard_comment_writetime, freeboard_comment_author_ip, freeboard_uid, user_uid) " +
+                    "VALUES (?, NOW(), ?, ?, ?)";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, comment.getFreeboardCommentContents());
+            pstmt.setString(2, comment.getFreeboardCommentAuthorIp());
+            pstmt.setLong(3, comment.getFreeboardUid());
+            pstmt.setLong(4, comment.getUserUid());
+            
+            int result = pstmt.executeUpdate();
+            return result > 0;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * 댓글 수정
+     */
+    public boolean updateComment(FreeboardCommentDTO comment) throws SQLException {
+        String sql = "UPDATE freeboard_comment SET " +
+                    "freeboard_comment_contents = ?, " +
+                    "freeboard_comment_modifytime = NOW() " +
+                    "WHERE freeboard_comment_uid = ? AND user_uid = ?";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, comment.getFreeboardCommentContents());
+            pstmt.setLong(2, comment.getFreeboardCommentUid());
+            pstmt.setLong(3, comment.getUserUid());
+            
+            int result = pstmt.executeUpdate();
+            
+            // 수정 로그 저장
+            if (result > 0) {
+                logModifyComment(comment.getFreeboardCommentUid(), comment.getUserUid(), "freeboard");
+            }
+            
+            return result > 0;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * 댓글 삭제
+     */
+    public boolean deleteComment(long commentId, long userId) throws SQLException {
+        // 관리자 여부 확인을 위해 댓글 정보 조회
+        FreeboardCommentDTO comment = getCommentById(commentId);
+        if (comment == null) {
+            return false;
+        }
+        
+        String sql = "DELETE FROM freeboard_comment WHERE freeboard_comment_uid = ?";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, commentId);
+            
+            int result = pstmt.executeUpdate();
+            
+            // 삭제 로그 저장
+            if (result > 0) {
+                logDeleteComment(commentId, userId, "freeboard");
+            }
+            
+            return result > 0;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * 댓글 상세 조회
+     */
+    public FreeboardCommentDTO getCommentById(long commentId) throws SQLException {
+        String sql = "SELECT c.*, u.user_name FROM freeboard_comment c " +
+                    "JOIN user u ON c.user_uid = u.user_uid " +
+                    "WHERE c.freeboard_comment_uid = ?";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, commentId);
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                FreeboardCommentDTO comment = new FreeboardCommentDTO();
+                comment.setFreeboardCommentUid(rs.getLong("freeboard_comment_uid"));
+                comment.setFreeboardCommentContents(rs.getString("freeboard_comment_contents"));
+                comment.setFreeboardCommentWritetime(rs.getTimestamp("freeboard_comment_writetime").toLocalDateTime());
+                
+                if (rs.getTimestamp("freeboard_comment_modifytime") != null) {
+                    comment.setFreeboardCommentModifytime(rs.getTimestamp("freeboard_comment_modifytime").toLocalDateTime());
+                }
+                
+                comment.setFreeboardCommentAuthorIp(rs.getString("freeboard_comment_author_ip"));
+                comment.setFreeboardUid(rs.getLong("freeboard_uid"));
+                comment.setUserUid(rs.getLong("user_uid"));
+                comment.setUserName(rs.getString("user_name"));
+                
+                return comment;
+            }
+            return null;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * 댓글 수정 로그 저장
+     */
+    private void logModifyComment(long commentId, long userId, String boardType) throws SQLException {
+        String sql = "INSERT INTO log_modify_comment " +
+                    "(log_modify_boardtype, log_modify_date, log_modify_comment_uid, user_uid) " +
+                    "VALUES (?, NOW(), ?, ?)";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, boardType);
+            pstmt.setLong(2, commentId);
+            pstmt.setLong(3, userId);
+            
+            pstmt.executeUpdate();
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * 댓글 삭제 로그 저장
+     */
+    private void logDeleteComment(long commentId, long userId, String boardType) throws SQLException {
+        String sql = "INSERT INTO log_delete_comment " +
+                    "(log_delete_boardtype, log_delete_date, log_deleted_comment_uid, user_uid) " +
+                    "VALUES (?, NOW(), ?, ?)";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, boardType);
+            pstmt.setLong(2, commentId);
+            pstmt.setLong(3, userId);
+            
+            pstmt.executeUpdate();
         } finally {
             closeResources();
         }
