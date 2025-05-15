@@ -5,8 +5,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 import business.service.user.UserService;
-import business.service.keyboard.KeyboardInfoService;
 import business.service.board.BoardService;
+import business.service.database.KeyboardInfoService;
 import dto.user.UserDTO;
 import dto.keyboard.KeyboardInfoDTO;
 import dto.keyboard.KeyboardScoreDTO;
