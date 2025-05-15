@@ -7,13 +7,13 @@ import java.util.List;
 
 import dto.user.UserDTO;
 import repository.dao.user.UserDAO;
+import business.service.user.UserStatusException;
 
 /**
  * 사용자 관련 비즈니스 로직을 처리하는 서비스 클래스
  */
 public class UserService {
     private UserDAO userDAO;
-    
     public UserService() {
         userDAO = new UserDAO();
     }
@@ -223,6 +223,64 @@ public class UserService {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             return password; // 암호화 실패 시 원본 반환 (실제로는 더 나은 오류 처리 필요)
+        }
+    }
+    
+    /**
+     * 사용자의 제한 상태 확인
+     * @param userId 사용자 ID
+     * @return 제한된 상태이면 true, 아니면 false
+     */
+    public boolean isUserRestricted(long userId) {
+        try {
+            return userDAO.isUserRestricted(userId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false; // 에러 발생 시 안전하게 false 반환
+        }
+    }
+
+    /**
+     * 로그인 시 사용자 상태 확인
+     * @param email 이메일
+     * @param password 비밀번호
+     * @return UserDTO 객체 또는 null (상태 정보 포함)
+     * @throws UserStatusException 사용자 계정이 제한된 경우
+     */
+    public UserDTO loginWithStatusCheck(String email, String password) throws UserStatusException {
+        UserDTO user = login(email, password);
+        
+        if (user != null && isUserRestricted(user.getUserId())) {
+            throw new UserStatusException("계정이 제한 상태입니다. 관리자에게 문의하세요.");
+        }
+        
+        return user;
+    }
+
+    /**
+     * 회원 탈퇴 요청 - 이유 없이 기본 처리
+     */
+    public boolean requestDeleteUser(long userId) {
+        return requestDeleteUser(userId, null);
+    }
+
+    /**
+     * 회원 탈퇴 요청 - 이유를 포함한 처리
+     */
+    public boolean requestDeleteUser(long userId, String reason) {
+        try {
+            // 사용자 정보 확인
+            UserDTO user = userDAO.getUserById(userId);
+            if (user == null) {
+                return false;
+            }
+              // 탈퇴 사유 기록 (선택적)
+            // 로깅 코드 임시 제거
+            
+            // 회원 비활성화 처리
+            return userDAO.deactivateUser(userId);        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }

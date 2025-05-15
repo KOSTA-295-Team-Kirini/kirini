@@ -13,7 +13,9 @@ public class UserDTO {
     private LocalDateTime lastLoginDate;
     private boolean isActive;
     private String introduce; // 사용자 자기소개
-    
+    private String userStatus;
+    private String userAuthority; // 사용자 권한 (admin, armband, user 등)
+
     // 기본 생성자
     public UserDTO() {
     }
@@ -33,8 +35,7 @@ public class UserDTO {
         this.isActive = true;
         this.registerDate = LocalDateTime.now();
     }
-    
-    // 전체 생성자
+      // 전체 생성자
     public UserDTO(long userId, String username, String password, String email, String nickname, 
                  int userLevel, LocalDateTime registerDate, LocalDateTime lastLoginDate, boolean isActive) {
         this.userId = userId;
@@ -46,6 +47,14 @@ public class UserDTO {
         this.registerDate = registerDate;
         this.lastLoginDate = lastLoginDate;
         this.isActive = isActive;
+    }
+    
+    // 권한 포함 전체 생성자
+    public UserDTO(long userId, String username, String password, String email, String nickname, 
+                 int userLevel, LocalDateTime registerDate, LocalDateTime lastLoginDate, boolean isActive,
+                 String userAuthority) {
+        this(userId, username, password, email, nickname, userLevel, registerDate, lastLoginDate, isActive);
+        this.userAuthority = userAuthority;
     }
     
     // UserRegisterController.java에서 사용
@@ -134,7 +143,42 @@ public class UserDTO {
         this.introduce = introduce;
     }
     
-    @Override
+    public String getUserStatus() {
+        return userStatus;
+    }
+
+    public void setUserStatus(String userStatus) {
+        this.userStatus = userStatus;
+    }
+    
+    // getUserUid 메서드 - userId 필드를 사용
+    public long getUserUid() {
+        return userId;
+    }
+    
+    // getUserAuthority 메서드
+    public String getUserAuthority() {
+        // userLevel에 따라 권한 반환
+        if (userAuthority != null) {
+            return userAuthority;
+        }
+        
+        // userAuthority가 설정되지 않은 경우 userLevel 기반으로 권한 결정
+        switch (userLevel) {
+            case 3:
+                return "admin";
+            case 2:
+                return "armband";
+            default:
+                return "user";
+        }
+    }
+    
+    // userAuthority 설정 메서드
+    public void setUserAuthority(String userAuthority) {
+        this.userAuthority = userAuthority;
+    }
+      @Override
     public String toString() {
         return "UserDTO{" +
                 "userId=" + userId +
@@ -145,6 +189,7 @@ public class UserDTO {
                 ", registerDate=" + registerDate +
                 ", lastLoginDate=" + lastLoginDate +
                 ", isActive=" + isActive +
+                ", userAuthority='" + getUserAuthority() + '\'' +
                 '}';
     }
 }

@@ -1,3 +1,5 @@
+drop database kirini_db;
+
 create database kirini_db;
 
 use kirini_db;
@@ -148,6 +150,7 @@ CREATE TABLE `user` (
 	`user_authority`	enum('normal', 'armband', 'admin')	NULL,
 	`user_point`	int	NULL,
 	`user_icon`	text	NULL,
+	`user_status`	ENUM('active', 'restricted', 'suspended', 'banned')	NOT NULL DEFAULT 'active',
 	PRIMARY KEY (`user_uid`)
 );
 
@@ -184,7 +187,13 @@ CREATE TABLE `scrap` (
 
 CREATE TABLE `report` (
 	`report_uid`	int	NOT NULL AUTO_INCREMENT,
-	`report_target_type`	varchar(50)	NULL,
+	`report_target_type` ENUM(
+                         'spam_ad',                  -- 스팸/광고성 게시물
+                         'profanity_hate_speech',    -- 욕설·혐오 발언
+                         'adult_content',            -- 음란물·18금 콘텐츠
+                         'impersonation_fraud',      -- 사칭·사기 행위
+                         'copyright_infringement'    -- 저작권·지식재산권 침해
+                       )              NOT NULL,
 	`report_reason`	text	NULL,
 	`report_status`	enum('active', 'inactive')	NOT NULL,
 	`report_createtime`	datetime	NOT NULL,
@@ -226,6 +235,17 @@ CREATE TABLE `inquiry` (
 	`inquiry_category`	enum('question','feedback')	NOT NULL,
 	`inquiry_read_status`	enum('read','unread')	NOT NULL,
 	PRIMARY KEY (`inquiry_uid`)
+);
+
+CREATE TABLE `freeboard_attach` (
+  `attach_uid` int NOT NULL AUTO_INCREMENT,
+  `freeboard_uid` int NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `file_path` varchar(500) NOT NULL,
+  `file_size` int NOT NULL,
+  `upload_date` datetime NOT NULL,
+  PRIMARY KEY (`attach_uid`),
+  FOREIGN KEY (`freeboard_uid`) REFERENCES `freeboard` (`freeboard_uid`)
 );
 
 -- keyboard_score
@@ -314,9 +334,15 @@ FOREIGN KEY (`user_uid`) REFERENCES `user` (`user_uid`);
 ALTER TABLE `inquiry` ADD CONSTRAINT `FK_inquiry_TO_inquiry` 
 FOREIGN KEY (`inquiry_parent_uid`) REFERENCES `inquiry` (`inquiry_uid`);
 
+-- 데이터베이스에 인덱스 추가 (별도 SQL 스크립트로 실행)
+CREATE INDEX idx_freeboard_uid ON freeboard(freeboard_uid);
+CREATE INDEX idx_user_uid ON freeboard(user_uid);
+CREATE INDEX idx_freeboard_notify ON freeboard(freeboard_notify);
+CREATE INDEX idx_freeboard_deleted ON freeboard(freeboard_deleted);
 
-
-
+-- 전문 검색용 인덱스 (MySQL 기준)
+CREATE FULLTEXT INDEX idx_freeboard_title_contents 
+ON freeboard(freeboard_title, freeboard_contents);
 
 INSERT INTO user (user_id, user_password, user_name, user_authority) 
 VALUES ('admin', 'admin', '관리자', 'admin');
