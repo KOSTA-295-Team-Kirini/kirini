@@ -8,7 +8,6 @@ import presentation.controller.page.user.UserLoginController;
 import presentation.controller.page.user.UserRegisterController;
 import presentation.controller.page.user.UserProfileController;
 import presentation.controller.page.guide.GuideController;
-import presentation.controller.page.admin.AdminPageController;
 
 public class HandlerMapping {
     private static HandlerMapping instance;
@@ -32,12 +31,12 @@ public class HandlerMapping {
         controllerMap.put("signup", new UserRegisterController());
         
         // 관리자 컨트롤러 추가
-        controllerMap.put("admin", new AdminPageController());
-        controllerMap.put("admin/users", new AdminPageController());
-        controllerMap.put("admin/reports", new AdminPageController());
-        controllerMap.put("admin/posts", new AdminPageController());
-        controllerMap.put("admin/guides", new AdminPageController());
-        controllerMap.put("admin/keyboards", new AdminPageController());
+//        controllerMap.put("admin", new AdminPageController());
+//        controllerMap.put("admin/users", new AdminPageController());
+//        controllerMap.put("admin/reports", new AdminPageController());
+//        controllerMap.put("admin/posts", new AdminPageController());
+//        controllerMap.put("admin/guides", new AdminPageController());
+//        controllerMap.put("admin/keyboards", new AdminPageController());
         
         // 새로운 기능은 여기에 추가
     }
