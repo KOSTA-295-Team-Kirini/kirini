@@ -1076,7 +1076,7 @@ public class QuestionController implements Controller {
             }
             
             // MIME 타입 검증
-            if (!FileUtil.validateMimeType(filePart)) {
+            if (!FileUtil.validateMimeType(filePart.getContentType())) {
                 response.setContentType("application/json");
                 response.getWriter().write("{\"success\": false, \"message\": \"유효하지 않은 파일 타입입니다.\"}");
                 return;

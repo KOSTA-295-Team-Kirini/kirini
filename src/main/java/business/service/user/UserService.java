@@ -7,13 +7,13 @@ import java.util.List;
 
 import dto.user.UserDTO;
 import repository.dao.user.UserDAO;
-import business.service.user.UserStatusException;
 
 /**
  * 사용자 관련 비즈니스 로직을 처리하는 서비스 클래스
  */
 public class UserService {
     private UserDAO userDAO;
+    
     public UserService() {
         userDAO = new UserDAO();
     }
@@ -262,9 +262,7 @@ public class UserService {
      */
     public boolean requestDeleteUser(long userId) {
         return requestDeleteUser(userId, null);
-    }
-
-    /**
+    }    /**
      * 회원 탈퇴 요청 - 이유를 포함한 처리
      */
     public boolean requestDeleteUser(long userId, String reason) {
@@ -274,11 +272,20 @@ public class UserService {
             if (user == null) {
                 return false;
             }
-              // 탈퇴 사유 기록 (선택적)
-            // 로깅 코드 임시 제거
+            
+            // 탈퇴 사유 기록 (선택적)
+            if (reason != null && !reason.trim().isEmpty()) {
+                // 탈퇴 사유 로그 기록 로직 추가
+                // 로깅 기능은 나중에 구현 예정
+                System.out.println("회원 탈퇴 요청 - 사용자 ID: " + userId + ", 사유: " + reason);
+            } else {
+                System.out.println("회원 탈퇴 요청 - 사용자 ID: " + userId);
+            }
             
             // 회원 비활성화 처리
-            return userDAO.deactivateUser(userId);        } catch (SQLException e) {
+            return userDAO.deactivateUser(userId);
+        } catch (SQLException e) {
+            System.err.println("회원 탈퇴 처리 중 오류 발생: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
