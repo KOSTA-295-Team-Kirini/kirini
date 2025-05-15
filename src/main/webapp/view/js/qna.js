@@ -440,4 +440,39 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 300);
     }, 3000);
   }
+  // 추천 버튼 기능 추가
+  const likeButtons = document.querySelectorAll('.post-like-button');
+  likeButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      // 추천 버튼 클릭 시 효과 추가
+      this.classList.add('liked');
+      
+      // 현재 추천 수 가져오기
+      const likeCountSpan = this.querySelector('span');
+      const currentLikes = parseInt(likeCountSpan.textContent);
+      
+      // 추천 수 증가시키기
+      likeCountSpan.textContent = currentLikes + 1;
+      
+      // 메타 정보의 추천수도 업데이트
+      const detailMeta = this.closest('.qna-detail').querySelector('.post-detail-likes-count');
+      if (detailMeta) {
+        detailMeta.textContent = currentLikes + 1;
+      }
+      
+      // 잠시 후 버튼 상태 변경
+      setTimeout(() => {
+        this.innerHTML = '<i>✓</i> 추천완료 (' + (currentLikes + 1) + ')';
+        this.disabled = true;
+      }, 300);
+      
+      // 실제 구현에서는 여기서 서버로 추천 데이터 전송
+      // const questionId = this.closest('.qna-detail').id.replace('qna-', '');
+      // fetch('/qna/like', {
+      //   method: 'POST',
+      //   body: JSON.stringify({ questionId }),
+      //   headers: { 'Content-Type': 'application/json' }
+      // });
+    });
+  });
 });
