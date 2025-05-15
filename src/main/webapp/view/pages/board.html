@@ -28,6 +28,57 @@
         <a href="#" data-board="anonymous">익명게시판</a>
       </div>
 
+      <!-- 게시글 상세 보기 영역을 여기로 이동 -->
+      <div id="post-detail-view" class="post-detail-section" style="display: none;">
+        <button class="post-detail-close">&times;</button>
+        <div class="post-detail-header">
+          <h2 id="detail-title">게시글 제목이 여기에 표시됩니다.</h2>
+          <div class="post-detail-meta">
+            <div class="post-detail-meta-left">
+              <div class="post-detail-author">
+                <span class="post-detail-label">작성자:</span>
+                <span id="detail-author"></span>
+              </div>
+            </div>
+            <div class="post-detail-meta-right">
+              <div class="post-detail-date">
+                <span class="post-detail-label">작성일:</span>
+                <span id="detail-date"></span>
+              </div>
+              <div class="post-detail-views">
+                <span class="post-detail-label">조회수:</span>
+                <span id="detail-views">0</span>
+              </div>
+              <div class="post-detail-likes">
+                <span class="post-detail-label">추천수:</span>
+                <span id="detail-likes" class="post-detail-likes-count">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="post-detail-content-wrapper">
+          <div id="detail-content" class="post-detail-body">
+            <!-- 게시글 본문이 여기에 동적으로 채워집니다. -->
+          </div>
+          <!-- 추천 버튼 추가 -->
+          <div class="post-like-section">
+            <button id="post-like-button" class="post-like-button">
+              <i>👍</i> 추천하기 (<span id="post-like-count-display">0</span>)
+            </button>
+          </div>
+        </div>
+        <div class="post-detail-comments">
+          <h3>댓글 (<span id="detail-comment-count">0</span>)</h3>
+          <div id="detail-comment-list" class="comment-list">
+            <!-- 댓글 목록이 여기에 동적으로 채워집니다. -->
+          </div>
+          <div class="comment-form">
+            <textarea id="detail-comment-input" placeholder="댓글을 입력하세요..."></textarea>
+            <button id="detail-comment-submit" class="btn">댓글 등록</button>
+          </div>
+        </div>
+      </div>
+
       <!-- 키보드 소식 게시판 -->
       <div id="news-board" class="board-content active">
         <div class="notice-area">
@@ -57,35 +108,35 @@
             </tr>
           </thead>
           <tbody>
-            <tr class="news-item">
+            <tr class="news-item clickable-row" data-post-id="news-45">
               <td>45</td>
               <td><a href="#">2025 키보드 트렌드 예측 - 올해는 어떤 키보드가 인기일까?</a> <span class="comment-count">[4]</span></td>
               <td>관리자</td>
               <td>2025-04-30</td>
               <td>128</td>
             </tr>
-            <tr class="news-item">
+            <tr class="news-item clickable-row" data-post-id="news-44">
               <td>44</td>
               <td><a href="#">레오폴드, 신규 무접점 키보드 라인업 출시 예정</a> <span class="comment-count">[12]</span></td>
               <td>관리자</td>
               <td>2025-04-28</td>
               <td>256</td>
             </tr>
-            <tr class="news-item">
+            <tr class="news-item clickable-row" data-post-id="news-43">
               <td>43</td>
               <td><a href="#">바밤바, 신형 'BBM100' 키보드 리뷰 - 타건감의 혁명</a> <span class="comment-count">[8]</span></td>
               <td>키보드매니아</td>
               <td>2025-04-26</td>
               <td>187</td>
             </tr>
-            <tr class="news-item">
+            <tr class="news-item clickable-row" data-post-id="news-42">
               <td>42</td>
               <td><a href="#">5월 키보드 관련 오프라인 행사 안내</a> <span class="comment-count">[2]</span></td>
               <td>관리자</td>
               <td>2025-04-25</td>
               <td>94</td>
             </tr>
-            <tr class="news-item">
+            <tr class="news-item clickable-row" data-post-id="news-41">
               <td>41</td>
               <td><a href="#">기계식 스위치의 역사 - 어제와 오늘, 그리고 내일</a> <span class="comment-count">[6]</span></td>
               <td>기계식마스터</td>
@@ -109,42 +160,42 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
+            <tr class="clickable-row" data-post-id="free-78">
               <td>78</td>
               <td><a href="#">제 첫 커스텀 키보드를 소개합니다!</a> <span class="comment-count">[15]</span> <span class="file-icon">📎</span></td>
               <td>커스텀러버</td>
               <td>2025-05-01</td>
               <td>42</td>
             </tr>
-            <tr>
+            <tr class="clickable-row" data-post-id="free-77">
               <td>77</td>
               <td><a href="#">키보드 추천 부탁드립니다. 사무용으로 조용한 것이 좋을까요?</a> <span class="comment-count">[8]</span></td>
               <td>직장인A</td>
               <td>2025-04-30</td>
               <td>67</td>
             </tr>
-            <tr>
+            <tr class="clickable-row" data-post-id="free-76">
               <td>76</td>
               <td><a href="#">타건 소리 녹음해봤습니다. 의견 부탁드려요!</a> <span class="comment-count">[6]</span> <span class="file-icon">🔊</span></td>
               <td>소리덕후</td>
               <td>2025-04-30</td>
               <td>53</td>
             </tr>
-            <tr>
+            <tr class="clickable-row" data-post-id="free-75">
               <td>75</td>
               <td><a href="#">키캡 추천해주세요. PBT가 좋을까요, ABS가 좋을까요?</a> <span class="comment-count">[12]</span></td>
               <td>키캡수집가</td>
               <td>2025-04-29</td>
               <td>85</td>
             </tr>
-            <tr>
+            <tr class="clickable-row" data-post-id="free-74">
               <td>74</td>
               <td><a href="#">붉은 계열 키보드 추천해주세요.</a> <span class="comment-count">[4]</span></td>
               <td>레드팬</td>
               <td>2025-04-29</td>
               <td>38</td>
             </tr>
-            <tr>
+            <tr class="clickable-row" data-post-id="free-73">
               <td>73</td>
               <td><a href="#">처음으로 키보드 분해해봤는데 다시 조립이 안돼요 ㅠㅠ</a> <span class="comment-count">[18]</span> <span class="file-icon">📎</span></td>
               <td>초보공구러</td>
@@ -261,112 +312,133 @@
             <a href="#">다음</a>
           </div>
           <div class="search-bar">
-            <input type="text" placeholder="검색어를 입력하세요">
+            <input type="text" placeholder="질문 검색하기">
             <button class="btn">검색</button>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- 글쓰기 모달 -->
-  <div id="write-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>게시글 작성</h2>
-      <div class="write-form">
-        <div class="form-group">
-          <label for="board-select">게시판 선택</label>
-          <select id="board-select">
-            <option value="news">키보드 소식</option>
-            <option value="free">자유게시판</option>
-            <option value="anonymous">익명게시판</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="post-title">제목</label>
-          <input type="text" id="post-title" placeholder="제목을 입력하세요">
-        </div>
-        <div class="form-group">
-          <label for="post-content">내용</label>
-          <textarea id="post-content" rows="10" placeholder="내용을 입력하세요"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="post-file">파일 첨부</label>
-          <input type="file" id="post-file">
-        </div>
-        <div class="form-buttons">
-          <button class="btn" id="submit-post">등록하기</button>
-          <button class="btn cancel">취소하기</button>
+    <!-- 글쓰기 모달 -->
+    <div id="write-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>게시글 작성</h2>
+        <div class="write-form">
+          <div class="form-group">
+            <label for="board-select">게시판 선택</label>
+            <select id="board-select">
+              <option value="news">키보드 소식</option>
+              <option value="free">자유게시판</option>
+              <option value="anonymous">익명게시판</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="post-title">제목</label>
+            <input type="text" id="post-title" placeholder="제목을 입력하세요">
+          </div>
+          <div class="form-group">
+            <label for="post-content">내용</label>
+            <textarea id="post-content" rows="10" placeholder="내용을 입력하세요"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="post-file">파일 첨부</label>
+            <input type="file" id="post-file">
+          </div>
+          <div class="form-buttons">
+            <button class="btn" id="submit-post">등록하기</button>
+            <button class="btn cancel">취소하기</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  
-  <!-- 익명 게시글 상세보기 모달 -->
-  <div id="post-detail-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <div class="post-detail-content">
-        <div class="post-detail-header">
-          <div class="post-detail-meta">
-            <span class="post-detail-nickname">익명_사자</span>
-            <span class="post-detail-date">2025-05-01</span>
-          </div>
+    
+    <!-- 익명 게시글 상세보기 모달 -->
+    <div id="post-detail-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div class="post-detail-content">        <div class="post-detail-header">
           <h2 class="post-detail-title">갈축 너무 시끄러운데 회사에서 계속 사용하는 분 있나요?</h2>
-        </div>
-        <div class="post-detail-body">
-          <p>저는 최근에 갈축 키보드를 구매해서 회사에서 사용하고 있는데, 소리가 생각보다 너무 큰 것 같아요. 옆자리 동료들이 시선을 보내는 것 같은데, 여러분은 어떤 방법으로 해결하셨나요? 소음기를 달아도 좋을까요?</p>
-        </div>
-        <div class="post-detail-stats">
-          <span class="post-detail-views">조회수: 64</span>
-        </div>
-        
-        <div class="post-comments">
-          <h3>댓글 (23)</h3>
-          <div class="comment-list">
-            <div class="comment">
-              <div class="comment-meta">
-                <span class="comment-nickname">익명_고양이</span>
-                <span class="comment-date">2025-05-01</span>
-              </div>
-              <div class="comment-content">
-                <p>저도 같은 고민을 했어요. 저는 결국 O-링 던퍼를 추가해서 소음을 줄였어요. 여전히 소리가 나지만 그래도 처음보다는 확실히 줄었어요.</p>
+          <div class="post-detail-meta">
+            <div class="post-detail-meta-left">
+              <div class="post-detail-author">
+                <span class="post-detail-label">닉네임:</span>
+                <span class="post-detail-nickname">익명_사자</span>
               </div>
             </div>
-            <div class="comment">
-              <div class="comment-meta">
-                <span class="comment-nickname">익명_토끼</span>
-                <span class="comment-date">2025-05-01</span>
+            <div class="post-detail-meta-right">
+              <div class="post-detail-date">
+                <span class="post-detail-label">작성일:</span>
+                <span class="post-detail-date">2025-05-01</span>
               </div>
-              <div class="comment-content">
-                <p>저는 그냥 조용한 적축으로 바꿔버렸어요. 어차피 타자감이 중요하지 않은 작업이라 괜찮더라고요.</p>
+              <div class="post-detail-views">
+                <span class="post-detail-label">조회수:</span>
+                <span>64</span>
               </div>
-            </div>
-            <div class="comment">
-              <div class="comment-meta">
-                <span class="comment-nickname">익명_펜귄</span>
-                <span class="comment-date">2025-05-01</span>
-              </div>
-              <div class="comment-content">
-                <p>저는 소음기를 사용해봤는데 생각보다 효과가 없었어요. 차라리 일하는 시간에 이어폰을 끄고 음악을 듣는 것이 더 나았어요.</p>
-              </div>
-            </div>
-            <div class="comment-more">
-              <button class="btn">댓글 더보기</button>
             </div>
           </div>
-          <div class="comment-form">
-            <textarea placeholder="댓글을 작성해주세요" rows="3"></textarea>
-            <button class="btn">등록</button>
+        </div>
+          <div class="post-detail-body">
+            <p>저는 최근에 갈축 키보드를 구매해서 회사에서 사용하고 있는데, 소리가 생각보다 너무 큰 것 같아요. 옆자리 동료들이 시선을 보내는 것 같은데, 여러분은 어떤 방법으로 해결하셨나요? 소음기를 달아도 좋을까요?</p>
+          </div>
+          
+          <div class="post-like-section">
+            <button class="post-like-button">
+              <i>👍</i> 추천하기 (<span>0</span>)
+            </button>
+          </div>
+          
+          <div class="post-comments">
+            <h3>댓글 (23)</h3>
+            <div class="comment-list">
+              <div class="comment">
+                <div class="comment-meta">
+                  <span class="comment-label">닉네임:</span>
+                  <span class="comment-nickname">익명_고양이</span>
+                  <span class="comment-label">작성일:</span>
+                  <span class="comment-date">2025-05-01</span>
+                </div>
+                <div class="comment-content">
+                  <p>저도 같은 고민을 했어요. 저는 결국 O-링 던퍼를 추가해서 소음을 줄였어요. 여전히 소리가 나지만 그래도 처음보다는 확실히 줄었어요.</p>
+                </div>
+              </div>
+              <div class="comment">
+                <div class="comment-meta">
+                  <span class="comment-label">닉네임:</span>
+                  <span class="comment-nickname">익명_토끼</span>
+                  <span class="comment-label">작성일:</span>
+                  <span class="comment-date">2025-05-01</span>
+                </div>
+                <div class="comment-content">
+                  <p>저는 그냥 조용한 적축으로 바꿔버렸어요. 어차피 타자감이 중요하지 않은 작업이라 괜찮더라고요.</p>
+                </div>
+              </div>
+              <div class="comment">
+                <div class="comment-meta">
+                  <span class="comment-label">닉네임:</span>
+                  <span class="comment-nickname">익명_펜귄</span>
+                  <span class="comment-label">작성일:</span>
+                  <span class="comment-date">2025-05-01</span>
+                </div>
+                <div class="comment-content">
+                  <p>저는 소음기를 사용해봤는데 생각보다 효과가 없었어요. 차라리 일하는 시간에 이어폰을 끄고 음악을 듣는 것이 더 나았어요.</p>
+                </div>
+              </div>
+              <div class="comment-more">
+                <button class="btn">댓글 더보기</button>
+              </div>
+            </div>
+            <div class="comment-form">
+              <textarea placeholder="댓글을 작성해주세요" rows="3"></textarea>
+              <button class="btn">등록</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  
-  <!-- 푸터 플레이스홀더 -->
-  <div id="footer-placeholder"></div>
+    
+    <!-- 푸터 플레이스홀더 -->
+    <div id="footer-placeholder"></div>
 </body>
 </html>

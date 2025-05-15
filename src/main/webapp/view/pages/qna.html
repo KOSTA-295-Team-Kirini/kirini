@@ -28,12 +28,36 @@
         <div class="qna-detail-header">
           <h2>처음 구매하는 게이밍 키보드 추천 부탁드립니다.</h2>
           <div class="qna-detail-meta">
-            <span>작성자: 키린이</span>
-            <span>작성일: 2025-04-25</span>
+            <div class="post-detail-meta-left">
+              <div class="post-detail-author">
+                <span class="post-detail-label">작성자:</span>
+                <span>키린이</span>
+              </div>
+            </div>
+            <div class="post-detail-meta-right">
+              <div class="post-detail-date">
+                <span class="post-detail-label">작성일:</span>
+                <span>2025-04-25</span>
+              </div>
+              <div class="post-detail-views">
+                <span class="post-detail-label">조회수:</span>
+                <span>42</span>
+              </div>
+              <div class="post-detail-likes">
+                <span class="post-detail-label">추천수:</span>
+                <span class="post-detail-likes-count">7</span>
+              </div>
+            </div>
           </div>
         </div>
         <div class="qna-detail-content">
           <p>안녕하세요. 처음으로 게이밍 키보드를 구매하려고 합니다. 게임은 주로 FPS와 MOBA를 하는데, 어떤 키보드가 좋을까요? 예산은 10만원 정도입니다. 소음이 크지 않은 것이 좋을 것 같아요. 추천 부탁드립니다!</p>
+        </div>
+        <!-- 추천 버튼 영역 추가 -->
+        <div class="post-like-section">
+          <button class="post-like-button">
+            <i>👍</i> 추천하기 (<span>7</span>)
+          </button>
         </div>
         <div class="qna-detail-answers">
           <h3>답변 (3)</h3>
@@ -67,7 +91,9 @@
           <div class="answer-form" data-question-id="1">
             <h3>답변 작성</h3>
             <textarea placeholder="답변을 작성해주세요" rows="5"></textarea>
-            <button class="btn answer-submit-btn">답변 등록</button>
+            <div style="text-align: right;">
+              <button class="btn answer-submit-btn">답변 등록</button>
+            </div>
           </div>
         </div>
       </div>
