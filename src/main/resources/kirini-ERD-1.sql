@@ -157,7 +157,7 @@ CREATE TABLE `user` (
 CREATE TABLE `keyboard_glossary` (
 	`keyboard_glossary_uid`	int	NOT NULL AUTO_INCREMENT,
 	`keyboard_glossary_title`	varchar(20)	NULL,
-	`keyboard_glossary_summary`	varchar(50)	NULL,
+	`keyboard_glossary_summary`	TEXT	NULL,
 	`keyboard_glossary_url`	varchar(50)	NULL,
 	PRIMARY KEY (`keyboard_glossary_uid`)
 );

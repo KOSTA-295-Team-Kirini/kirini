@@ -8,7 +8,7 @@ import presentation.controller.page.user.UserLoginController;
 import presentation.controller.page.user.UserRegisterController;
 import presentation.controller.page.user.UserProfileController;
 import presentation.controller.page.guide.GuideController;
-import presentation.controller.page.admin.AdminPageController;
+/*import presentation.controller.page.admin.AdminPageController;*/
 import presentation.controller.page.board.FreeboardController;
 import presentation.controller.page.board.ChatboardController;
 import presentation.controller.page.board.NewsController;
@@ -32,11 +32,11 @@ public class HandlerMapping {
         return instance;
     }
     
-    private void initializeControllers() {        // 사용자 관련 컨트롤러
+    private void initializeControllers() {
+        // 사용자 관련 컨트롤러
         controllerMap.put("login", new UserLoginController());
         controllerMap.put("signup", new UserRegisterController());
         controllerMap.put("profile", new UserProfileController());
-        controllerMap.put("mypage", new UserpageController());  // 마이페이지 컨트롤러 추가
         
         // 게시판 관련 컨트롤러
         controllerMap.put("freeboard", new FreeboardController());
@@ -51,12 +51,12 @@ public class HandlerMapping {
         controllerMap.put("guide", new GuideController());
         
         // 관리자 컨트롤러 추가
-        controllerMap.put("admin", new AdminPageController());
+        /*controllerMap.put("admin", new AdminPageController());
         controllerMap.put("admin/users", new AdminPageController());
         controllerMap.put("admin/reports", new AdminPageController());
         controllerMap.put("admin/posts", new AdminPageController());
         controllerMap.put("admin/guides", new AdminPageController());
-        controllerMap.put("admin/keyboards", new AdminPageController());
+        controllerMap.put("admin/keyboards", new AdminPageController());*/
     }
     
     public Controller getController(String command) {
