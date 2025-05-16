@@ -14,6 +14,9 @@ public class KeyboardInfoDTO {
     private String connectType;
     private List<String> tags;
     
+    // 스크랩 관련 속성
+    private java.sql.Timestamp scrapDate;
+    
     // 기본 생성자
     public KeyboardInfoDTO() {
     }
@@ -59,6 +62,11 @@ public class KeyboardInfoDTO {
         return tags;
     }
     
+    // 스크랩 날짜 Getter
+    public java.sql.Timestamp getScrapDate() {
+        return scrapDate;
+    }
+    
     // Setter 메서드들
     public void setKeyboardId(long keyboardId) {
         this.keyboardId = keyboardId;
@@ -98,5 +106,10 @@ public class KeyboardInfoDTO {
     
     public void setTags(List<String> tags) {
         this.tags = tags;
+    }
+    
+    // 스크랩 날짜 Setter
+    public void setScrapDate(java.sql.Timestamp scrapDate) {
+        this.scrapDate = scrapDate;
     }
 }

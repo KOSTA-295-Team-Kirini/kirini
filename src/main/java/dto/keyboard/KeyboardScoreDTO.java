@@ -10,6 +10,7 @@ public class KeyboardScoreDTO {
     private int scoreValue;
     private String review;
     private LocalDateTime createdAt;
+    private String keyboardName;
     
     // 기본 생성자
     public KeyboardScoreDTO() {
@@ -70,5 +71,13 @@ public class KeyboardScoreDTO {
     
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+    
+    public String getKeyboardName() {
+        return keyboardName;
+    }
+    
+    public void setKeyboardName(String keyboardName) {
+        this.keyboardName = keyboardName;
     }
 }

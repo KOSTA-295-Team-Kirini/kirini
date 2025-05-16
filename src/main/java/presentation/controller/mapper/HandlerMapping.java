@@ -12,6 +12,7 @@ import presentation.controller.page.admin.AdminPageController;
 import presentation.controller.page.board.FreeboardController;
 import presentation.controller.page.board.ChatboardController;
 import presentation.controller.page.board.NewsController;
+import presentation.controller.page.board.UserpageController;
 import presentation.controller.page.question.QuestionController;
 import presentation.controller.page.database.KeyboardInfoController;
 
@@ -31,11 +32,11 @@ public class HandlerMapping {
         return instance;
     }
     
-    private void initializeControllers() {
-        // 사용자 관련 컨트롤러
+    private void initializeControllers() {        // 사용자 관련 컨트롤러
         controllerMap.put("login", new UserLoginController());
         controllerMap.put("signup", new UserRegisterController());
         controllerMap.put("profile", new UserProfileController());
+        controllerMap.put("mypage", new UserpageController());  // 마이페이지 컨트롤러 추가
         
         // 게시판 관련 컨트롤러
         controllerMap.put("freeboard", new FreeboardController());
