@@ -1,6 +1,7 @@
 package business.service.database;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import dto.keyboard.KeyboardInfoDTO;
@@ -130,6 +131,30 @@ public class KeyboardInfoService {
     }
     
     /**
+     * 사용자가 스크랩한 키보드 목록 조회
+     */
+    public List<KeyboardInfoDTO> getScrapsByUserId(long userId, int page, int pageSize) {
+        try {
+            return keyboardInfoDAO.getScrapsByUserId(userId, page, pageSize);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * 사용자가 스크랩한 키보드 총 개수 조회
+     */
+    public int getTotalScrapCountByUserId(long userId) {
+        try {
+            return keyboardInfoDAO.getTotalScrapCountByUserId(userId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+    
+    /**
      * 키보드 태그 조회 (투표 정보 포함)
      */
     public List<KeyboardTagDTO> getKeyboardTagsWithVotes(long keyboardId, long userId) {
@@ -198,6 +223,30 @@ public class KeyboardInfoService {
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
+        }
+    }
+    
+    /**
+     * 사용자가 작성한 키보드 별점 목록 조회
+     */
+    public List<KeyboardScoreDTO> getScoresByUserId(long userId, String sortBy, int page, int pageSize) {
+        try {
+            return keyboardInfoDAO.getScoresByUserId(userId, sortBy, page, pageSize);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * 사용자가 작성한 키보드 별점 총 개수 조회
+     */
+    public int getTotalScoreCountByUserId(long userId) {
+        try {
+            return keyboardInfoDAO.getTotalScoreCountByUserId(userId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
         }
     }
     

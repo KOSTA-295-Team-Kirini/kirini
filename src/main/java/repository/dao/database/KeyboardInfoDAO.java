@@ -1020,4 +1020,154 @@ public class KeyboardInfoDAO {
             closeResources();
         }
     }
+    
+    /**
+     * 사용자가 스크랩한 키보드 목록 조회
+     */
+    public List<KeyboardInfoDTO> getScrapsByUserId(long userId, int page, int pageSize) throws SQLException {
+        List<KeyboardInfoDTO> scrapList = new ArrayList<>();
+        
+        String sql = "SELECT k.*, " +
+                    "(SELECT AVG(score_value) FROM keyboard_score WHERE keyboard_uid = k.keyboard_uid) AS avg_score, " +
+                    "s.scrap_date " +
+                    "FROM keyboard_info k " +
+                    "JOIN keyboard_scrap s ON k.keyboard_uid = s.keyboard_uid " +
+                    "WHERE s.user_uid = ? " +
+                    "ORDER BY s.scrap_date DESC " +
+                    "LIMIT ? OFFSET ?";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, userId);
+            pstmt.setInt(2, pageSize);
+            pstmt.setInt(3, (page - 1) * pageSize);
+            
+            rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                KeyboardInfoDTO keyboard = createKeyboardFromResultSet(rs);
+                
+                // 스크랩 날짜 설정
+                keyboard.setScrapDate(rs.getTimestamp("scrap_date"));
+                
+                // 키보드의 태그 정보 가져오기
+                List<String> tags = getKeyboardTags(keyboard.getKeyboardId());
+                keyboard.setTags(tags);
+                
+                scrapList.add(keyboard);
+            }
+            
+            return scrapList;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * 사용자가 스크랩한 키보드 총 개수 조회
+     */
+    public int getTotalScrapCountByUserId(long userId) throws SQLException {
+        String sql = "SELECT COUNT(*) " +
+                    "FROM keyboard_scrap " +
+                    "WHERE user_uid = ?";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, userId);
+            
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            
+            return 0;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * 사용자가 작성한 별점 목록 조회
+     */
+    public List<KeyboardScoreDTO> getScoresByUserId(long userId, String sortBy, int page, int pageSize) throws SQLException {
+        List<KeyboardScoreDTO> scoreList = new ArrayList<>();
+        
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT s.*, k.keyboard_name, u.nickname ");
+        sql.append("FROM keyboard_score s ");
+        sql.append("JOIN keyboard_info k ON s.keyboard_uid = k.keyboard_uid ");
+        sql.append("JOIN user u ON s.user_uid = u.user_id ");
+        sql.append("WHERE s.user_uid = ? ");
+        
+        // 정렬 기준 적용
+        if ("date".equalsIgnoreCase(sortBy)) {
+            sql.append("ORDER BY s.score_created_at DESC ");
+        } else if ("score".equalsIgnoreCase(sortBy)) {
+            sql.append("ORDER BY s.score_value DESC ");
+        } else {
+            sql.append("ORDER BY s.score_created_at DESC "); // 기본 정렬 기준
+        }
+        
+        sql.append("LIMIT ? OFFSET ?");
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql.toString());
+            pstmt.setLong(1, userId);
+            pstmt.setInt(2, pageSize);
+            pstmt.setInt(3, (page - 1) * pageSize);
+            
+            rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                KeyboardScoreDTO score = new KeyboardScoreDTO();
+                score.setScoreId(rs.getLong("score_uid"));
+                score.setKeyboardId(rs.getLong("keyboard_uid"));
+                score.setUserId(rs.getLong("user_uid"));
+                score.setScoreValue(rs.getInt("score_value"));
+                score.setReview(rs.getString("score_review"));
+                // Timestamp를 LocalDateTime으로 변환
+                java.sql.Timestamp timestamp = rs.getTimestamp("score_created_at");
+                if (timestamp != null) {
+                    score.setCreatedAt(timestamp.toLocalDateTime());
+                }
+                
+                // 키보드 이름과 사용자 닉네임 설정
+                score.setUserName(rs.getString("nickname"));
+                score.setKeyboardName(rs.getString("keyboard_name"));
+                
+                scoreList.add(score);
+            }
+            
+            return scoreList;
+        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * 사용자가 작성한 별점 총 개수 조회
+     */
+    public int getTotalScoreCountByUserId(long userId) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM keyboard_score WHERE user_uid = ?";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, userId);
+            
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            
+            return 0;
+        } finally {
+            closeResources();
+        }
+    }
 }

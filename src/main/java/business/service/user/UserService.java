@@ -179,6 +179,31 @@ public class UserService {
     }
     
     /**
+     * 비밀번호 검증 (사용자 ID와 입력 비밀번호 기반)
+     * @param userId 사용자 ID
+     * @param inputPassword 입력받은 비밀번호
+     * @return 일치 여부
+     */
+    public boolean verifyPassword(long userId, String inputPassword) {
+        try {
+            // 사용자 정보 조회
+            UserDTO user = getUserById(userId);
+            if (user == null) {
+                return false;
+            }
+            
+            // 저장된 비밀번호 가져오기
+            String storedPassword = user.getPassword();
+            
+            // 비밀번호 검증
+            return verifyPassword(inputPassword, storedPassword);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
      * 회원 탈퇴
      * @param userId 사용자 ID
      * @return 성공 시 true, 실패 시 false
