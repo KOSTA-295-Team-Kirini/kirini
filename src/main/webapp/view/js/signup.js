@@ -29,7 +29,11 @@ document.addEventListener('DOMContentLoaded', function() {
   const nicknameError = document.getElementById('nickname-error');
   const passwordError = document.getElementById('password-error');
   const passwordConfirmError = document.getElementById('password-confirm-error');
-  // 이메일 유효성 검사
+
+  let isEmailCheckedAndValid = false;
+  let isNicknameCheckedAndValid = false;
+
+  // 이메일 유효성 검사 및 중복 확인 버튼 상태 초기화
   emailInput.addEventListener('input', function() {
     const isValid = validateEmail(this.value);
     if (isValid) {
@@ -37,8 +41,8 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       emailError.style.display = 'block';
     }
-    
-    // 이메일이 변경되면 중복확인 버튼 재활성화
+    // 이메일이 변경되면 중복확인 버튼 재활성화 및 상태 초기화
+    isEmailCheckedAndValid = false;
     emailCheckBtn.textContent = '중복확인';
     emailCheckBtn.disabled = false;
     emailCheckBtn.classList.remove('completed');
@@ -46,19 +50,40 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // 이메일 중복 확인
-  emailCheckBtn.addEventListener('click', function() {
+  emailCheckBtn.addEventListener('click', async function() {
     const email = emailInput.value;
-    if (validateEmail(email)) {
-      // 가상의 서버 응답을 시뮬레이션
-      setTimeout(() => {
-        this.textContent = '확인완료';
-        this.classList.add('completed'); // 클래스로 스타일 변경
-        this.disabled = true; // 버튼 비활성화
-        checkFormValidity();
-      }, 1000);
+    if (!validateEmail(email)) {
+      emailError.textContent = '올바른 이메일 형식이 아닙니다.';
+      emailError.style.display = 'block';
+      return;
     }
+    emailError.style.display = 'none';
+
+    try {
+      const response = await fetch(`/user/check-email?email=${encodeURIComponent(email)}`);
+      const result = await response.json();
+
+      if (response.ok && result.isAvailable) {
+        emailError.style.display = 'none';
+        emailCheckBtn.textContent = '확인완료';
+        emailCheckBtn.disabled = true;
+        emailCheckBtn.classList.add('completed');
+        isEmailCheckedAndValid = true;
+      } else {
+        emailError.textContent = result.message || '이미 사용 중인 이메일입니다.';
+        emailError.style.display = 'block';
+        isEmailCheckedAndValid = false;
+      }
+    } catch (error) {
+      console.error('이메일 중복 확인 중 오류 발생:', error);
+      emailError.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+      emailError.style.display = 'block';
+      isEmailCheckedAndValid = false;
+    }
+    checkFormValidity();
   });
-  // 닉네임 유효성 검사
+
+  // 닉네임 유효성 검사 및 중복 확인 버튼 상태 초기화
   nicknameInput.addEventListener('input', function() {
     const isValid = this.value.length >= 2 && this.value.length <= 10;
     if (isValid) {
@@ -66,8 +91,8 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       nicknameError.style.display = 'block';
     }
-    
-    // 닉네임이 변경되면 중복확인 버튼 재활성화
+    // 닉네임이 변경되면 중복확인 버튼 재활성화 및 상태 초기화
+    isNicknameCheckedAndValid = false;
     nicknameCheckBtn.textContent = '중복확인';
     nicknameCheckBtn.disabled = false;
     nicknameCheckBtn.classList.remove('completed');
@@ -75,41 +100,51 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // 닉네임 중복 확인
-  nicknameCheckBtn.addEventListener('click', function() {
+  nicknameCheckBtn.addEventListener('click', async function() {
     const nickname = nicknameInput.value;
-    if (nickname.length >= 2 && nickname.length <= 10) {
-      // 가상의 서버 응답을 시뮬레이션
-      setTimeout(() => {
-        this.textContent = '확인완료';
-        this.classList.add('completed'); // 클래스로 스타일 변경
-        this.disabled = true; // 버튼 비활성화
-        checkFormValidity();
-      }, 1000);
+    if (!(nickname.length >= 2 && nickname.length <= 10)) {
+      nicknameError.textContent = '닉네임은 2-10자 이내여야 합니다.';
+      nicknameError.style.display = 'block';
+      return;
     }
+    nicknameError.style.display = 'none';
+
+    try {
+      // 실제 백엔드 API 경로로 수정해야 한다냥! 예: /check-nickname 또는 /api/users/check-nickname
+      const response = await fetch(`/user/check-nickname?nickname=${encodeURIComponent(nickname)}`);
+      const result = await response.json();
+
+      if (response.ok && result.isAvailable) {
+        nicknameError.style.display = 'none';
+        nicknameCheckBtn.textContent = '확인완료';
+        nicknameCheckBtn.disabled = true;
+        nicknameCheckBtn.classList.add('completed');
+        isNicknameCheckedAndValid = true;
+      } else {
+        nicknameError.textContent = result.message || '이미 사용 중인 닉네임입니다.';
+        nicknameError.style.display = 'block';
+        isNicknameCheckedAndValid = false;
+      }
+    } catch (error) {
+      console.error('닉네임 중복 확인 중 오류 발생:', error);
+      nicknameError.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+      nicknameError.style.display = 'block';
+      isNicknameCheckedAndValid = false;
+    }
+    checkFormValidity();
   });
+
   // 비밀번호 유효성 검사
   passwordInput.addEventListener('input', function() {
     const isValid = validatePassword(this.value);
     if (isValid) {
       passwordError.style.display = 'none';
     } else {
-      // 어떤 유효성 검사를 통과하지 못했는지 확인
-      if (this.value.length < 8) {
-        passwordError.textContent = "비밀번호는 최소 8자 이상이어야 합니다.";
-      } else if (!/(?=.*[A-Za-z])/.test(this.value)) {
-        passwordError.textContent = "비밀번호에 영문자가 포함되어야 합니다.";
-      } else if (!/(?=.*\d)/.test(this.value)) {
-        passwordError.textContent = "비밀번호에 숫자가 포함되어야 합니다.";
-      } else if (!/(?=.*[!@#$%^&*])/.test(this.value)) {
-        passwordError.textContent = "비밀번호에 특수문자(!@#$%^&*)가 포함되어야 합니다.";
-      } else {
-        passwordError.textContent = "비밀번호 형식이 올바르지 않습니다.";
-      }
       passwordError.style.display = 'block';
     }
     // 비밀번호 확인 일치 여부도 체크
     const isMatch = this.value === passwordConfirmInput.value;
-    if (isMatch) {
+    if (isMatch || passwordConfirmInput.value === '') {
       passwordConfirmError.style.display = 'none';
     } else {
       passwordConfirmError.style.display = 'block';
@@ -132,13 +167,38 @@ document.addEventListener('DOMContentLoaded', function() {
   agreeCheckbox.addEventListener('change', checkFormValidity);
 
   // 폼 제출 이벤트
-  signupForm.addEventListener('submit', function(e) {
+  signupForm.addEventListener('submit', async function(e) {
     e.preventDefault();
-    if (signupButton.disabled) return;
-    
-    alert('회원가입이 완료되었습니다!');
-    // 실제 서비스에서는 서버로 데이터를 전송하고 회원가입 처리를 진행합니다.
-    window.location.href = 'login.html';
+    if (signupButton.disabled) {
+      alert('입력값을 모두 정확히 입력하고, 약관에 동의해주세요.');
+      return;
+    }
+
+    const email = emailInput.value;
+    const nickname = nicknameInput.value;
+    const password = passwordInput.value;
+
+    try {
+      const response = await fetch('/user/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, nickname, password }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.status === 'success') {
+        alert('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
+        window.location.href = 'login.html'; // 회원가입 성공 시 로그인 페이지로 이동
+      } else {
+        alert(result.message || '회원가입에 실패했습니다. 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('회원가입 요청 중 오류 발생:', error);
+      alert('회원가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
   });
 
   // 이메일 유효성 검사 함수
@@ -149,51 +209,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 비밀번호 유효성 검사 함수 (영문, 숫자, 특수문자 조합 8자 이상)
   function validatePassword(password) {
+    // 실제 프로젝트의 비밀번호 정책에 맞게 수정할 수 있다냥!
     const re = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
     return re.test(password);
   }
+
   // 폼 유효성 검증 함수
   function checkFormValidity() {
-    const isEmailValid = validateEmail(emailInput.value) && emailCheckBtn.textContent === '확인완료';
-    const isNicknameValid = nicknameInput.value.length >= 2 && nicknameInput.value.length <= 10 && nicknameCheckBtn.textContent === '확인완료';
+    const isEmailValid = validateEmail(emailInput.value);
+    const isNicknameValid = nicknameInput.value.length >= 2 && nicknameInput.value.length <= 10;
     const isPasswordValid = validatePassword(passwordInput.value);
-    const isPasswordMatch = passwordInput.value === passwordConfirmInput.value;
+    const isPasswordConfirmValid = passwordInput.value === passwordConfirmInput.value;
     const isAgreed = agreeCheckbox.checked;
-    
-    signupButton.disabled = !(isEmailValid && isNicknameValid && isPasswordValid && isPasswordMatch && isAgreed);
-  }  // 비밀번호 표시/숨김 토글 기능
+
+    // 모든 조건이 충족되어야 회원가입 버튼 활성화
+    if (
+      isEmailValid &&
+      isEmailCheckedAndValid && // 이메일 중복 확인 완료 여부
+      isNicknameValid &&
+      isNicknameCheckedAndValid && // 닉네임 중복 확인 완료 여부
+      isPasswordValid &&
+      isPasswordConfirmValid &&
+      isAgreed
+    ) {
+      signupButton.disabled = false;
+    } else {
+      signupButton.disabled = true;
+    }
+  }
+
+  // 비밀번호 보이기/숨기기 토글 기능 (기존 코드 유지)
   const passwordToggle = document.getElementById('password-toggle');
   const passwordConfirmToggle = document.getElementById('password-confirm-toggle');
   
-  passwordToggle.addEventListener('click', function() {
-    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passwordInput.setAttribute('type', type);
-    
-    // 아이콘 상태 변경
-    if (type === 'password') {
-      this.querySelector('.eye-icon').classList.remove('eye-slash');
-      this.querySelector('.eye-icon').classList.remove('eye-active');
-      this.classList.remove('active'); // 토글 버튼 비활성화
-    } else {
-      this.querySelector('.eye-icon').classList.add('eye-slash');
-      this.querySelector('.eye-icon').classList.add('eye-active');
-      this.classList.add('active'); // 토글 버튼 활성화
-    }
-  });
+  if (passwordToggle) {
+    passwordToggle.addEventListener('click', function() {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      // 아이콘 변경 로직 (필요시 추가)
+      this.classList.toggle('active'); // 예시: active 클래스로 아이콘 상태 변경
+    });
+  }
   
-  passwordConfirmToggle.addEventListener('click', function() {
-    const type = passwordConfirmInput.getAttribute('type') === 'password' ? 'text' : 'password';
-    passwordConfirmInput.setAttribute('type', type);
-    
-    // 아이콘 상태 변경
-    if (type === 'password') {
-      this.querySelector('.eye-icon').classList.remove('eye-slash');
-      this.querySelector('.eye-icon').classList.remove('eye-active');
-      this.classList.remove('active'); // 토글 버튼 비활성화
-    } else {
-      this.querySelector('.eye-icon').classList.add('eye-slash');
-      this.querySelector('.eye-icon').classList.add('eye-active');
-      this.classList.add('active'); // 토글 버튼 활성화
-    }
-  });
+  if (passwordConfirmToggle) {
+    passwordConfirmToggle.addEventListener('click', function() {
+      const type = passwordConfirmInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordConfirmInput.setAttribute('type', type);
+      // 아이콘 변경 로직 (필요시 추가)
+      this.classList.toggle('active'); // 예시: active 클래스로 아이콘 상태 변경
+    });
+  }
 });
