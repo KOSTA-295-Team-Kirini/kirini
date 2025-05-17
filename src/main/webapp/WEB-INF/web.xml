@@ -9,7 +9,6 @@
     <welcome-file>default.jsp</welcome-file>
     <welcome-file>default.htm</welcome-file>
   </welcome-file-list>
-
   <!-- 이 부분을 제거하거나 주석 처리 -->
   <!--
   <servlet>
@@ -23,6 +22,17 @@
     <url-pattern>*.do</url-pattern>
   </servlet-mapping>
   -->
+
+  <!-- AJAX 컨트롤러 서블릿 등록 -->
+  <servlet>
+    <servlet-name>ajaxController</servlet-name>
+    <servlet-class>presentation.controller.ajax.AjaxController</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>ajaxController</servlet-name>
+    <url-pattern>/api/*</url-pattern>
+  </servlet-mapping>
 
   <listener>
     <listener-class>presentation.controller.mapper.HandlerMappingListener</listener-class>
