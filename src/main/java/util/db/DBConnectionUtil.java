@@ -12,10 +12,10 @@ import java.sql.SQLException;
 public class DBConnectionUtil {
     
     // 데이터베이스 연결 정보
-    private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String URL = "jdbc:mysql://localhost:3306/kirini_db?serverTimezone=Asia/Seoul&characterEncoding=UTF-8";
-    private static final String USER = "root";
-    private static final String PASSWORD = "admin";
+    private static final String DRIVER = System.getenv("DB_DRIVER");
+    private static final String URL = System.getenv("DB_URL");
+    private static final String USER = System.getenv("DB_USER");
+    private static final String PASSWORD = System.getenv("DB_PASSWORD");
     
     // 정적 초기화 블록으로 드라이버 로드
     static {
