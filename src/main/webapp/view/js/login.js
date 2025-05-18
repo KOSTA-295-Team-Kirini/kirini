@@ -10,20 +10,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const password = passwordInput.value;
     
     try {
-      const response = await fetch('/user/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      // API 클라이언트를 사용하여 로그인 요청 (.do 접미사 사용)
+      const result = await UserService.login(email, password);
 
-      const result = await response.json();
-
-      if (response.ok && result.status === 'success') {
+      if (result.status === 'success') {
         const userName = result.data.userName;
         const role = result.data.role;
         const rememberMe = document.getElementById('remember-me').checked;
+
+        // 토큰 저장
+        ApiClient.setAuthToken(result.data.token);
+        if (result.data.refreshToken) {
+          localStorage.setItem('kirini_refresh_token', result.data.refreshToken);
+        }
 
         if (typeof Auth !== 'undefined') {
           Auth.setLoginStatus(userName, role, rememberMe); // Auth.js에 맞게 함수 호출
