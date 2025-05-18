@@ -1,53 +1,98 @@
 package dto.admin;
 
-import java.sql.Timestamp;
+import java.sql.Date;
 
 /**
- * 삭제 로그 정보를 담는 데이터 전송 객체
+ * 삭제된 게시글/댓글 로그 DTO 클래스
  */
 public class AdminDeleteLogDTO {
-    // 공통 필드
-    private long logDeleteUid;          // 로그 ID
-    private String logDeleteBoardtype;  // 게시판 유형 (freeboard, news, notice, inquiry, chatboard)
-    private Timestamp logDeleteDate;    // 삭제 날짜
-    private long userUid;               // 삭제 작업을 수행한 사용자 ID
-    
-    // 게시글 또는 댓글 ID (타입에 따라 다름)
-    private long deletedItemUid;        // 삭제된 항목 ID (게시글 ID 또는 댓글 ID)
-    
-    // 추가 정보 (JOIN으로 가져올 데이터)
-    private String deletedItemTitle;    // 삭제된 항목 제목 (게시글 제목 또는 댓글 내용 일부)
-    private String deletedByUsername;   // 삭제한 관리자 이름
-    private String originalAuthorName;  // 원 작성자 이름
-    private String itemType;            // "post" 또는 "comment"
+    private long logId;
+    private String boardType;
+    private long contentId;
+    private String contentTitle;
+    private String contentText;
+    private String deleteReason;
+    private Date deleteDate;
+    private long adminUid;
+    private String adminName;
+    private long userUid;
+    private String userName;
     
     // 기본 생성자
     public AdminDeleteLogDTO() {
     }
     
-    // Getter, Setter 메서드
-    public long getLogDeleteUid() {
-        return logDeleteUid;
+    // Getter/Setter 메소드
+    public long getLogId() {
+        return logId;
     }
     
-    public void setLogDeleteUid(long logDeleteUid) {
-        this.logDeleteUid = logDeleteUid;
+    public void setLogId(long logId) {
+        this.logId = logId;
     }
     
-    public String getLogDeleteBoardtype() {
-        return logDeleteBoardtype;
+    public String getBoardType() {
+        return boardType;
     }
     
-    public void setLogDeleteBoardtype(String logDeleteBoardtype) {
-        this.logDeleteBoardtype = logDeleteBoardtype;
+    public void setBoardType(String boardType) {
+        this.boardType = boardType;
     }
     
-    public Timestamp getLogDeleteDate() {
-        return logDeleteDate;
+    public long getContentId() {
+        return contentId;
     }
     
-    public void setLogDeleteDate(Timestamp logDeleteDate) {
-        this.logDeleteDate = logDeleteDate;
+    public void setContentId(long contentId) {
+        this.contentId = contentId;
+    }
+    
+    public String getContentTitle() {
+        return contentTitle;
+    }
+    
+    public void setContentTitle(String contentTitle) {
+        this.contentTitle = contentTitle;
+    }
+    
+    public String getContentText() {
+        return contentText;
+    }
+    
+    public void setContentText(String contentText) {
+        this.contentText = contentText;
+    }
+    
+    public String getDeleteReason() {
+        return deleteReason;
+    }
+    
+    public void setDeleteReason(String deleteReason) {
+        this.deleteReason = deleteReason;
+    }
+    
+    public Date getDeleteDate() {
+        return deleteDate;
+    }
+    
+    public void setDeleteDate(Date deleteDate) {
+        this.deleteDate = deleteDate;
+    }
+    
+    public long getAdminUid() {
+        return adminUid;
+    }
+    
+    public void setAdminUid(long adminUid) {
+        this.adminUid = adminUid;
+    }
+    
+    public String getAdminName() {
+        return adminName;
+    }
+    
+    public void setAdminName(String adminName) {
+        this.adminName = adminName;
     }
     
     public long getUserUid() {
@@ -58,58 +103,11 @@ public class AdminDeleteLogDTO {
         this.userUid = userUid;
     }
     
-    public long getDeletedItemUid() {
-        return deletedItemUid;
+    public String getUserName() {
+        return userName;
     }
     
-    public void setDeletedItemUid(long deletedItemUid) {
-        this.deletedItemUid = deletedItemUid;
-    }
-    
-    public String getDeletedItemTitle() {
-        return deletedItemTitle;
-    }
-    
-    public void setDeletedItemTitle(String deletedItemTitle) {
-        this.deletedItemTitle = deletedItemTitle;
-    }
-    
-    public String getDeletedByUsername() {
-        return deletedByUsername;
-    }
-    
-    public void setDeletedByUsername(String deletedByUsername) {
-        this.deletedByUsername = deletedByUsername;
-    }
-    
-    public String getOriginalAuthorName() {
-        return originalAuthorName;
-    }
-    
-    public void setOriginalAuthorName(String originalAuthorName) {
-        this.originalAuthorName = originalAuthorName;
-    }
-    
-    public String getItemType() {
-        return itemType;
-    }
-    
-    public void setItemType(String itemType) {
-        this.itemType = itemType;
-    }
-    
-    @Override
-    public String toString() {
-        return "AdminDeleteLogDTO{" +
-               "logDeleteUid=" + logDeleteUid +
-               ", logDeleteBoardtype='" + logDeleteBoardtype + '\'' +
-               ", logDeleteDate=" + logDeleteDate +
-               ", userUid=" + userUid +
-               ", deletedItemUid=" + deletedItemUid +
-               ", deletedItemTitle='" + deletedItemTitle + '\'' +
-               ", deletedByUsername='" + deletedByUsername + '\'' +
-               ", originalAuthorName='" + originalAuthorName + '\'' +
-               ", itemType='" + itemType + '\'' +
-               '}';
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }

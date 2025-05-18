@@ -9,20 +9,21 @@ public class GuideDTO {
     private String category;
     private LocalDateTime createDate;
     private LocalDateTime updateDate;
+    private String url; // URL 필드 추가
     
     // 기본 생성자
     public GuideDTO() {
     }
-    
-    // 모든 필드를 받는 생성자
+      // 모든 필드를 받는 생성자
     public GuideDTO(long guideId, String term, String description, String category, 
-                   LocalDateTime createDate, LocalDateTime updateDate) {
+                   LocalDateTime createDate, LocalDateTime updateDate, String url) {
         this.guideId = guideId;
         this.term = term;
         this.description = description;
         this.category = category;
         this.createDate = createDate;
         this.updateDate = updateDate;
+        this.url = url;
     }
     
     // Getter 메서드
@@ -48,6 +49,24 @@ public class GuideDTO {
     
     public LocalDateTime getUpdateDate() {
         return updateDate;
+    }
+    
+    // URL 관련 Getter/Setter
+    public String getUrl() {
+        return url;
+    }
+    
+    public void setUrl(String url) {
+        this.url = url;
+    }
+    
+    // 호환성을 위한 별칭 메서드
+    public long getId() {
+        return guideId;
+    }
+    
+    public void setId(long id) {
+        this.guideId = id;
     }
     
     // Setter 메서드

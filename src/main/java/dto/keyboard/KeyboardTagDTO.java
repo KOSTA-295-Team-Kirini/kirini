@@ -51,4 +51,29 @@ public class KeyboardTagDTO {
     public void setUserVote(String userVote) {
         this.userVote = userVote;
     }
+    
+    // 호환성을 위한 별칭 메서드들
+    public long getId() {
+        return tagId;
+    }
+    
+    public void setId(long id) {
+        this.tagId = id;
+    }
+    
+    public String getName() {
+        return tagName;
+    }
+    
+    public void setName(String name) {
+        this.tagName = name;
+    }
+    
+    public String getStatus() {
+        return tagType;
+    }
+    
+    public void setStatus(String status) {
+        this.tagType = status;
+    }
 }
