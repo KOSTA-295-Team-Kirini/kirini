@@ -57,6 +57,7 @@ CREATE TABLE `log_delete_comment` (
 CREATE TABLE `keyboard_category` (
 	`keyboard_category_uid`	int	NOT NULL AUTO_INCREMENT,
 	`keyboard_category_name`	varchar(50)	NULL,
+	`category_type`	ENUM('switch', 'layout', 'connect')	NULL,
 	PRIMARY KEY (`keyboard_category_uid`)
 );
 

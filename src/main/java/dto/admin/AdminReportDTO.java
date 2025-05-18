@@ -22,17 +22,19 @@ public class AdminReportDTO {
     public AdminReportDTO() {
     }
     
-    // ReportDTO로부터 변환하는 생성자
-    public AdminReportDTO(dto.board.ReportDTO reportDTO) {
-        this.reportUid = reportDTO.getReportUid();
-        this.reportUserUid = reportDTO.getReportUserUid();
-        this.reportTargetType = reportDTO.getReportTargetType();
-        this.reportReason = reportDTO.getReportReason();
-        this.reportStatus = reportDTO.getReportStatus();
-        this.reportCreatetime = reportDTO.getReportCreatetime();
-        this.targetUserUid = reportDTO.getTargetUserUid();
-        this.reporterUsername = reportDTO.getReporterUsername();
-        this.targetUsername = reportDTO.getTargetUsername();
+    // 모든 필드를 매개변수로 받는 생성자
+    public AdminReportDTO(long reportUid, long reportUserUid, String reportTargetType, String reportReason,
+                          String reportStatus, Date reportCreatetime, long targetUserUid,
+                          String reporterUsername, String targetUsername) {
+        this.reportUid = reportUid;
+        this.reportUserUid = reportUserUid;
+        this.reportTargetType = reportTargetType;
+        this.reportReason = reportReason;
+        this.reportStatus = reportStatus;
+        this.reportCreatetime = reportCreatetime;
+        this.targetUserUid = targetUserUid;
+        this.reporterUsername = reporterUsername;
+        this.targetUsername = targetUsername;
     }
     
     // Getter, Setter 메서드

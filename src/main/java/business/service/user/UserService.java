@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import dto.user.UserDTO;
+import exception.UserStatusException;
 import repository.dao.user.UserDAO;
 
 /**
