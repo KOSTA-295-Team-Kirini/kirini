@@ -43,6 +43,10 @@ services:
       # tomcat, nginx가 공유할 Static 리소스 경로 바인드 마운트
       - ./src/main/webapp/view:/usr/local/tomcat/webapps/view:ro   # tomcat용
       - ./src/main/webapp/view:/usr/share/nginx/html:ro            # nginx용
+      # tomcat, nginx가 공유할 리소스 업로드 경로 바인드 마운트
+      - /home/ubuntu/kirini/uploads:/usr/local/tomcat/webapps/uploads    # tomcat용
+      - ./src/main/webapp/uploads:/usr/share/nginx/html/uploads:ro     # nginx용
+
       - ./service1-tomcat/logs:/usr/local/tomcat/logs # 로그 저장소를 bind로
     depends_on:
       - mysql
@@ -72,6 +76,10 @@ services:
       # tomcat, nginx가 공유할 Static 리소스 경로 바인드 마운트
       - ./src/main/webapp/view:/usr/local/tomcat/webapps/view:ro   # tomcat용
       - ./src/main/webapp/view:/usr/share/nginx/html:ro            # nginx용
+      # tomcat, nginx가 공유할 리소스 업로드 경로 바인드 마운트
+      - /home/ubuntu/kirini/uploads:/usr/local/tomcat/webapps/uploads    # tomcat용
+      - ./src/main/webapp/uploads:/usr/share/nginx/html/uploads:ro     # nginx용
+
     depends_on:
       - service1-tomcat 
       # tomcat이 안 떠있으면 nginx가 올라가도 tomcat을 통해 동작하는 페이지가 정상적으로 동작하지 않음 (502 bad gateway)
