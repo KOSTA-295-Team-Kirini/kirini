@@ -16,6 +16,7 @@ const API_CONFIG = {
 
 // 토큰 스토리지 키
 const TOKEN_STORAGE_KEY = 'kirini_auth_token';
+const REFRESH_TOKEN_KEY = 'kirini_refresh_token';
 
 /**
  * API 클라이언트 클래스
@@ -46,6 +47,27 @@ class ApiClient {
    */
   static removeAuthToken() {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+
+  /**
+   * 리프레시 토큰 가져오기
+   * @returns {string|null} 저장된 리프레시 토큰
+   */
+  static getRefreshToken() {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  }
+
+  /**
+   * 리프레시 토큰 저장
+   * @param {string} token 저장할 리프레시 토큰
+   */
+  static setRefreshToken(token) {
+    if (token) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+    }
   }
 
   /**
@@ -100,63 +122,82 @@ class ApiClient {
   }
 
   /**
-   * 인증 만료 처리 (토큰 리프레시)
-   * @param {string} originalEndpoint 실패한 요청의 엔드포인트
-   * @param {Object} originalOptions 실패한 요청의 옵션
-   * @returns {Promise} 새 토큰으로 재시도한 API 응답
+   * 401 Unauthorized 응답 처리 및 토큰 갱신
+   * @param {string} originalEndpoint 원본 요청 엔드포인트
+   * @param {Object} originalOptions 원본 요청 옵션
+   * @returns {Promise} 재요청 결과
    */
   static async handleUnauthorized(originalEndpoint, originalOptions) {
     try {
-      // 토큰 갱신 요청
-      const refreshToken = localStorage.getItem('kirini_refresh_token');
+      const refreshToken = ApiClient.getRefreshToken();
       if (!refreshToken) {
-        throw new Error('리프레시 토큰 없음');
+        // 리프레시 토큰이 없으면 로그인 페이지로 이동
+        window.location.href = '/view/login.html';
+        throw new Error('인증이 필요합니다.');
       }
 
-      const refreshResponse = await fetch(`${API_CONFIG.baseUrl}/auth/refresh.do`, {
+      // 리프레시 토큰으로 새 접근 토큰 요청
+      const refreshResult = await fetch(`${API_CONFIG.baseUrl}/auth/refresh.do`, {
         method: 'POST',
         headers: API_CONFIG.defaultHeaders,
         body: JSON.stringify({ refreshToken })
       });
 
-      if (!refreshResponse.ok) {
-        throw new Error('토큰 갱신 실패');
-      }
+      if (refreshResult.ok) {
+        const tokenData = await refreshResult.json();
+        
+        // 새 토큰 저장
+        ApiClient.setAuthToken(tokenData.accessToken);
+        if (tokenData.refreshToken) {
+          ApiClient.setRefreshToken(tokenData.refreshToken);
+        }
 
-      const tokenData = await refreshResponse.json();
-      ApiClient.setAuthToken(tokenData.token);
-      localStorage.setItem('kirini_refresh_token', tokenData.refreshToken);
-      
-      // 기존 요청 재시도
-      const newOptions = {
-        ...originalOptions,
-        headers: ApiClient.getAuthHeaders(originalOptions.headers)
-      };
-      
-      return ApiClient.request(originalEndpoint, newOptions);
+        // 원본 요청 재시도 (새 토큰으로)
+        const newHeaders = {
+          ...originalOptions.headers,
+          'Authorization': `Bearer ${tokenData.accessToken}`
+        };
+
+        // 원본 요청 재시도
+        return ApiClient.request(originalEndpoint, {
+          ...originalOptions,
+          headers: newHeaders
+        });
+      } else {
+        // 리프레시 실패 - 로그아웃 처리
+        ApiClient.removeAuthToken();
+        window.location.href = '/view/login.html';
+        throw new Error('세션이 만료되었습니다.');
+      }
     } catch (error) {
-      // 갱신 실패 시 로그아웃 처리
-      ApiClient.removeAuthToken();
-      localStorage.removeItem('kirini_refresh_token');
-      window.dispatchEvent(new CustomEvent('auth:logout'));
-      throw new Error('인증 만료: 다시 로그인 필요');
+      console.error('토큰 갱신 오류:', error);
+      throw error;
     }
   }
 
   /**
    * GET 요청
    * @param {string} endpoint API 엔드포인트
-   * @param {Object} params URL 파라미터
-   * @param {boolean} withAuth 인증 필요 여부
+   * @param {Object} params URL 쿼리 매개변수
+   * @param {boolean} auth 인증 필요 여부
    * @returns {Promise} API 응답
    */
-  static async get(endpoint, params = {}, withAuth = false) {
-    const url = new URL(`${window.location.origin}${endpoint}`);
-    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+  static async get(endpoint, params = {}, auth = false) {
+    // URL 파라미터 추가
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value);
+      }
+    });
     
-    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
+    const queryString = queryParams.toString();
+    const url = queryString ? `${endpoint}?${queryString}` : endpoint;
     
-    return ApiClient.request(url.pathname + url.search, {
+    // 인증 헤더 추가
+    const headers = auth ? ApiClient.getAuthHeaders() : {};
+    
+    return ApiClient.request(url, {
       method: 'GET',
       headers
     });
@@ -165,12 +206,12 @@ class ApiClient {
   /**
    * POST 요청
    * @param {string} endpoint API 엔드포인트
-   * @param {Object} data 요청 데이터
-   * @param {boolean} withAuth 인증 필요 여부
+   * @param {Object} data 요청 본문 데이터
+   * @param {boolean} auth 인증 필요 여부
    * @returns {Promise} API 응답
    */
-  static async post(endpoint, data = {}, withAuth = false) {
-    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
+  static async post(endpoint, data = {}, auth = false) {
+    const headers = auth ? ApiClient.getAuthHeaders() : {};
     
     return ApiClient.request(endpoint, {
       method: 'POST',
@@ -182,12 +223,12 @@ class ApiClient {
   /**
    * PUT 요청
    * @param {string} endpoint API 엔드포인트
-   * @param {Object} data 요청 데이터
-   * @param {boolean} withAuth 인증 필요 여부
+   * @param {Object} data 요청 본문 데이터
+   * @param {boolean} auth 인증 필요 여부
    * @returns {Promise} API 응답
    */
-  static async put(endpoint, data = {}, withAuth = false) {
-    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
+  static async put(endpoint, data = {}, auth = false) {
+    const headers = auth ? ApiClient.getAuthHeaders() : {};
     
     return ApiClient.request(endpoint, {
       method: 'PUT',
@@ -199,31 +240,122 @@ class ApiClient {
   /**
    * DELETE 요청
    * @param {string} endpoint API 엔드포인트
-   * @param {boolean} withAuth 인증 필요 여부
+   * @param {Object} params URL 쿼리 매개변수
+   * @param {boolean} auth 인증 필요 여부
    * @returns {Promise} API 응답
    */
-  static async delete(endpoint, withAuth = false) {
-    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
+  static async delete(endpoint, params = {}, auth = false) {
+    // URL 파라미터 추가
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value);
+      }
+    });
     
-    return ApiClient.request(endpoint, {
+    const queryString = queryParams.toString();
+    const url = queryString ? `${endpoint}?${queryString}` : endpoint;
+    
+    // 인증 헤더 추가
+    const headers = auth ? ApiClient.getAuthHeaders() : {};
+    
+    return ApiClient.request(url, {
       method: 'DELETE',
       headers
     });
   }
+
+  /**
+   * 파일 업로드 요청
+   * @param {string} endpoint API 엔드포인트
+   * @param {FormData} formData 폼 데이터 (파일 포함)
+   * @param {boolean} auth 인증 필요 여부
+   * @returns {Promise} API 응답
+   */
+  static async uploadFile(endpoint, formData, auth = false) {
+    // 파일 업로드는 Content-Type 헤더를 자동으로 설정
+    const headers = auth ? ApiClient.getAuthHeaders({}) : {};
+    delete headers['Content-Type']; // FormData에서는 Content-Type을 설정하지 않음
+    
+    return ApiClient.request(endpoint, {
+      method: 'POST',
+      headers,
+      body: formData
+    });
+  }
 }
 
-/**
- * 사용자 관련 API 서비스
- */
+// API 서비스 모듈 - 키보드 관련 API
+class KeyboardService {
+  /**
+   * 키보드 목록 조회
+   * @param {Object} params 검색 및 페이징 파라미터
+   * @returns {Promise} 키보드 목록
+   */
+  static async getKeyboards(params = {}) {
+    return ApiClient.get('/keyboard/list.do', params);
+  }
+
+  /**
+   * 키보드 상세 정보 조회
+   * @param {number} keyboardId 키보드 ID
+   * @returns {Promise} 키보드 상세 정보
+   */
+  static async getKeyboardDetail(keyboardId) {
+    return ApiClient.get(`/keyboard/detail.do`, { keyboardId });
+  }
+
+  /**
+   * 키보드 리뷰 목록 조회
+   * @param {number} keyboardId 키보드 ID
+   * @param {Object} params 페이징 파라미터
+   * @returns {Promise} 리뷰 목록
+   */
+  static async getKeyboardReviews(keyboardId, params = {}) {
+    return ApiClient.get(`/keyboard/reviews.do`, { keyboardId, ...params });
+  }
+
+  /**
+   * 키보드 리뷰 작성
+   * @param {number} keyboardId 키보드 ID
+   * @param {Object} reviewData 리뷰 데이터
+   * @returns {Promise} 작성 결과
+   */
+  static async addReview(keyboardId, reviewData) {
+    return ApiClient.post(`/keyboard/review/add.do`, { keyboardId, ...reviewData }, true);
+  }
+
+  /**
+   * 키보드 태그 추가
+   * @param {number} keyboardId 키보드 ID
+   * @param {string} tag 태그 문자열
+   * @returns {Promise} 추가 결과
+   */
+  static async addTag(keyboardId, tag) {
+    return ApiClient.post(`/keyboard/tag/add.do`, { keyboardId, tag }, true);
+  }
+}
+
+// API 서비스 모듈 - 사용자 관련 API
 class UserService {
   /**
    * 로그인 요청
    * @param {string} username 사용자명
    * @param {string} password 비밀번호
-   * @returns {Promise} 로그인 결과
+   * @returns {Promise} 로그인 결과 및 토큰
    */
   static async login(username, password) {
-    return ApiClient.post('/user/login.do', { username, password });
+    const result = await ApiClient.post('/user/login.do', { username, password });
+    
+    // 토큰 저장
+    if (result.accessToken) {
+      ApiClient.setAuthToken(result.accessToken);
+      if (result.refreshToken) {
+        ApiClient.setRefreshToken(result.refreshToken);
+      }
+    }
+    
+    return result;
   }
 
   /**
@@ -236,40 +368,35 @@ class UserService {
   }
 
   /**
-   * 이메일 중복 확인
-   * @param {string} email 확인할 이메일
-   * @returns {Promise} 중복 확인 결과
+   * 로그아웃 처리
    */
-  static async checkEmailDuplicate(email) {
-    return ApiClient.get('/user/checkEmail.do', { email });
-  }
-
-  /**
-   * 닉네임 중복 확인
-   * @param {string} nickname 확인할 닉네임
-   * @returns {Promise} 중복 확인 결과
-   */
-  static async checkNicknameDuplicate(nickname) {
-    return ApiClient.get('/user/checkNickname.do', { nickname });
+  static async logout() {
+    // 서버에 로그아웃 요청 (토큰 무효화)
+    try {
+      await ApiClient.post('/user/logout.do', {}, true);
+    } catch (error) {
+      console.warn('로그아웃 요청 실패:', error);
+    }
+    
+    // 로컬 토큰 삭제
+    ApiClient.removeAuthToken();
   }
 
   /**
    * 사용자 프로필 조회
-   * @param {string} userId 사용자 ID (생략시 본인 프로필)
    * @returns {Promise} 사용자 프로필 정보
    */
-  static async getProfile(userId) {
-    const endpoint = userId ? `/user/profile.do?userId=${userId}` : '/user/profile.do';
-    return ApiClient.get(endpoint, {}, true);
+  static async getProfile() {
+    return ApiClient.get('/user/profile.do', {}, true);
   }
 
   /**
    * 사용자 프로필 업데이트
-   * @param {Object} profileData 업데이트할 프로필 데이터
+   * @param {Object} profileData 프로필 데이터
    * @returns {Promise} 업데이트 결과
    */
   static async updateProfile(profileData) {
-    return ApiClient.put('/user/profile.do', profileData, true);
+    return ApiClient.put('/user/profile/update.do', profileData, true);
   }
 
   /**
@@ -279,217 +406,100 @@ class UserService {
    * @returns {Promise} 변경 결과
    */
   static async changePassword(currentPassword, newPassword) {
-    return ApiClient.post('/user/password.do', {
-      currentPassword,
-      newPassword
-    }, true);
+    return ApiClient.post('/user/password/change.do', { currentPassword, newPassword }, true);
   }
 
   /**
-   * 비밀번호 찾기 (이메일 발송)
-   * @param {string} email 사용자 이메일
-   * @returns {Promise} 처리 결과
+   * 비밀번호 재설정 요청 (비밀번호 찾기)
+   * @param {string} email 이메일
+   * @returns {Promise} 요청 결과
    */
-  static async forgotPassword(email) {
-    return ApiClient.post('/user/forgot-password.do', { email });
-  }
-
-  /**
-   * 로그아웃
-   * @returns {void}
-   */
-  static logout() {
-    ApiClient.removeAuthToken();
-    localStorage.removeItem('kirini_refresh_token');
-    window.dispatchEvent(new CustomEvent('auth:logout'));
+  static async requestPasswordReset(email) {
+    return ApiClient.post('/user/password/reset-request.do', { email });
   }
 }
 
-/**
- * 키보드 관련 API 서비스
- */
-class KeyboardService {
-  /**
-   * 키보드 목록 조회
-   * @param {Object} params 검색/필터/정렬/페이징 파라미터
-   * @returns {Promise} 키보드 목록 및 페이징 정보
-   */
-  static async getKeyboards(params = {}) {
-    return ApiClient.get('/keyboard/list.do', params);
-  }
-
-  /**
-   * 키보드 상세 정보 조회
-   * @param {string} keyboardId 키보드 ID
-   * @returns {Promise} 키보드 상세 정보
-   */
-  static async getKeyboardDetails(keyboardId) {
-    return ApiClient.get(`/keyboard/detail.do`, { id: keyboardId });
-  }
-
-  /**
-   * 키보드 검색
-   * @param {string} query 검색어
-   * @param {Object} filters 필터 옵션
-   * @param {Object} sorting 정렬 옵션
-   * @param {Object} pagination 페이징 옵션
-   * @returns {Promise} 검색 결과 및 페이징 정보
-   */
-  static async searchKeyboards(query, filters = {}, sorting = {}, pagination = {}) {
-    return ApiClient.get('/keyboard/search.do', {
-      query,
-      ...filters,
-      ...sorting,
-      ...pagination
-    });
-  }
-
-  /**
-   * 인기 키보드 조회
-   * @param {number} limit 조회할 개수
-   * @returns {Promise} 인기 키보드 목록
-   */
-  static async getPopularKeyboards(limit = 10) {
-    return ApiClient.get('/keyboard/popular.do', { limit });
-  }
-
-  /**
-   * 키보드 평점 제출
-   * @param {string} keyboardId 키보드 ID
-   * @param {number} rating 평점 (1-5)
-   * @returns {Promise} 제출 결과
-   */
-  static async rateKeyboard(keyboardId, rating) {
-    return ApiClient.post('/keyboard/rate.do', {
-      keyboardId,
-      rating
-    }, true);
-  }
-
-  /**
-   * 관련 키보드 조회
-   * @param {string} keyboardId 기준 키보드 ID
-   * @param {number} limit 조회할 개수
-   * @returns {Promise} 관련 키보드 목록
-   */
-  static async getRelatedKeyboards(keyboardId, limit = 5) {
-    return ApiClient.get('/keyboard/related.do', {
-      id: keyboardId,
-      limit
-    });
-  }
-}
-
-/**
- * 게시판 관련 API 서비스
- */
+// API 서비스 모듈 - 게시판 관련 API
 class BoardService {
   /**
-   * 게시물 목록 조회
-   * @param {string} boardType 게시판 유형 (free, qna, notice 등)
-   * @param {Object} params 페이징 및 정렬 옵션
-   * @returns {Promise} 게시물 목록
+   * 게시글 목록 조회
+   * @param {string} boardType 게시판 타입 (free, qna, news)
+   * @param {Object} params 검색 및 페이징 파라미터
+   * @returns {Promise} 게시글 목록
    */
   static async getPosts(boardType, params = {}) {
-    return ApiClient.get(`/${boardType}/list.do`, params);
+    return ApiClient.get(`/board/${boardType}/list.do`, params);
   }
 
   /**
-   * 게시물 상세 조회
-   * @param {string} boardType 게시판 유형
-   * @param {string} postId 게시물 ID
-   * @returns {Promise} 게시물 상세 정보
+   * 게시글 상세 조회
+   * @param {string} boardType 게시판 타입
+   * @param {number} postId 게시글 ID
+   * @returns {Promise} 게시글 상세 정보
    */
-  static async getPost(boardType, postId) {
-    return ApiClient.get(`/${boardType}/detail.do`, { id: postId });
+  static async getPostDetail(boardType, postId) {
+    return ApiClient.get(`/board/${boardType}/detail.do`, { postId });
   }
 
   /**
-   * 게시물 작성
-   * @param {string} boardType 게시판 유형
-   * @param {Object} postData 게시물 데이터
+   * 게시글 작성
+   * @param {string} boardType 게시판 타입
+   * @param {Object} postData 게시글 데이터
    * @returns {Promise} 작성 결과
    */
   static async createPost(boardType, postData) {
-    return ApiClient.post(`/${boardType}/create.do`, postData, true);
+    return ApiClient.post(`/board/${boardType}/write.do`, postData, true);
   }
 
   /**
-   * 게시물 수정
-   * @param {string} boardType 게시판 유형
-   * @param {string} postId 게시물 ID
-   * @param {Object} postData 수정할 데이터
+   * 게시글 수정
+   * @param {string} boardType 게시판 타입
+   * @param {number} postId 게시글 ID
+   * @param {Object} postData 게시글 데이터
    * @returns {Promise} 수정 결과
    */
   static async updatePost(boardType, postId, postData) {
-    return ApiClient.put(`/${boardType}/update.do`, {
-      id: postId,
-      ...postData
-    }, true);
+    return ApiClient.put(`/board/${boardType}/update.do`, { postId, ...postData }, true);
   }
 
   /**
-   * 게시물 삭제
-   * @param {string} boardType 게시판 유형
-   * @param {string} postId 게시물 ID
+   * 게시글 삭제
+   * @param {string} boardType 게시판 타입
+   * @param {number} postId 게시글 ID
    * @returns {Promise} 삭제 결과
    */
   static async deletePost(boardType, postId) {
-    return ApiClient.post(`/${boardType}/delete.do`, { id: postId }, true);
+    return ApiClient.delete(`/board/${boardType}/delete.do`, { postId }, true);
   }
 
   /**
    * 댓글 작성
-   * @param {string} boardType 게시판 유형
-   * @param {string} postId 게시물 ID
-   * @param {string} content 댓글 내용
-   * @param {string} parentId 부모 댓글 ID (답글인 경우)
+   * @param {string} boardType 게시판 타입
+   * @param {number} postId 게시글 ID
+   * @param {Object} commentData 댓글 데이터
    * @returns {Promise} 작성 결과
    */
-  static async createComment(boardType, postId, content, parentId = null) {
-    return ApiClient.post(`/${boardType}/comment/create.do`, {
-      postId,
-      content,
-      parentId
-    }, true);
+  static async addComment(boardType, postId, commentData) {
+    return ApiClient.post(`/board/${boardType}/comment/add.do`, { postId, ...commentData }, true);
   }
 
   /**
    * 댓글 목록 조회
-   * @param {string} boardType 게시판 유형
-   * @param {string} postId 게시물 ID
-   * @param {Object} params 페이징 옵션
+   * @param {string} boardType 게시판 타입
+   * @param {number} postId 게시글 ID
+   * @param {Object} params 페이징 파라미터
    * @returns {Promise} 댓글 목록
    */
   static async getComments(boardType, postId, params = {}) {
-    return ApiClient.get(`/${boardType}/comment/list.do`, {
-      postId,
-      ...params
-    });
-  }
-
-  /**
-   * 게시물 좋아요/싫어요
-   * @param {string} boardType 게시판 유형
-   * @param {string} postId 게시물 ID
-   * @param {string} type 'like' 또는 'dislike'
-   * @returns {Promise} 처리 결과
-   */
-  static async reactToPost(boardType, postId, type) {
-    return ApiClient.post(`/${boardType}/react.do`, {
-      postId,
-      type
-    }, true);
+    return ApiClient.get(`/board/${boardType}/comments.do`, { postId, ...params });
   }
 }
 
-/**
- * 용어사전 관련 API 서비스
- */
+// API 서비스 모듈 - 용어 사전 관련 API
 class GlossaryService {
   /**
    * 용어 목록 조회
-   * @param {Object} params 필터 및 페이징 옵션
+   * @param {Object} params 검색 및 필터 파라미터
    * @returns {Promise} 용어 목록
    */
   static async getTerms(params = {}) {
@@ -498,24 +508,11 @@ class GlossaryService {
 
   /**
    * 용어 상세 조회
-   * @param {string} termId 용어 ID
+   * @param {number} termId 용어 ID
    * @returns {Promise} 용어 상세 정보
    */
-  static async getTerm(termId) {
-    return ApiClient.get('/glossary/detail.do', { id: termId });
-  }
-
-  /**
-   * 용어 검색
-   * @param {string} query 검색어
-   * @param {Object} filters 필터 옵션
-   * @returns {Promise} 검색 결과
-   */
-  static async searchTerms(query, filters = {}) {
-    return ApiClient.get('/glossary/search.do', {
-      query,
-      ...filters
-    });
+  static async getTermDetail(termId) {
+    return ApiClient.get('/glossary/detail.do', { termId });
   }
 
   /**
@@ -525,56 +522,47 @@ class GlossaryService {
   static async getCategories() {
     return ApiClient.get('/glossary/categories.do');
   }
-}
 
-/**
- * 리뷰 관련 API 서비스
- */
-class ReviewService {
   /**
-   * 리뷰 작성
-   * @param {string} keyboardId 키보드 ID
-   * @param {Object} reviewData 리뷰 데이터
-   * @returns {Promise} 작성 결과
+   * 용어 검색
+   * @param {string} keyword 검색 키워드
+   * @returns {Promise} 검색 결과
    */
-  static async createReview(keyboardId, reviewData) {
-    return ApiClient.post('/review/create.do', {
-      keyboardId,
-      ...reviewData
-    }, true);
+  static async searchTerms(keyword) {
+    return ApiClient.get('/glossary/search.do', { keyword });
   }
 
   /**
-   * 리뷰 목록 조회
-   * @param {string} keyboardId 키보드 ID
-   * @param {Object} params 정렬 및 페이징 옵션
-   * @returns {Promise} 리뷰 목록
+   * 알파벳 인덱스별 용어 조회
+   * @param {string} letter 알파벳(A-Z) 또는 기타(#)
+   * @returns {Promise} 해당 알파벳으로 시작하는 용어 목록
    */
-  static async getReviews(keyboardId, params = {}) {
-    return ApiClient.get('/review/list.do', {
-      keyboardId,
-      ...params
-    });
+  static async getTermsByLetter(letter) {
+    return ApiClient.get('/glossary/by-letter.do', { letter });
   }
-
+  
   /**
-   * 리뷰 도움됨/안됨 평가
-   * @param {string} reviewId 리뷰 ID
-   * @param {boolean} helpful 도움 여부
-   * @returns {Promise} 처리 결과
+   * 관련 용어 조회
+   * @param {number} termId 용어 ID
+   * @returns {Promise} 관련 용어 목록
    */
-  static async rateReviewHelpfulness(reviewId, helpful) {
-    return ApiClient.post('/review/helpful.do', {
-      reviewId,
-      helpful
-    }, true);
+  static async getRelatedTerms(termId) {
+    return ApiClient.get('/glossary/related.do', { termId });
+  }
+  
+  /**
+   * 인기 용어 조회
+   * @param {number} limit 조회 개수
+   * @returns {Promise} 인기 용어 목록
+   */
+  static async getPopularTerms(limit = 10) {
+    return ApiClient.get('/glossary/popular.do', { limit });
   }
 }
 
-// 브라우저에서 사용할 수 있도록 전역 객체에 노출
+// 서비스 내보내기
 window.ApiClient = ApiClient;
-window.UserService = UserService;
 window.KeyboardService = KeyboardService;
+window.UserService = UserService;
 window.BoardService = BoardService;
 window.GlossaryService = GlossaryService;
-window.ReviewService = ReviewService;

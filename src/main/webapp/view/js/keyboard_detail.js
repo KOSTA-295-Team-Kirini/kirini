@@ -1,677 +1,1089 @@
-// URL에서 키보드 ID 가져오기
-const urlParams = new URLSearchParams(window.location.search);
-const keyboardId = urlParams.get('id');
+// 키보드 상세 페이지 스크립트
+document.addEventListener('DOMContentLoaded', () => {
+  // URL에서 키보드 ID 가져오기
+  const urlParams = new URLSearchParams(window.location.search);
+  const keyboardId = urlParams.get('id');
+  
+  if (!keyboardId) {
+    showErrorMessage('키보드 ID가 지정되지 않았습니다.');
+    return;
+  }
+  
+  // 키보드 상세 데이터 로드
+  loadKeyboardDetail(keyboardId);
+  
+  // 리뷰 관련 이벤트 리스너 설정
+  setupReviewListeners(keyboardId);
+  
+  // 탭 전환 이벤트 처리
+  setupTabEvents();
+  
+  // 이미지 갤러리 설정
+  setupImageGalleryEvents();
+});
 
-// 키보드 상세 정보 로드 (API 사용)
-async function loadKeyboardData() {
+/**
+ * 키보드 상세 정보 로드
+ * @param {number} keyboardId 키보드 ID
+ */
+async function loadKeyboardDetail(keyboardId) {
   try {
     // 로딩 상태 표시
-    const contentArea = document.querySelector('.keyboard-detail-content');
-    if (contentArea) {
-      contentArea.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>키보드 정보를 불러오는 중입니다...</p></div>';
-    }
+    showLoadingState();
     
-    // API를 통해 키보드 정보 가져오기 (.do 접미사 사용)
-    const keyboard = await KeyboardService.getKeyboardDetails(keyboardId);
+    // 캐시 키 생성
+    const cacheKey = `keyboard_detail_${keyboardId}`;
+    const cachedData = sessionStorage.getItem(cacheKey);
     
-    // 상세 정보 화면에 표시
-    document.getElementById('keyboardName').textContent = keyboard.keyboardName;
-    document.getElementById('keyboardPrice').textContent = `${keyboard.keyboardPrice.toLocaleString()}원`;
+    let keyboardData;
     
-    // 별점 표시
-    const avgScore = keyboard.avgScore || 0;
-    const fullStars = Math.floor(avgScore);
-    const halfStar = avgScore - fullStars >= 0.5;
-    
-    let starsText = '';
-    for (let i = 0; i < fullStars; i++) {
-      starsText += '★';
-    }
-    if (halfStar) {
-      starsText += '☆';
-    }
-    for (let i = 0; i < 5 - fullStars - (halfStar ? 1 : 0); i++) {
-      starsText += '☆';
-    }
-    
-    document.querySelector('.stars').textContent = starsText;
-    document.querySelector('.rate-count').textContent = `(${avgScore.toFixed(1)}/5, 리뷰 ${keyboard.reviewCount}개)`;
-    
-    // 이미지 설정
-    if (keyboard.keyboardImageUrl) {
-      document.getElementById('mainImage').src = keyboard.keyboardImageUrl;
-    } else {
-      document.getElementById('mainImage').src = '../img/keyboard_default.jpg';
-    }
-    document.getElementById('mainImage').onerror = function() {
-      this.src = `https://via.placeholder.com/500x300?text=${encodeURIComponent(keyboard.keyboardName)}`;
-    };
-    
-    // 이미지 갤러리 생성
-    if (keyboard.images && keyboard.images.length > 0) {
-      const galleryContainer = document.querySelector('.image-gallery');
-      if (galleryContainer) {
-        galleryContainer.innerHTML = '';
-        
-        keyboard.images.forEach(imageUrl => {
-          const imgElement = document.createElement('img');
-          imgElement.className = 'gallery-image';
-          imgElement.src = imageUrl;
-          imgElement.alt = keyboard.keyboardName;
-          imgElement.onclick = function() {
-            changeImage(this, imageUrl);
-          };
-          
-          galleryContainer.appendChild(imgElement);
-        });
-        
-        // 첫 번째 이미지 활성화
-        if (galleryContainer.firstChild) {
-          galleryContainer.firstChild.classList.add('active');
-        }
+    // 캐시된 데이터가 있으면 사용 (1분 내)
+    if (cachedData) {
+      const parsedCache = JSON.parse(cachedData);
+      const cacheAge = Date.now() - parsedCache.timestamp;
+      
+      if (cacheAge < 60000) { // 1분
+        keyboardData = parsedCache.data;
+        console.log('캐시된 키보드 상세 정보 사용');
       }
     }
     
-    // 키보드 설명 표시
-    if (document.getElementById('keyboard-description')) {
-      document.getElementById('keyboard-description').textContent = keyboard.keyboardDescription;
-    }
-    
-    // 사양 정보 표시
-    if (keyboard.specifications && document.getElementById('keyboard-specs')) {
-      const specsContainer = document.getElementById('keyboard-specs');
-      specsContainer.innerHTML = '';
+    // 캐시가 없거나 오래된 경우 API 호출
+    if (!keyboardData) {
+      console.log('키보드 상세 정보 API 호출');
+      keyboardData = await KeyboardService.getKeyboardDetail(keyboardId);
       
-      // 사양 테이블 생성
-      const table = document.createElement('table');
-      table.className = 'specs-table';
-      
-      Object.entries(keyboard.specifications).forEach(([key, value]) => {
-        const row = document.createElement('tr');
-        
-        const keyCell = document.createElement('th');
-        keyCell.textContent = key;
-        
-        const valueCell = document.createElement('td');
-        valueCell.textContent = value;
-        
-        row.appendChild(keyCell);
-        row.appendChild(valueCell);
-        table.appendChild(row);
-      });
-      
-      specsContainer.appendChild(table);
-    }
-    
-    // 태그 표시
-    if (keyboard.tags && keyboard.tags.length > 0) {
-      const tagsContainer = document.querySelector('.keyboard-tags');
-      
-      // 기존 태그 삭제 (태그 추가 버튼 제외)
-      const addButton = tagsContainer.querySelector('.keyboard-tag-add');
-      while (tagsContainer.firstChild && tagsContainer.firstChild !== addButton) {
-        tagsContainer.removeChild(tagsContainer.firstChild);
+      // 유효한 데이터인지 확인
+      if (!keyboardData || !keyboardData.id) {
+        throw new Error('유효하지 않은 키보드 데이터');
       }
       
-      // 새 태그 추가
-      keyboard.tags.forEach(tag => {
-        const tagElement = document.createElement('span');
-        tagElement.className = 'keyboard-tag ' + (tag.isAdmin ? 'tag-admin' : 'tag-user');
-        tagElement.setAttribute('data-tag', tag.tagName);
-        
-        const tagText = document.createTextNode(tag.tagName);
-        tagElement.appendChild(tagText);
-        
-        if (!tag.isAdmin) {
-          const tagCount = document.createElement('span');
-          tagCount.className = 'tag-count';
-          tagCount.textContent = tag.voteCount;
-          tagElement.appendChild(tagCount);
-        }
-        
-        tagsContainer.insertBefore(tagElement, addButton);
-      });
+      // 결과 캐싱
+      sessionStorage.setItem(cacheKey, JSON.stringify({
+        timestamp: Date.now(),
+        data: keyboardData
+      }));
     }
     
-    // 현재 키보드 이름을 태그 모달에 설정
-    document.getElementById('currentKeyboard').textContent = keyboard.keyboardName;
+    // 데이터 렌더링
+    renderKeyboardDetail(keyboardData);
     
-    // 리뷰 불러오기
-    loadReviews(keyboardId);
-    
-    // 관련 키보드 불러오기
-    loadRelatedKeyboards(keyboardId);
+    // 리뷰 로드
+    loadKeyboardReviews(keyboardId);
     
     // 로딩 상태 제거
-    if (contentArea) {
-      contentArea.querySelector('.loading-indicator')?.remove();
-    }
+    hideLoadingState();
     
+    // 방문 이력 기록 (최근 본 키보드)
+    recordRecentKeyboard(keyboardData);
   } catch (error) {
-    console.error('키보드 정보를 불러오는데 실패했습니다:', error);
+    console.error('키보드 상세 정보 로딩 오류:', error);
     
-    // 오류 메시지 표시
-    const contentArea = document.querySelector('.keyboard-detail-content');
-    if (contentArea) {
-      contentArea.innerHTML = '<div class="error-message"><p>키보드 정보를 불러오는데 실패했습니다. <button id="retry-load">다시 시도</button></p></div>';
-      
-      // 다시 시도 버튼
-      document.getElementById('retry-load')?.addEventListener('click', () => {
-        loadKeyboardData();
-      });
+    // 네트워크 오류인지 확인
+    if (error.message.includes('network') || error.message.includes('fetch')) {
+      showErrorMessage('네트워크 연결을 확인해주세요.', true);
+    } else if (error.message.includes('유효하지 않은 키보드')) {
+      showErrorMessage('요청한 키보드를 찾을 수 없습니다.');
+    } else {
+      showErrorMessage('키보드 정보를 불러오는데 문제가 발생했습니다.', true);
     }
   }
 }
 
-// 키보드 리뷰 불러오기
-async function loadReviews(keyboardId) {
+/**
+ * 키보드 상세 정보 렌더링
+ * @param {Object} keyboard 키보드 데이터
+ */
+function renderKeyboardDetail(keyboard) {
+  // 메인 정보 업데이트
+  document.querySelector('.keyboard-name').textContent = keyboard.name;
+  document.querySelector('.keyboard-brand').textContent = keyboard.brand;
+  document.querySelector('.keyboard-price').textContent = `₩${formatPrice(keyboard.price)}`;
+  
+  // 별점 표시
+  updateRatingDisplay(keyboard.rating, keyboard.reviewCount);
+  
+  // 메인 이미지 설정
+  const mainImage = document.querySelector('.keyboard-main-image');
+  if (mainImage) {
+    mainImage.src = keyboard.imageUrl || '/view/img/keyboard-placeholder.jpg';
+    mainImage.alt = keyboard.name;
+  }
+  
+  // 이미지 갤러리 설정
+  setupImageGallery(keyboard.images || []);
+  
+  // 키보드 사양 테이블 업데이트
+  updateSpecsTable(keyboard.specs || {});
+  
+  // 태그 목록 업데이트
+  updateTags(keyboard.tags || []);
+  
+  // 관련 키보드 업데이트
+  updateRelatedKeyboards(keyboard.relatedKeyboards || []);
+  
+  // 메타데이터 업데이트 (페이지 제목 등)
+  document.title = `${keyboard.name} - 키리니`;
+  
+  // SNS 공유 링크 업데이트
+  updateSharingLinks(keyboard);
+}
+
+/**
+ * 키보드 리뷰 로드
+ * @param {number} keyboardId 키보드 ID
+ * @param {Object} params 페이징 및 정렬 파라미터
+ */
+async function loadKeyboardReviews(keyboardId, params = {}) {
   try {
-    const reviewsContainer = document.getElementById('keyboard-reviews');
+    // 리뷰 컨테이너
+    const reviewsContainer = document.querySelector('.reviews-container');
     if (!reviewsContainer) return;
     
-    reviewsContainer.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>리뷰를 불러오는 중입니다...</p></div>';
+    // 리뷰 로딩 상태 표시
+    reviewsContainer.innerHTML = '<div class="loading-reviews">리뷰를 불러오는 중입니다...</div>';
     
-    // API를 통해 리뷰 목록 가져오기 (.do 접미사 사용)
-    const response = await ReviewService.getReviews(keyboardId, {
-      page: 1,
-      size: 10,
-      sort: 'newest'
-    });
+    // 캐시 키 생성
+    const cacheKey = `keyboard_reviews_${keyboardId}_${JSON.stringify(params)}`;
+    const cachedData = sessionStorage.getItem(cacheKey);
     
-    if (!response || !response.reviews) {
-      throw new Error('리뷰를 불러오는데 실패했습니다.');
-    }
+    let reviewData;
     
-    const reviews = response.reviews;
-    
-    // 리뷰 목록 표시
-    reviewsContainer.innerHTML = '';
-    
-    if (reviews.length === 0) {
-      reviewsContainer.innerHTML = `
-        <div class="no-reviews">
-          <p>아직 리뷰가 없습니다. 첫 리뷰를 작성해보세요!</p>
-          <button class="btn write-review-btn">리뷰 작성하기</button>
-        </div>
-      `;
+    // 캐시된 데이터가 있으면 사용 (30초 내)
+    if (cachedData) {
+      const parsedCache = JSON.parse(cachedData);
+      const cacheAge = Date.now() - parsedCache.timestamp;
       
-      reviewsContainer.querySelector('.write-review-btn')?.addEventListener('click', openReviewForm);
-      return;
-    }
-    
-    // 리뷰 컨테이너 생성
-    const reviewsList = document.createElement('div');
-    reviewsList.className = 'reviews-list';
-    
-    reviews.forEach(review => {
-      const reviewElement = document.createElement('div');
-      reviewElement.className = 'review-item';
-      
-      // 별점 생성
-      let starsText = '';
-      for (let i = 0; i < 5; i++) {
-        starsText += i < review.score ? '★' : '☆';
+      if (cacheAge < 30000) { // 30초
+        reviewData = parsedCache.data;
+        console.log('캐시된 리뷰 데이터 사용');
       }
+    }
+    
+    // 캐시가 없거나 오래된 경우 API 호출
+    if (!reviewData) {
+      console.log('리뷰 데이터 API 호출');
+      reviewData = await KeyboardService.getKeyboardReviews(keyboardId, params);
       
-      reviewElement.innerHTML = `
-        <div class="review-header">
-          <div class="review-author">${review.authorName}</div>
-          <div class="review-date">${new Date(review.createdAt).toLocaleDateString()}</div>
-        </div>
-        <div class="review-rating">
-          <span class="stars">${starsText}</span>
-          <span class="score">${review.score}/5</span>
-        </div>
-        <div class="review-content">${review.content}</div>
-        <div class="review-footer">
-          <button class="review-helpful" data-review-id="${review.id}">
-            도움됨 <span class="helpful-count">${review.helpfulCount || 0}</span>
-          </button>
-        </div>
-      `;
-      
-      reviewsList.appendChild(reviewElement);
-    });
+      // 결과 캐싱
+      sessionStorage.setItem(cacheKey, JSON.stringify({
+        timestamp: Date.now(),
+        data: reviewData
+      }));
+    }
     
-    reviewsContainer.appendChild(reviewsList);
+    // 리뷰 통계 업데이트
+    updateReviewStats(reviewData.stats || {});
     
-    // 리뷰 하단 페이지네이션 및 작성 버튼
-    const reviewsFooter = document.createElement('div');
-    reviewsFooter.className = 'reviews-footer';
-    reviewsFooter.innerHTML = `
-      <button class="btn write-review-btn">리뷰 작성하기</button>
-    `;
+    // 리뷰 목록 렌더링
+    renderReviews(reviewData.reviews || []);
     
-    reviewsContainer.appendChild(reviewsFooter);
+    // 페이지네이션 업데이트
+    updateReviewPagination(reviewData.pagination);
     
-    // 리뷰 작성 버튼 이벤트
-    reviewsContainer.querySelector('.write-review-btn')?.addEventListener('click', openReviewForm);
-    
-    // 리뷰 도움됨 버튼 이벤트
-    reviewsContainer.querySelectorAll('.review-helpful').forEach(button => {
-      button.addEventListener('click', async function() {
-        const reviewId = this.dataset.reviewId;
-        try {
-          await ReviewService.rateReviewHelpfulness(reviewId, true);
-          
-          const countElement = this.querySelector('.helpful-count');
-          if (countElement) {
-            const currentCount = parseInt(countElement.textContent);
-            countElement.textContent = (currentCount + 1).toString();
-          }
-          
-          this.disabled = true;
-          this.classList.add('clicked');
-        } catch (error) {
-          console.error('리뷰 평가 중 오류 발생:', error);
-        }
-      });
-    });
-    
+    // 리뷰 작성 폼 업데이트
+    updateReviewForm(keyboardId);
   } catch (error) {
-    console.error('리뷰를 불러오는 중 오류 발생:', error);
-    
-    const reviewsContainer = document.getElementById('keyboard-reviews');
+    console.error('키보드 리뷰 로딩 오류:', error);
+    const reviewsContainer = document.querySelector('.reviews-container');
     if (reviewsContainer) {
-      reviewsContainer.innerHTML = '<div class="error-message"><p>리뷰를 불러오는데 실패했습니다.</p></div>';
-    }
-  }
-}
-
-// 관련 키보드 불러오기
-async function loadRelatedKeyboards(keyboardId) {
-  try {
-    const relatedContainer = document.getElementById('related-keyboards');
-    if (!relatedContainer) return;
-    
-    relatedContainer.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>관련 키보드를 불러오는 중입니다...</p></div>';
-    
-    // API를 통해 관련 키보드 가져오기 (.do 접미사 사용)
-    const response = await KeyboardService.getRelatedKeyboards(keyboardId);
-    
-    if (!response || !response.keyboards) {
-      throw new Error('관련 키보드를 불러오는데 실패했습니다.');
-    }
-    
-    const relatedKeyboards = response.keyboards;
-    
-    // 관련 키보드 표시
-    relatedContainer.innerHTML = '';
-    
-    if (relatedKeyboards.length === 0) {
-      relatedContainer.innerHTML = '<p>관련 키보드가 없습니다.</p>';
-      return;
-    }
-    
-    // 관련 키보드 그리드 생성
-    const relatedGrid = document.createElement('div');
-    relatedGrid.className = 'related-keyboards-grid';
-    
-    relatedKeyboards.forEach(keyboard => {
-      const keyboardElement = document.createElement('div');
-      keyboardElement.className = 'related-keyboard-item';
-      
-      keyboardElement.innerHTML = `
-        <a href="keyboard_detail.html?id=${keyboard.id}">
-          <img src="${keyboard.imageUrl || '../img/keyboard_default.jpg'}" alt="${keyboard.name}" 
-               onerror="this.src='https://via.placeholder.com/200x100?text=${encodeURIComponent(keyboard.name)}'">
-          <div class="related-keyboard-info">
-            <h4>${keyboard.name}</h4>
-            <div class="price">${keyboard.price.toLocaleString()}원</div>
-          </div>
-        </a>
+      reviewsContainer.innerHTML = `
+        <div class="error-message">
+          리뷰를 불러오는데 문제가 발생했습니다.
+          <button class="btn btn-sm btn-outline-primary retry-reviews mt-2">다시 시도</button>
+        </div>
       `;
       
-      relatedGrid.appendChild(keyboardElement);
-    });
-    
-    relatedContainer.appendChild(relatedGrid);
-    
-  } catch (error) {
-    console.error('관련 키보드를 불러오는 중 오류 발생:', error);
-    
-    const relatedContainer = document.getElementById('related-keyboards');
-    if (relatedContainer) {
-      relatedContainer.innerHTML = '<div class="error-message"><p>관련 키보드를 불러오는데 실패했습니다.</p></div>';
-    }
-  }
-}
-
-// 리뷰 작성 폼 열기
-function openReviewForm() {
-  // 리뷰 작성 모달 표시 로직
-  const reviewModal = document.getElementById('review-modal');
-  if (reviewModal) {
-    reviewModal.style.display = 'block';
-  }
-}
-
-// 이미지 갤러리 기능
-function changeImage(element, imageUrl) {
-  document.getElementById('mainImage').src = imageUrl;
-  document.querySelectorAll('.gallery-image').forEach(img => {
-    img.classList.remove('active');
-  });
-  element.classList.add('active');
-}
-
-// 탭 전환 기능
-function initTabs() {
-  document.querySelectorAll('.tab-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      // 모든 탭 버튼에서 active 클래스 제거
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
+      // 리뷰 로드 재시도 버튼
+      reviewsContainer.querySelector('.retry-reviews').addEventListener('click', () => {
+        loadKeyboardReviews(keyboardId, params);
       });
-      // 클릭한 탭 버튼에 active 클래스 추가
-      button.classList.add('active');
-      
-      // 모든 탭 콘텐츠에서 active 클래스 제거
-      document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-      });
-      
-      // 선택한 탭의 콘텐츠에 active 클래스 추가
-      const tabId = button.getAttribute('data-tab');
-      document.getElementById('tab-' + tabId).classList.add('active');
+    }
+  }
+}
+
+/**
+ * 별점 표시 업데이트
+ * @param {number} rating 평점 (0-5)
+ * @param {number} reviewCount 리뷰 수
+ */
+function updateRatingDisplay(rating = 0, reviewCount = 0) {
+  const ratingElement = document.querySelector('.keyboard-rating');
+  if (!ratingElement) return;
+  
+  const starsElement = document.querySelector('.rating-stars');
+  const countElement = document.querySelector('.rating-count');
+  
+  // 별점 HTML 생성
+  starsElement.innerHTML = generateStarRating(rating);
+  
+  // 리뷰 수 표시
+  countElement.textContent = `(${rating.toFixed(1)}/5, 리뷰 ${reviewCount}개)`;
+}
+
+/**
+ * 별점 HTML 생성
+ * @param {number} rating 평점 (0-5)
+ * @returns {string} 별점 HTML
+ */
+function generateStarRating(rating) {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+  
+  let starsHtml = '';
+  
+  // 꽉 찬 별
+  for (let i = 0; i < fullStars; i++) {
+    starsHtml += '<i class="fas fa-star"></i>';
+  }
+  
+  // 반 별
+  if (hasHalfStar) {
+    starsHtml += '<i class="fas fa-star-half-alt"></i>';
+  }
+  
+  // 빈 별
+  for (let i = 0; i < emptyStars; i++) {
+    starsHtml += '<i class="far fa-star"></i>';
+  }
+  
+  return starsHtml;
+}
+
+/**
+ * 이미지 갤러리 설정
+ * @param {Array} images 이미지 URL 배열
+ */
+function setupImageGallery(images) {
+  const galleryContainer = document.querySelector('.keyboard-gallery-thumbnails');
+  if (!galleryContainer) return;
+  
+  // 기본 이미지가 없으면 첫 번째 이미지를 추가
+  if (images.length === 0) {
+    images.push('/view/img/keyboard-placeholder.jpg');
+  }
+  
+  // 썸네일 생성
+  galleryContainer.innerHTML = images.map((imageUrl, index) => `
+    <div class="gallery-thumbnail ${index === 0 ? 'active' : ''}">
+      <img src="${imageUrl}" alt="키보드 이미지 ${index + 1}" data-index="${index}">
+    </div>
+  `).join('');
+  
+  // 메인 이미지 설정
+  const mainImage = document.querySelector('.keyboard-main-image');
+  if (mainImage && images.length > 0) {
+    mainImage.src = images[0];
+  }
+}
+
+/**
+ * 이미지 갤러리 이벤트 설정
+ */
+function setupImageGalleryEvents() {
+  // 갤러리 컨테이너
+  const galleryContainer = document.querySelector('.keyboard-gallery-thumbnails');
+  if (!galleryContainer) return;
+  
+  // 썸네일 클릭 이벤트
+  galleryContainer.addEventListener('click', (e) => {
+    const thumbnail = e.target.closest('.gallery-thumbnail img');
+    if (!thumbnail) return;
+    
+    // 활성 썸네일 변경
+    document.querySelectorAll('.gallery-thumbnail').forEach(thumb => {
+      thumb.classList.remove('active');
     });
-  });
-}
-
-// 태그 모달 관련 함수
-function openTagModal(keyboardName) {
-  document.getElementById('currentKeyboard').textContent = keyboardName;
-  document.getElementById('tagModal').classList.add('active');
-}
-
-function closeTagModal() {
-  document.getElementById('tagModal').classList.remove('active');
-}
-
-// 추천 태그 추가 기능
-async function addRecommendedTag(tagName) {
-  const tagsContainer = document.querySelector('.keyboard-tags');
-  const tagExists = Array.from(tagsContainer.querySelectorAll('.keyboard-tag')).some(
-    tag => tag.textContent.trim().replace(/\d+/g, '').includes(tagName)
-  );
-  
-  if (tagExists) {
-    alert('이미 추가된 태그입니다.');
-    return;
-  }
-  
-  try {
-    // API를 통해 태그 제안
-    const response = await API.keyboard.suggestTag(keyboardId, tagName);
+    thumbnail.parentElement.classList.add('active');
     
-    if (response && response.success) {
-      // 새로운 태그 요소 생성
-      const newTag = document.createElement('span');
-      newTag.className = 'keyboard-tag tag-user';
-      newTag.setAttribute('data-tag', tagName);
-      newTag.innerHTML = tagName + '<span class="tag-count">1</span>';
-      
-      // 태그 추가 버튼 앞에 삽입
-      const addButton = tagsContainer.querySelector('.keyboard-tag-add');
-      tagsContainer.insertBefore(newTag, addButton);
-      
-      // 알림 표시 후 모달 닫기
-      alert(`'${tagName}' 태그가 추가되었습니다.`);
-      closeTagModal();
-    } else {
-      alert(response?.message || '태그 추가 중 오류가 발생했습니다.');
-    }
-  } catch (error) {
-    console.error('태그 추가 중 오류 발생:', error);
-    alert('태그 추가 중 오류가 발생했습니다. 로그인이 필요할 수 있습니다.');
-  }
-}
-
-// 태그 추천/비추천 기능
-async function voteTag(tagName, voteType) {
-  // 해당 태그의 투표 카운트 요소 찾기
-  const tagId = 'vote-' + tagName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-  const voteCountElement = document.getElementById(tagId);
-  
-  if (!voteCountElement) {
-    console.error('투표 카운트 요소를 찾을 수 없습니다:', tagId);
-    return;
-  }
-  
-  try {
-    // API를 통해 태그 투표
-    const response = await API.keyboard.voteTag(keyboardId, tagId, voteType);
-    
-    if (response.success) {
-      // 현재 투표 수 가져오기
-      let voteCount = response.newCount || parseInt(voteCountElement.textContent);
-      
-      // UI 업데이트
-      voteCountElement.textContent = voteCount;
-      
-      // 키보드 상세 영역의 태그에도 업데이트
-      updateMainTagCount(tagName, voteCount);
-      
-      // 투표 버튼 스타일 업데이트
-      updateVoteButtonStyles(tagName, voteType);
-      
-      alert(`'${tagName}' 태그에 ${voteType === 'up' ? '추천' : '비추천'}하셨습니다.`);
-    } else {
-      alert(response.message || '태그 투표 처리 중 오류가 발생했습니다.');
-    }
-  } catch (error) {
-    console.error('태그 투표 처리 중 오류 발생:', error);
-    alert('태그 투표 처리 중 오류가 발생했습니다. 로그인이 필요할 수 있습니다.');
-  }
-}
-
-// 메인 태그 영역의 태그 카운트 업데이트
-function updateMainTagCount(tagName, count) {
-  const mainTags = document.querySelectorAll('.keyboard-tags .keyboard-tag');
-  for (const tag of mainTags) {
-    if (tag.getAttribute('data-tag') === tagName) {
-      let countElement = tag.querySelector('.tag-count');
-      if (!countElement) {
-        // 관리자 태그에는 카운트가 없을 수 있음 - 추가
-        countElement = document.createElement('span');
-        countElement.className = 'tag-count';
-        tag.appendChild(countElement);
-        
-        // 관리자 태그를 사용자 태그로 변경
-        tag.classList.remove('tag-admin');
-        tag.classList.add('tag-user');
-      }
-      countElement.textContent = Math.max(0, count); // 음수 방지
-      break;
-    }
-  }
-}
-
-// 투표 버튼 스타일 업데이트
-function updateVoteButtonStyles(tagName, voteType) {
-  const tagItems = document.querySelectorAll('.tag-list-item');
-  
-  for (const item of tagItems) {
-    const tagNameElement = item.querySelector('.tag-list-name');
-    if (tagNameElement && tagNameElement.textContent.trim() === tagName) {
-      const upvoteBtn = item.querySelector('.upvote');
-      const downvoteBtn = item.querySelector('.downvote');
-      
-      // 모든 투표 버튼 초기화
-      upvoteBtn.classList.remove('active');
-      downvoteBtn.classList.remove('active');
-      
-      // 현재 투표에 따라 스타일 적용
-      if (voteType === 'up') {
-        upvoteBtn.classList.add('active');
-      } else {
-        downvoteBtn.classList.add('active');
-      }
-    }
-  }
-}
-
-// 태그 클릭 이벤트 설정
-function initTagClickEvents() {
-  document.addEventListener('click', function(e) {
-    const target = e.target;
-    if (target.classList.contains('keyboard-tag')) {
-      const tagName = target.getAttribute('data-tag');
-      if (tagName) {
-        alert(`'${tagName}' 태그로 관련 키보드를 검색합니다.`);
-        // 여기에 태그 검색 기능을 구현할 수 있습니다.
-      }
+    // 메인 이미지 업데이트
+    const mainImage = document.querySelector('.keyboard-main-image');
+    if (mainImage) {
+      mainImage.src = thumbnail.src;
     }
   });
-}
-
-// 태그 폼 제출 핸들러 설정
-function initTagForm() {
-  const tagForm = document.getElementById('tagForm');
-  if (tagForm) {
-    tagForm.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      const tagName = document.getElementById('tagName').value;
-      const tagReason = document.getElementById('tagReason').value;
-      
-      if (tagName && tagReason) {
-        try {
-          // API 호출을 위해 suggestTag 함수에 tagReason도 넘길 수 있게 API 확장이 필요
-          const response = await API.keyboard.suggestTag(keyboardId, tagName, tagReason);
-          
-          if (response && response.success) {
-            alert("'" + tagName + "' 태그 신청이 접수되었습니다. \n관리자 검토 후 추가될 예정입니다.");
-            this.reset();
-            closeTagModal();
-          } else {
-            alert(response?.message || '태그 신청 중 오류가 발생했습니다.');
-          }
-        } catch (error) {
-          console.error('태그 신청 중 오류 발생:', error);
-          alert('태그 신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-        }
-      } else {
-        alert('태그 이름과 추천 이유를 모두 입력해주세요.');
-      }
+  
+  // 이미지 확대 기능
+  const mainImage = document.querySelector('.keyboard-main-image');
+  if (mainImage) {
+    mainImage.addEventListener('click', () => {
+      // 이미지 확대 모달 표시
+      showImageModal(mainImage.src);
     });
   }
 }
 
-// 별점 입력 폼 초기화
-function initRatingForm() {
-  // 리뷰 탭 컨텐츠 찾기
-  const reviewsTab = document.getElementById('tab-reviews');
-  if (!reviewsTab) return;
+/**
+ * 이미지 확대 모달 표시
+ * @param {string} imageUrl 이미지 URL
+ */
+function showImageModal(imageUrl) {
+  // 기존 모달 제거
+  const existingModal = document.querySelector('.image-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
   
-  // 리뷰 폼이 이미 있는지 확인
-  let ratingFormContainer = reviewsTab.querySelector('.rating-form-container');
-  if (ratingFormContainer) return;
-  
-  // 리뷰 폼 추가
-  const formHtml = `
-    <div class="rating-form-container">
-      <h3>리뷰 작성하기</h3>
-      <form id="ratingForm" class="review-form">
-        <div class="rating-stars">
-          <span>별점 선택:</span>
-          <div class="star-input">
-            <i class="star" data-value="1">★</i>
-            <i class="star" data-value="2">★</i>
-            <i class="star" data-value="3">★</i>
-            <i class="star" data-value="4">★</i>
-            <i class="star" data-value="5">★</i>
-            <input type="hidden" id="ratingValue" name="ratingValue" value="0">
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="reviewContent">한줄평</label>
-          <textarea id="reviewContent" name="reviewContent" rows="3" placeholder="이 키보드에 대한 의견을 작성해주세요" required></textarea>
-        </div>
-        <button type="submit" class="submit-review-btn">리뷰 등록</button>
-      </form>
+  // 모달 생성
+  const modal = document.createElement('div');
+  modal.className = 'image-modal';
+  modal.innerHTML = `
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <img src="${imageUrl}" alt="확대 이미지">
     </div>
   `;
   
-  // 리뷰 폼 추가
-  reviewsTab.insertAdjacentHTML('afterbegin', formHtml);
+  // 모달 닫기 이벤트
+  modal.querySelector('.close-modal').addEventListener('click', () => {
+    modal.remove();
+  });
   
-  // 별점 선택 기능 추가
-  const stars = reviewsTab.querySelectorAll('.star');
+  // 모달 외부 클릭 시 닫기
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove();
+    }
+  });
+  
+  // 문서에 모달 추가
+  document.body.appendChild(modal);
+}
+
+/**
+ * 키보드 사양 테이블 업데이트
+ * @param {Object} specs 키보드 사양 객체
+ */
+function updateSpecsTable(specs) {
+  const specsTable = document.querySelector('.keyboard-specs-table tbody');
+  if (!specsTable) return;
+  
+  // 테이블 내용 생성
+  let tableContent = '';
+  
+  // 사양 정보 순회
+  for (const [key, value] of Object.entries(specs)) {
+    tableContent += `
+      <tr>
+        <th>${formatSpecName(key)}</th>
+        <td>${value}</td>
+      </tr>
+    `;
+  }
+  
+  // 내용이 없으면 기본 메시지 표시
+  if (!tableContent) {
+    tableContent = `
+      <tr>
+        <td colspan="2" class="no-specs">사양 정보가 없습니다.</td>
+      </tr>
+    `;
+  }
+  
+  specsTable.innerHTML = tableContent;
+}
+
+/**
+ * 사양 이름 포맷팅
+ * @param {string} specName 사양 키 이름
+ * @returns {string} 포맷팅된 사양 이름
+ */
+function formatSpecName(specName) {
+  // 카멜케이스나 스네이크케이스를 적절히 변환
+  return specName
+    .replace(/_/g, ' ')
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, str => str.toUpperCase())
+    .trim();
+}
+
+/**
+ * 태그 목록 업데이트
+ * @param {Array} tags 태그 배열
+ */
+function updateTags(tags) {
+  const tagContainer = document.querySelector('.keyboard-tags');
+  if (!tagContainer) return;
+  
+  // 태그가 없으면 컨테이너 숨김
+  if (!tags || tags.length === 0) {
+    tagContainer.style.display = 'none';
+    return;
+  }
+  
+  // 태그 HTML 생성
+  tagContainer.innerHTML = tags.map(tag => 
+    `<span class="keyboard-tag" data-tag="${tag}">${tag}</span>`
+  ).join('');
+  
+  // 태그 클릭 이벤트
+  tagContainer.querySelectorAll('.keyboard-tag').forEach(tagElement => {
+    tagElement.addEventListener('click', () => {
+      // 태그 검색 페이지로 이동
+      window.location.href = `/view/keyboard/list.html?tag=${encodeURIComponent(tagElement.dataset.tag)}`;
+    });
+  });
+  
+  // 컨테이너 표시
+  tagContainer.style.display = '';
+}
+
+/**
+ * 관련 키보드 업데이트
+ * @param {Array} relatedKeyboards 관련 키보드 배열
+ */
+function updateRelatedKeyboards(relatedKeyboards) {
+  const relatedContainer = document.querySelector('.related-keyboards');
+  if (!relatedContainer) return;
+  
+  // 관련 키보드가 없으면 섹션 숨김
+  if (!relatedKeyboards || relatedKeyboards.length === 0) {
+    const relatedSection = document.querySelector('.related-keyboards-section');
+    if (relatedSection) {
+      relatedSection.style.display = 'none';
+    }
+    return;
+  }
+  
+  // 관련 키보드 HTML 생성
+  relatedContainer.innerHTML = relatedKeyboards.map(keyboard => `
+    <div class="related-keyboard-card">
+      <a href="/view/keyboard/detail.html?id=${keyboard.id}">
+        <div class="card">
+          <div class="card-image">
+            <img src="${keyboard.imageUrl || '/view/img/keyboard-placeholder.jpg'}" alt="${keyboard.name}">
+          </div>
+          <div class="card-content">
+            <h4 class="card-title">${keyboard.name}</h4>
+            <div class="card-price">₩${formatPrice(keyboard.price)}</div>
+            <div class="card-rating">
+              ${generateStarRating(keyboard.rating || 0)}
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  `).join('');
+  
+  // 섹션 표시
+  const relatedSection = document.querySelector('.related-keyboards-section');
+  if (relatedSection) {
+    relatedSection.style.display = '';
+  }
+}
+
+/**
+ * 공유 링크 업데이트
+ * @param {Object} keyboard 키보드 데이터
+ */
+function updateSharingLinks(keyboard) {
+  const shareButtons = document.querySelectorAll('.share-button');
+  if (!shareButtons.length) return;
+  
+  // 현재 페이지 URL
+  const pageUrl = window.location.href;
+  // 공유 제목
+  const shareTitle = `${keyboard.name} - 키리니에서 확인하세요`;
+  
+  // SNS 공유 링크 설정
+  shareButtons.forEach(button => {
+    const platform = button.dataset.platform;
+    if (!platform) return;
+    
+    switch (platform) {
+      case 'facebook':
+        button.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
+        break;
+      case 'twitter':
+        button.href = `https://twitter.com/intent/tweet?url=${encodeURIComponent(pageUrl)}&text=${encodeURIComponent(shareTitle)}`;
+        break;
+      case 'kakaotalk':
+        // 카카오톡 API 초기화 및 공유 기능은 별도 처리 필요
+        break;
+    }
+  });
+  
+  // 클립보드 복사 버튼 이벤트
+  const copyButton = document.querySelector('.share-button[data-platform="clipboard"]');
+  if (copyButton) {
+    copyButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // 클립보드에 URL 복사
+      navigator.clipboard.writeText(pageUrl)
+        .then(() => {
+          alert('URL이 클립보드에 복사되었습니다.');
+        })
+        .catch(() => {
+          alert('클립보드 복사에 실패했습니다.');
+        });
+    });
+  }
+}
+
+/**
+ * 리뷰 통계 업데이트
+ * @param {Object} stats 리뷰 통계 데이터
+ */
+function updateReviewStats(stats) {
+  const statsContainer = document.querySelector('.review-stats');
+  if (!statsContainer) return;
+  
+  // 평균 평점
+  const avgRating = stats.avgRating || 0;
+  statsContainer.querySelector('.avg-rating-value').textContent = avgRating.toFixed(1);
+  statsContainer.querySelector('.avg-rating-stars').innerHTML = generateStarRating(avgRating);
+  
+  // 평점 분포
+  const distributionContainer = document.querySelector('.rating-distribution');
+  if (distributionContainer && stats.distribution) {
+    // 5점부터 1점까지 역순으로 표시
+    for (let i = 5; i >= 1; i--) {
+      const percentage = (stats.distribution[i] || 0) * 100;
+      
+      const barElement = distributionContainer.querySelector(`.rating-bar-${i} .bar-fill`);
+      if (barElement) {
+        barElement.style.width = `${percentage}%`;
+      }
+      
+      const percentElement = distributionContainer.querySelector(`.rating-bar-${i} .bar-percent`);
+      if (percentElement) {
+        percentElement.textContent = `${Math.round(percentage)}%`;
+      }
+    }
+  }
+}
+
+/**
+ * 리뷰 목록 렌더링
+ * @param {Array} reviews 리뷰 배열
+ */
+function renderReviews(reviews) {
+  const reviewsContainer = document.querySelector('.reviews-list');
+  if (!reviewsContainer) return;
+  
+  // 리뷰가 없을 경우
+  if (!reviews || reviews.length === 0) {
+    reviewsContainer.innerHTML = `
+      <div class="no-reviews">
+        <p>아직 리뷰가 없습니다.</p>
+        <p>첫 번째 리뷰를 작성해보세요!</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // 리뷰 목록 생성
+  reviewsContainer.innerHTML = reviews.map(review => `
+    <div class="review-item" data-review-id="${review.id}">
+      <div class="review-header">
+        <div class="reviewer-info">
+          <span class="reviewer-name">${review.userName}</span>
+          <span class="review-date">${formatDate(review.createdAt)}</span>
+        </div>
+        <div class="review-rating">
+          ${generateStarRating(review.rating)}
+        </div>
+      </div>
+      <div class="review-content">
+        <div class="review-text">${review.content}</div>
+        ${review.images && review.images.length ? `
+          <div class="review-images">
+            ${review.images.map(image => `
+              <div class="review-image">
+                <img src="${image}" alt="리뷰 이미지" class="review-img-thumbnail">
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+      <div class="review-footer">
+        <button class="btn-helpful" data-review-id="${review.id}">
+          <i class="far fa-thumbs-up"></i>
+          도움됨
+          <span class="helpful-count">${review.helpfulCount || 0}</span>
+        </button>
+        <button class="btn-report" data-review-id="${review.id}">
+          <i class="far fa-flag"></i>
+          신고
+        </button>
+      </div>
+    </div>
+  `).join('');
+  
+  // 리뷰 이미지 클릭 이벤트 (확대)
+  reviewsContainer.querySelectorAll('.review-img-thumbnail').forEach(img => {
+    img.addEventListener('click', () => {
+      showImageModal(img.src);
+    });
+  });
+  
+  // 도움됨 버튼 클릭 이벤트
+  reviewsContainer.querySelectorAll('.btn-helpful').forEach(button => {
+    button.addEventListener('click', async () => {
+      if (!ApiClient.getAuthToken()) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+      
+      const reviewId = button.dataset.reviewId;
+      try {
+        await KeyboardService.markReviewHelpful(reviewId);
+        
+        // 카운트 증가
+        const countElement = button.querySelector('.helpful-count');
+        const currentCount = parseInt(countElement.textContent) || 0;
+        countElement.textContent = currentCount + 1;
+        
+        // 버튼 비활성화
+        button.classList.add('active');
+        button.disabled = true;
+      } catch (error) {
+        console.error('리뷰에 도움됨 표시 실패:', error);
+        alert('이미 도움됨으로 표시하셨거나 오류가 발생했습니다.');
+      }
+    });
+  });
+  
+  // 신고 버튼 클릭 이벤트
+  reviewsContainer.querySelectorAll('.btn-report').forEach(button => {
+    button.addEventListener('click', () => {
+      if (!ApiClient.getAuthToken()) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+      
+      const reviewId = button.dataset.reviewId;
+      const reason = prompt('신고 사유를 입력해주세요:');
+      
+      if (reason) {
+        KeyboardService.reportReview(reviewId, reason)
+          .then(() => {
+            alert('신고가 접수되었습니다.');
+          })
+          .catch(error => {
+            console.error('리뷰 신고 실패:', error);
+            alert('신고 처리 중 오류가 발생했습니다.');
+          });
+      }
+    });
+  });
+}
+
+/**
+ * 리뷰 페이지네이션 업데이트
+ * @param {Object} pagination 페이징 정보
+ */
+function updateReviewPagination(pagination) {
+  const paginationContainer = document.querySelector('.review-pagination');
+  if (!paginationContainer || !pagination) return;
+  
+  const { currentPage, totalPages } = pagination;
+  
+  // 페이지 링크 생성
+  let paginationHTML = `
+    <nav aria-label="리뷰 페이지 네비게이션">
+      <ul class="pagination">
+        <li class="page-item ${currentPage <= 1 ? 'disabled' : ''}">
+          <a class="page-link" href="#reviews" data-page="${currentPage - 1}" aria-label="이전">
+            <span aria-hidden="true">&laquo;</span>
+          </a>
+        </li>
+  `;
+  
+  // 페이지 번호 표시 (최대 5개)
+  const startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, startPage + 4);
+  
+  for (let i = startPage; i <= endPage; i++) {
+    paginationHTML += `
+      <li class="page-item ${i === currentPage ? 'active' : ''}">
+        <a class="page-link" href="#reviews" data-page="${i}">${i}</a>
+      </li>
+    `;
+  }
+  
+  paginationHTML += `
+        <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+          <a class="page-link" href="#reviews" data-page="${currentPage + 1}" aria-label="다음">
+            <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  `;
+  
+  paginationContainer.innerHTML = paginationHTML;
+  
+  // 페이지 링크 이벤트 설정
+  document.querySelectorAll('.review-pagination .page-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      const page = parseInt(link.dataset.page);
+      if (isNaN(page) || page < 1 || page > totalPages) return;
+      
+      // 리뷰 목록 새로 로드
+      const urlParams = new URLSearchParams(window.location.search);
+      const keyboardId = urlParams.get('id');
+      
+      loadKeyboardReviews(keyboardId, { page });
+      
+      // 리뷰 섹션으로 스크롤
+      const reviewsTab = document.querySelector('a[href="#reviews"]');
+      if (reviewsTab) {
+        reviewsTab.click();
+      }
+    });
+  });
+}
+
+/**
+ * 리뷰 작성 폼 업데이트
+ * @param {number} keyboardId 키보드 ID
+ */
+function updateReviewForm(keyboardId) {
+  const reviewForm = document.querySelector('#review-form');
+  if (!reviewForm) return;
+  
+  // 로그인 상태 확인
+  if (!Auth.isLoggedIn()) {
+    // 로그인하지 않은 경우 로그인 안내 표시
+    reviewForm.innerHTML = `
+      <div class="login-required-message">
+        <p>리뷰를 작성하려면 <a href="/view/login.html?returnUrl=${encodeURIComponent(window.location.href)}">로그인</a>이 필요합니다.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // 이미 리뷰 작성 폼이 있으면 업데이트하지 않음
+  if (reviewForm.querySelector('textarea')) return;
+  
+  // 리뷰 작성 폼 생성
+  reviewForm.innerHTML = `
+    <div class="form-group mb-3">
+      <label for="review-rating">평점</label>
+      <div class="rating-input">
+        <div class="rating-stars">
+          <i class="far fa-star" data-rating="1"></i>
+          <i class="far fa-star" data-rating="2"></i>
+          <i class="far fa-star" data-rating="3"></i>
+          <i class="far fa-star" data-rating="4"></i>
+          <i class="far fa-star" data-rating="5"></i>
+        </div>
+        <input type="hidden" id="review-rating" name="rating" value="0">
+      </div>
+    </div>
+    <div class="form-group mb-3">
+      <label for="review-title">제목</label>
+      <input type="text" id="review-title" class="form-control" placeholder="리뷰 제목을 입력하세요">
+    </div>
+    <div class="form-group mb-3">
+      <label for="review-content">내용</label>
+      <textarea id="review-content" class="form-control" rows="5" placeholder="리뷰 내용을 입력하세요"></textarea>
+    </div>
+    <div class="form-group mb-3">
+      <label for="review-pros">장점</label>
+      <textarea id="review-pros" class="form-control" rows="2" placeholder="이 키보드의 장점을 입력하세요"></textarea>
+    </div>
+    <div class="form-group mb-3">
+      <label for="review-cons">단점</label>
+      <textarea id="review-cons" class="form-control" rows="2" placeholder="이 키보드의 단점을 입력하세요"></textarea>
+    </div>
+    <div class="form-group text-end">
+      <button type="submit" class="btn btn-primary">리뷰 등록</button>
+    </div>
+  `;
+  
+  // 별점 선택 이벤트
+  const stars = reviewForm.querySelectorAll('.rating-stars i');
+  const ratingInput = reviewForm.querySelector('#review-rating');
+  
   stars.forEach(star => {
     star.addEventListener('click', function() {
-      const value = parseInt(this.getAttribute('data-value'));
-      document.getElementById('ratingValue').value = value;
+      const rating = parseInt(this.dataset.rating);
       
-      // 별점 표시
-      stars.forEach(s => {
-        const starValue = parseInt(s.getAttribute('data-value'));
-        s.classList.toggle('active', starValue <= value);
+      // 별점 입력값 설정
+      ratingInput.value = rating;
+      
+      // 별점 UI 업데이트
+      stars.forEach((s, index) => {
+        if (index < rating) {
+          s.className = 'fas fa-star';
+        } else {
+          s.className = 'far fa-star';
+        }
       });
     });
     
-    // 마우스 오버 효과
-    star.addEventListener('mouseover', function() {
-      const value = parseInt(this.getAttribute('data-value'));
+    // 마우스 호버 효과
+    star.addEventListener('mouseenter', function() {
+      const rating = parseInt(this.dataset.rating);
       
-      stars.forEach(s => {
-        const starValue = parseInt(s.getAttribute('data-value'));
-        s.classList.toggle('hover', starValue <= value);
+      stars.forEach((s, index) => {
+        if (index < rating) {
+          s.className = 'fas fa-star hover';
+        }
+      });
+    });
+    
+    star.addEventListener('mouseleave', function() {
+      const currentRating = parseInt(ratingInput.value);
+      
+      stars.forEach((s, index) => {
+        if (index < currentRating) {
+          s.className = 'fas fa-star';
+        } else {
+          s.className = 'far fa-star';
+        }
       });
     });
   });
   
-  // 마우스가 나가면 원래 선택한 별점으로 돌아가기
-  const starInput = reviewsTab.querySelector('.star-input');
-  starInput.addEventListener('mouseout', function() {
-    const value = parseInt(document.getElementById('ratingValue').value);
-    
-    stars.forEach(s => {
-      s.classList.remove('hover');
-      const starValue = parseInt(s.getAttribute('data-value'));
-      s.classList.toggle('active', starValue <= value);
-    });
-  });
-  
-  // 폼 제출 처리
-  const reviewForm = document.getElementById('ratingForm');
-  reviewForm.addEventListener('submit', async function(e) {
+  // 리뷰 폼 제출 이벤트
+  reviewForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const scoreValue = parseInt(document.getElementById('ratingValue').value);
-    const review = document.getElementById('reviewContent').value;
+    const submitButton = reviewForm.querySelector('button[type="submit"]');
+    const rating = parseInt(ratingInput.value);
+    const title = reviewForm.querySelector('#review-title').value.trim();
+    const content = reviewForm.querySelector('#review-content').value.trim();
+    const pros = reviewForm.querySelector('#review-pros').value.trim();
+    const cons = reviewForm.querySelector('#review-cons').value.trim();
     
-    if (scoreValue === 0) {
+    // 유효성 검사
+    if (rating === 0) {
       alert('별점을 선택해주세요.');
       return;
     }
     
+    if (!title) {
+      alert('리뷰 제목을 입력해주세요.');
+      reviewForm.querySelector('#review-title').focus();
+      return;
+    }
+    
+    if (!content) {
+      alert('리뷰 내용을 입력해주세요.');
+      reviewForm.querySelector('#review-content').focus();
+      return;
+    }
+    
+    // 버튼 비활성화
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> 처리 중...';
+    
     try {
-      // API 호출하여 별점 등록
-      const response = await API.keyboard.rate(keyboardId, scoreValue, review);
+      // 리뷰 데이터 구성
+      const reviewData = {
+        rating,
+        title,
+        content,
+        pros,
+        cons
+      };
       
-      if (response && response.success) {
-        alert('리뷰가 성공적으로 등록되었습니다.');
-        // 페이지 새로고침하여 업데이트된 리뷰 목록 보기
-        location.reload();
-      } else {
-        alert(response?.message || '리뷰 등록 중 오류가 발생했습니다.');
-      }
+      // API 호출
+      await KeyboardService.addReview(keyboardId, reviewData);
+      
+      // 성공 메시지
+      alert('리뷰가 등록되었습니다.');
+      
+      // 캐시 삭제 (리뷰 목록 갱신 위함)
+      const cacheKeyPattern = `keyboard_reviews_${keyboardId}`;
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith(cacheKeyPattern)) {
+          sessionStorage.removeItem(key);
+        }
+      });
+      
+      // 리뷰 목록 새로고침
+      loadKeyboardReviews(keyboardId);
+      
+      // 폼 초기화
+      reviewForm.reset();
+      ratingInput.value = 0;
+      stars.forEach(s => {
+        s.className = 'far fa-star';
+      });
     } catch (error) {
-      console.error('리뷰 등록 중 오류 발생:', error);
-      alert('리뷰 등록 중 오류가 발생했습니다. 로그인이 필요할 수 있습니다.');
+      console.error('리뷰 등록 실패:', error);
+      alert('리뷰 등록에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      // 버튼 상태 복원
+      submitButton.disabled = false;
+      submitButton.innerHTML = '리뷰 등록';
     }
   });
 }
 
-// 페이지 초기화 함수
-function initKeyboardDetail() {
-  loadKeyboardData();
-  initTabs();
-  initTagClickEvents();
-  initTagForm();
-  initRatingForm();
+/**
+ * 탭 전환 이벤트 설정
+ */
+function setupTabEvents() {
+  const tabLinks = document.querySelectorAll('.nav-tabs .nav-link');
+  const tabContents = document.querySelectorAll('.tab-content .tab-pane');
+  
+  tabLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // 활성 탭 변경
+      tabLinks.forEach(tab => tab.classList.remove('active'));
+      link.classList.add('active');
+      
+      // 탭 컨텐츠 표시 전환
+      const targetId = link.getAttribute('href').substring(1);
+      tabContents.forEach(content => {
+        content.classList.remove('active');
+        if (content.id === targetId) {
+          content.classList.add('active');
+        }
+      });
+    });
+  });
 }
 
-// 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', initKeyboardDetail);
+/**
+ * 로딩 상태 표시
+ */
+function showLoadingState() {
+  const container = document.querySelector('.keyboard-detail-container');
+  if (!container) return;
+  
+  // 로딩 인디케이터 추가
+  const loadingElement = document.createElement('div');
+  loadingElement.className = 'loading-indicator';
+  loadingElement.innerHTML = `
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">로딩 중...</span>
+    </div>
+    <p>키보드 정보를 불러오는 중입니다...</p>
+  `;
+  
+  container.innerHTML = '';
+  container.appendChild(loadingElement);
+}
+
+/**
+ * 로딩 상태 제거
+ */
+function hideLoadingState() {
+  const loadingIndicator = document.querySelector('.loading-indicator');
+  if (loadingIndicator) {
+    loadingIndicator.remove();
+  }
+}
+
+/**
+ * 최근 본 키보드 기록
+ * @param {Object} keyboard 키보드 데이터
+ */
+function recordRecentKeyboard(keyboard) {
+  try {
+    // 필요한 데이터만 저장
+    const keyboardInfo = {
+      id: keyboard.id,
+      name: keyboard.name,
+      brand: keyboard.brand,
+      imageUrl: keyboard.imageUrl || keyboard.images?.[0],
+      price: keyboard.price,
+      timestamp: Date.now()
+    };
+    
+    // 로컬 스토리지에서 기존 기록 가져오기
+    const recentItems = JSON.parse(localStorage.getItem('recent_keyboards') || '[]');
+    
+    // 이미 있는 항목이면 제거
+    const existingIndex = recentItems.findIndex(item => item.id === keyboardInfo.id);
+    if (existingIndex !== -1) {
+      recentItems.splice(existingIndex, 1);
+    }
+    
+    // 배열 맨 앞에 추가
+    recentItems.unshift(keyboardInfo);
+    
+    // 최대 10개만 유지
+    const updatedList = recentItems.slice(0, 10);
+    
+    // 로컬 스토리지에 저장
+    localStorage.setItem('recent_keyboards', JSON.stringify(updatedList));
+  } catch (error) {
+    console.error('최근 본 키보드 기록 오류:', error);
+    // 비치명적 오류이므로 사용자에게 알리지 않음
+  }
+}
+
+/**
+ * 오류 메시지 표시
+ * @param {string} message 오류 메시지
+ * @param {boolean} showRetry 재시도 버튼 표시 여부
+ */
+function showErrorMessage(message, showRetry = false) {
+  const container = document.querySelector('.keyboard-detail-container');
+  if (!container) return;
+  
+  // 로딩 인디케이터 제거
+  hideLoadingState();
+  
+  // 오류 메시지 추가
+  const errorElement = document.createElement('div');
+  errorElement.className = 'error-message alert alert-danger';
+  
+  let errorHTML = message;
+  
+  // 재시도 버튼 추가
+  if (showRetry) {
+    errorHTML += `
+      <div class="mt-3">
+        <button class="btn btn-outline-primary retry-button">다시 시도</button>
+        <button class="btn btn-link return-to-list">목록으로 돌아가기</button>
+      </div>
+    `;
+  } else {
+    errorHTML += `
+      <div class="mt-3">
+        <button class="btn btn-link return-to-list">목록으로 돌아가기</button>
+      </div>
+    `;
+  }
+  
+  errorElement.innerHTML = errorHTML;
+  container.innerHTML = '';
+  container.appendChild(errorElement);
+  
+  // 재시도 버튼 이벤트 설정
+  if (showRetry) {
+    container.querySelector('.retry-button').addEventListener('click', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const keyboardId = urlParams.get('id');
+      loadKeyboardDetail(keyboardId);
+    });
+  }
+  
+  // 목록으로 돌아가기 버튼
+  container.querySelector('.return-to-list').addEventListener('click', () => {
+    window.location.href = '/view/keyboard_info.html';
+  });
+}
+
+/**
+ * 날짜 포맷팅
+ * @param {string} dateString 날짜 문자열
+ * @returns {string} 포맷된 날짜 문자열
+ */
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+/**
+ * 가격 포맷팅 (1000단위 콤마)
+ * @param {number} price 가격
+ * @returns {string} 포맷된 가격
+ */
+function formatPrice(price) {
+  return price?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') || '0';
+}

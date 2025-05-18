@@ -1,262 +1,354 @@
 // 회원가입 페이지 스크립트
 document.addEventListener('DOMContentLoaded', function() {
-  // 회원가입 페이지에서는 항상 비로그인 상태(GUEST)로 가정하고 UI를 설정
-  if (typeof Auth !== 'undefined') {
-    // 명시적으로 로컬 스토리지 상태를 체크하여 권한 설정 강제 적용
-    // 이미 로그인된 상태라면 홈으로 리다이렉트
-    if (Auth.isLoggedIn()) {
-      // 이미 로그인된 사용자라면 홈페이지로 리다이렉션
-      window.location.href = '../pages/index.html';
-      return;
-    } else {
-      // 강제로 Auth 모듈에 GUEST 권한 적용 (CSS 표시용)
-      Auth.applyRoleVisibility();
-      console.log("회원가입 페이지: GUEST 권한 적용");
-    }
+  // 이미 로그인한 경우 메인 페이지로 리다이렉션
+  if (Auth.isLoggedIn()) {
+    window.location.href = '/';
+    return;
   }
-
+  
+  // 회원가입 폼 이벤트 리스너 설정
   const signupForm = document.getElementById('signup-form');
-  const emailInput = document.getElementById('email');
-  const nicknameInput = document.getElementById('nickname');
-  const passwordInput = document.getElementById('password');
-  const passwordConfirmInput = document.getElementById('password-confirm');
-  const emailCheckBtn = document.getElementById('email-check');
-  const nicknameCheckBtn = document.getElementById('nickname-check');
-  const signupButton = document.getElementById('signup-button');
-  const agreeCheckbox = document.getElementById('agree');
-
-  const emailError = document.getElementById('email-error');
-  const nicknameError = document.getElementById('nickname-error');
-  const passwordError = document.getElementById('password-error');
-  const passwordConfirmError = document.getElementById('password-confirm-error');
-
-  let isEmailCheckedAndValid = false;
-  let isNicknameCheckedAndValid = false;
-
-  // 이메일 유효성 검사 및 중복 확인 버튼 상태 초기화
-  emailInput.addEventListener('input', function() {
-    const isValid = validateEmail(this.value);
-    if (isValid) {
-      emailError.style.display = 'none';
-    } else {
-      emailError.style.display = 'block';
-    }
-    // 이메일이 변경되면 중복확인 버튼 재활성화 및 상태 초기화
-    isEmailCheckedAndValid = false;
-    emailCheckBtn.textContent = '중복확인';
-    emailCheckBtn.disabled = false;
-    emailCheckBtn.classList.remove('completed');
-    checkFormValidity();
-  });
-
-  // 이메일 중복 확인
-  emailCheckBtn.addEventListener('click', async function() {
-    const email = emailInput.value;
-    if (!validateEmail(email)) {
-      emailError.textContent = '올바른 이메일 형식이 아닙니다.';
-      emailError.style.display = 'block';
-      return;
-    }
-    emailError.style.display = 'none';
-
-    try {
-      const response = await fetch(`/user/check-email?email=${encodeURIComponent(email)}`);
-      const result = await response.json();
-
-      if (response.ok && result.isAvailable) {
-        emailError.style.display = 'none';
-        emailCheckBtn.textContent = '확인완료';
-        emailCheckBtn.disabled = true;
-        emailCheckBtn.classList.add('completed');
-        isEmailCheckedAndValid = true;
-      } else {
-        emailError.textContent = result.message || '이미 사용 중인 이메일입니다.';
-        emailError.style.display = 'block';
-        isEmailCheckedAndValid = false;
-      }
-    } catch (error) {
-      console.error('이메일 중복 확인 중 오류 발생:', error);
-      emailError.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
-      emailError.style.display = 'block';
-      isEmailCheckedAndValid = false;
-    }
-    checkFormValidity();
-  });
-
-  // 닉네임 유효성 검사 및 중복 확인 버튼 상태 초기화
-  nicknameInput.addEventListener('input', function() {
-    const isValid = this.value.length >= 2 && this.value.length <= 10;
-    if (isValid) {
-      nicknameError.style.display = 'none';
-    } else {
-      nicknameError.style.display = 'block';
-    }
-    // 닉네임이 변경되면 중복확인 버튼 재활성화 및 상태 초기화
-    isNicknameCheckedAndValid = false;
-    nicknameCheckBtn.textContent = '중복확인';
-    nicknameCheckBtn.disabled = false;
-    nicknameCheckBtn.classList.remove('completed');
-    checkFormValidity();
-  });
-
-  // 닉네임 중복 확인
-  nicknameCheckBtn.addEventListener('click', async function() {
-    const nickname = nicknameInput.value;
-    if (!(nickname.length >= 2 && nickname.length <= 10)) {
-      nicknameError.textContent = '닉네임은 2-10자 이내여야 합니다.';
-      nicknameError.style.display = 'block';
-      return;
-    }
-    nicknameError.style.display = 'none';
-
-    try {
-      // 실제 백엔드 API 경로로 수정해야 한다냥! 예: /check-nickname 또는 /api/users/check-nickname
-      const response = await fetch(`/user/check-nickname?nickname=${encodeURIComponent(nickname)}`);
-      const result = await response.json();
-
-      if (response.ok && result.isAvailable) {
-        nicknameError.style.display = 'none';
-        nicknameCheckBtn.textContent = '확인완료';
-        nicknameCheckBtn.disabled = true;
-        nicknameCheckBtn.classList.add('completed');
-        isNicknameCheckedAndValid = true;
-      } else {
-        nicknameError.textContent = result.message || '이미 사용 중인 닉네임입니다.';
-        nicknameError.style.display = 'block';
-        isNicknameCheckedAndValid = false;
-      }
-    } catch (error) {
-      console.error('닉네임 중복 확인 중 오류 발생:', error);
-      nicknameError.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
-      nicknameError.style.display = 'block';
-      isNicknameCheckedAndValid = false;
-    }
-    checkFormValidity();
-  });
-
-  // 비밀번호 유효성 검사
-  passwordInput.addEventListener('input', function() {
-    const isValid = validatePassword(this.value);
-    if (isValid) {
-      passwordError.style.display = 'none';
-    } else {
-      passwordError.style.display = 'block';
-    }
-    // 비밀번호 확인 일치 여부도 체크
-    const isMatch = this.value === passwordConfirmInput.value;
-    if (isMatch || passwordConfirmInput.value === '') {
-      passwordConfirmError.style.display = 'none';
-    } else {
-      passwordConfirmError.style.display = 'block';
-    }
-    checkFormValidity();
-  });
-
-  // 비밀번호 확인 일치 검사
-  passwordConfirmInput.addEventListener('input', function() {
-    const isMatch = this.value === passwordInput.value;
-    if (isMatch) {
-      passwordConfirmError.style.display = 'none';
-    } else {
-      passwordConfirmError.style.display = 'block';
-    }
-    checkFormValidity();
-  });
-
-  // 약관 동의 체크박스
-  agreeCheckbox.addEventListener('change', checkFormValidity);
-
-  // 폼 제출 이벤트
-  signupForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    if (signupButton.disabled) {
-      alert('입력값을 모두 정확히 입력하고, 약관에 동의해주세요.');
-      return;
-    }
-
-    const email = emailInput.value;
-    const nickname = nicknameInput.value;
-    const password = passwordInput.value;
-
-    try {
-      const response = await fetch('/user/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, nickname, password }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.status === 'success') {
-        alert('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
-        window.location.href = 'login.html'; // 회원가입 성공 시 로그인 페이지로 이동
-      } else {
-        alert(result.message || '회원가입에 실패했습니다. 다시 시도해주세요.');
-      }
-    } catch (error) {
-      console.error('회원가입 요청 중 오류 발생:', error);
-      alert('회원가입 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-    }
-  });
-
-  // 이메일 유효성 검사 함수
-  function validateEmail(email) {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  }
-
-  // 비밀번호 유효성 검사 함수 (영문, 숫자, 특수문자 조합 8자 이상)
-  function validatePassword(password) {
-    // 실제 프로젝트의 비밀번호 정책에 맞게 수정할 수 있다냥!
-    const re = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
-    return re.test(password);
-  }
-
-  // 폼 유효성 검증 함수
-  function checkFormValidity() {
-    const isEmailValid = validateEmail(emailInput.value);
-    const isNicknameValid = nicknameInput.value.length >= 2 && nicknameInput.value.length <= 10;
-    const isPasswordValid = validatePassword(passwordInput.value);
-    const isPasswordConfirmValid = passwordInput.value === passwordConfirmInput.value;
-    const isAgreed = agreeCheckbox.checked;
-
-    // 모든 조건이 충족되어야 회원가입 버튼 활성화
-    if (
-      isEmailValid &&
-      isEmailCheckedAndValid && // 이메일 중복 확인 완료 여부
-      isNicknameValid &&
-      isNicknameCheckedAndValid && // 닉네임 중복 확인 완료 여부
-      isPasswordValid &&
-      isPasswordConfirmValid &&
-      isAgreed
-    ) {
-      signupButton.disabled = false;
-    } else {
-      signupButton.disabled = true;
-    }
-  }
-
-  // 비밀번호 보이기/숨기기 토글 기능 (기존 코드 유지)
-  const passwordToggle = document.getElementById('password-toggle');
-  const passwordConfirmToggle = document.getElementById('password-confirm-toggle');
-  
-  if (passwordToggle) {
-    passwordToggle.addEventListener('click', function() {
-      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      passwordInput.setAttribute('type', type);
-      // 아이콘 변경 로직 (필요시 추가)
-      this.classList.toggle('active'); // 예시: active 클래스로 아이콘 상태 변경
-    });
-  }
-  
-  if (passwordConfirmToggle) {
-    passwordConfirmToggle.addEventListener('click', function() {
-      const type = passwordConfirmInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      passwordConfirmInput.setAttribute('type', type);
-      // 아이콘 변경 로직 (필요시 추가)
-      this.classList.toggle('active'); // 예시: active 클래스로 아이콘 상태 변경
-    });
+  if (signupForm) {
+    setupFormValidation(signupForm);
+    signupForm.addEventListener('submit', handleSignup);
   }
 });
+
+/**
+ * 폼 유효성 검증 설정
+ * @param {HTMLFormElement} form 폼 엘리먼트
+ */
+function setupFormValidation(form) {
+  const usernameInput = form.querySelector('#username');
+  const emailInput = form.querySelector('#email');
+  const passwordInput = form.querySelector('#password');
+  const confirmPasswordInput = form.querySelector('#confirm-password');
+  const usernameError = form.querySelector('#username-error');
+  const emailError = form.querySelector('#email-error');
+  const passwordError = form.querySelector('#password-error');
+  const confirmPasswordError = form.querySelector('#confirm-password-error');
+  const passwordStrengthMeter = form.querySelector('.password-strength-meter');
+  const passwordStrengthText = form.querySelector('.password-strength-text');
+  
+  // 사용자명 유효성 검사
+  if (usernameInput && usernameError) {
+    usernameInput.addEventListener('blur', async () => {
+      const username = usernameInput.value.trim();
+      
+      if (!username) {
+        showError(usernameError, '사용자명을 입력해주세요.');
+        return;
+      }
+      
+      if (username.length < 4) {
+        showError(usernameError, '사용자명은 최소 4자 이상이어야 합니다.');
+        return;
+      }
+      
+      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        showError(usernameError, '사용자명은 영문자, 숫자, 밑줄(_)만 포함할 수 있습니다.');
+        return;
+      }
+      
+      try {
+        // 사용자명 중복 확인 (API 요청)
+        const response = await fetch(`/api/users/check-username.do?username=${encodeURIComponent(username)}`);
+        const result = await response.json();
+        
+        if (!result.available) {
+          showError(usernameError, '이미 사용 중인 사용자명입니다.');
+          return;
+        }
+        
+        hideError(usernameError);
+      } catch (error) {
+        console.error('사용자명 확인 실패:', error);
+      }
+    });
+  }
+  
+  // 이메일 유효성 검사
+  if (emailInput && emailError) {
+    emailInput.addEventListener('blur', async () => {
+      const email = emailInput.value.trim();
+      
+      if (!email) {
+        showError(emailError, '이메일을 입력해주세요.');
+        return;
+      }
+      
+      if (!isValidEmail(email)) {
+        showError(emailError, '유효한 이메일 주소를 입력해주세요.');
+        return;
+      }
+      
+      try {
+        // 이메일 중복 확인 (API 요청)
+        const response = await fetch(`/api/users/check-email.do?email=${encodeURIComponent(email)}`);
+        const result = await response.json();
+        
+        if (!result.available) {
+          showError(emailError, '이미 사용 중인 이메일입니다.');
+          return;
+        }
+        
+        hideError(emailError);
+      } catch (error) {
+        console.error('이메일 확인 실패:', error);
+      }
+    });
+  }
+  
+  // 비밀번호 강도 체크
+  if (passwordInput && passwordStrengthMeter && passwordStrengthText) {
+    passwordInput.addEventListener('input', () => {
+      const password = passwordInput.value;
+      const strength = checkPasswordStrength(password);
+      
+      // 강도 미터 업데이트
+      passwordStrengthMeter.className = 'password-strength-meter';
+      passwordStrengthMeter.classList.add(`strength-${strength.level}`);
+      
+      // 강도 텍스트 업데이트
+      passwordStrengthText.textContent = strength.message;
+      passwordStrengthText.className = 'password-strength-text';
+      passwordStrengthText.classList.add(`text-${strength.level}`);
+      
+      // 비밀번호 유효성 검사
+      if (password && password.length < 8) {
+        showError(passwordError, '비밀번호는 최소 8자 이상이어야 합니다.');
+      } else if (strength.level === 'weak') {
+        showError(passwordError, '더 강력한 비밀번호를 사용하세요.');
+      } else {
+        hideError(passwordError);
+      }
+    });
+  }
+  
+  // 비밀번호 확인 검사
+  if (confirmPasswordInput && confirmPasswordError) {
+    confirmPasswordInput.addEventListener('input', () => {
+      const password = passwordInput.value;
+      const confirmPassword = confirmPasswordInput.value;
+      
+      if (password !== confirmPassword) {
+        showError(confirmPasswordError, '비밀번호가 일치하지 않습니다.');
+      } else {
+        hideError(confirmPasswordError);
+      }
+    });
+  }
+}
+
+/**
+ * 회원가입 폼 제출 처리
+ * @param {Event} e 이벤트 객체
+ */
+async function handleSignup(e) {
+  e.preventDefault();
+  
+  // 폼 데이터 가져오기
+  const form = e.target;
+  const username = form.username.value.trim();
+  const email = form.email.value.trim();
+  const password = form.password.value;
+  const confirmPassword = form.confirmPassword.value;
+  const nickname = form.nickname?.value.trim() || username;
+  const agreeTerms = form.agreeTerms?.checked || false;
+  
+  // 제출 버튼 및 오류 메시지 요소
+  const submitButton = form.querySelector('button[type="submit"]');
+  const formErrorMessage = document.getElementById('form-error-message');
+  
+  // 폼 유효성 검사
+  if (!username || !email || !password || !confirmPassword) {
+    showError(formErrorMessage, '모든 필수 항목을 입력해주세요.');
+    return;
+  }
+  
+  if (!agreeTerms) {
+    showError(formErrorMessage, '서비스 약관에 동의해주세요.');
+    return;
+  }
+  
+  if (password !== confirmPassword) {
+    showError(formErrorMessage, '비밀번호가 일치하지 않습니다.');
+    return;
+  }
+  
+  // 비밀번호 강도 검사
+  const strength = checkPasswordStrength(password);
+  if (strength.level === 'weak') {
+    showError(formErrorMessage, '비밀번호가 너무 약합니다. 더 강력한 비밀번호를 사용하세요.');
+    return;
+  }
+  
+  // 로딩 상태 표시
+  submitButton.disabled = true;
+  submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 처리 중...';
+    // 성공 메시지 컨테이너
+  const successContainer = document.querySelector('.signup-success');
+  const formContainer = document.querySelector('.signup-form-container');
+  
+  try {
+    // 회원가입 요청 데이터
+    const userData = {
+      username,
+      email,
+      password,
+      confirmPassword, // 백엔드 검증용
+      nickname,
+      agreeTerms // 약관 동의 여부
+    };
+    
+    // CSRF 토큰 추가 (보안 강화)
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (csrfToken) {
+      userData.csrfToken = csrfToken;
+    }
+    
+    // 회원가입 API 요청
+    const result = await Auth.register(userData);
+    
+    // 회원가입 성공
+    hideError(formErrorMessage);
+    
+    // 폼 숨기고 성공 메시지 표시
+    if (formContainer && successContainer) {
+      formContainer.style.display = 'none';
+      successContainer.style.display = 'block';
+      
+      // 성공 메시지 설정
+      const messageElement = successContainer.querySelector('.success-message');
+      if (messageElement) {
+        messageElement.innerHTML = `
+          <h3>회원가입이 완료되었습니다!</h3>
+          <p>환영합니다, <strong>${nickname || username}</strong>님!</p>
+          <p>가입하신 이메일 <strong>${email}</strong>로 인증 메일이 발송되었습니다.</p>
+          <p>이메일 인증 후 모든 서비스를 이용하실 수 있습니다.</p>
+        `;
+      }
+      
+      // 자동 로그인 전환
+      if (result.autoLogin) {
+        const redirectTimer = successContainer.querySelector('.redirect-timer');
+        if (redirectTimer) {
+          let timeLeft = 5;
+          redirectTimer.textContent = timeLeft;
+          
+          // 카운트다운 후 로그인 페이지로 이동
+          const interval = setInterval(() => {
+            timeLeft--;
+            if (redirectTimer) redirectTimer.textContent = timeLeft;
+            
+            if (timeLeft <= 0) {
+              clearInterval(interval);
+              window.location.href = '/view/login.html';
+            }
+          }, 1000);
+        } else {
+          // 타이머 요소 없으면 5초 후 이동
+          setTimeout(() => {
+            window.location.href = '/view/login.html';
+          }, 5000);
+        }
+      }
+    } else {
+      // 성공 컨테이너가 없는 경우 기존 방식으로 처리
+      alert('회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.');
+      window.location.href = '/view/login.html';
+    }
+  } catch (error) {
+    console.error('회원가입 실패:', error);
+    
+    // 오류 메시지 표시
+    let errorMessage = '회원가입 중 문제가 발생했습니다. 다시 시도해주세요.';
+    
+    // 에러 메시지 세분화
+    if (error.message === 'Username already exists') {
+      errorMessage = '이미 사용 중인 사용자명입니다.';
+    } else if (error.message === 'Email already exists') {
+      errorMessage = '이미 사용 중인 이메일입니다.';
+    } else if (error.message === 'Invalid password format') {
+      errorMessage = '유효하지 않은 비밀번호 형식입니다. 영문, 숫자, 특수문자를 포함하여 8자 이상으로 설정해주세요.';
+    } else if (error.message === 'Invalid email format') {
+      errorMessage = '유효하지 않은 이메일 형식입니다.';
+    } else if (error.message.includes('network') || error.message.includes('timeout')) {
+      errorMessage = '네트워크 오류가 발생했습니다. 인터넷 연결을 확인하고 다시 시도해주세요.';
+    }
+    
+    showError(formErrorMessage, errorMessage);
+  } finally {
+    // 버튼 상태 복원
+    submitButton.disabled = false;
+    submitButton.innerHTML = '회원가입';
+  }
+}
+
+/**
+ * 비밀번호 강도 확인
+ * @param {string} password 비밀번호
+ * @returns {Object} 강도 정보
+ */
+function checkPasswordStrength(password) {
+  if (!password) {
+    return { level: 'empty', message: '비밀번호를 입력하세요' };
+  }
+  
+  const length = password.length;
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasNumbers = /\d/.test(password);
+  const hasSpecialChars = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  
+  // 점수 계산
+  let score = 0;
+  if (length >= 8) score += 1;
+  if (length >= 12) score += 1;
+  if (hasLowerCase) score += 1;
+  if (hasUpperCase) score += 1;
+  if (hasNumbers) score += 1;
+  if (hasSpecialChars) score += 2;
+  
+  // 강도 수준 결정
+  if (score >= 6) {
+    return { level: 'strong', message: '강력함' };
+  } else if (score >= 4) {
+    return { level: 'medium', message: '보통' };
+  } else {
+    return { level: 'weak', message: '약함' };
+  }
+}
+
+/**
+ * 이메일 주소 유효성 검사
+ * @param {string} email 이메일 주소
+ * @returns {boolean} 유효 여부
+ */
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+/**
+ * 오류 메시지 표시
+ * @param {HTMLElement} element 메시지 엘리먼트
+ * @param {string} message 오류 메시지
+ */
+function showError(element, message) {
+  if (element) {
+    element.textContent = message;
+    element.style.display = 'block';
+  }
+}
+
+/**
+ * 오류 메시지 숨김
+ * @param {HTMLElement} element 메시지 엘리먼트
+ */
+function hideError(element) {
+  if (element) {
+    element.textContent = '';
+    element.style.display = 'none';
+  }
+}
