@@ -10,9 +10,10 @@ services:
     #  - "3307:3306"
     # 여기서 포트를 직접 열지 않고 haproxy에서 3307로 진입한 뒤 내부 네트워크를 통해 mysql에 접근하도록 변경
     environment:
-      - MYSQL_ROOT_PASSWORD=Kosta295!
-      - MYSQL_DATABASE=kirini
-      - TZ="Asia/Seoul"
+    #환경변수의 값을 사용하도록 리팩토링
+    - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    - MYSQL_DATABASE=${MYSQL_DATABASE}
+    - TZ=${TZ}
     volumes:
       - mysql-data:/var/lib/mysql #db 저장소
       - ./docker-settings/mysql-init:/docker-entrypoint-initdb.d #스크립트를 자동 실행할 폴더
