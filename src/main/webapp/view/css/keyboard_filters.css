@@ -1,0 +1,352 @@
+/* 키보드 필터링 및 정렬 스타일 */
+
+/* 키보드 컨트롤 영역 */
+.keyboard-controls {
+    max-width: 1200px;
+    margin: 0 auto 20px;
+    padding: 0 20px;
+}
+
+/* 필터 컨테이너 */
+.filter-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+/* 필터 토글 버튼 */
+.filter-toggle-btn {
+    background: #ffcc80;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 120px;
+    transition: all 0.3s ease;
+}
+
+.filter-toggle-btn:hover {
+    background: #ffb74d;
+}
+
+.toggle-icon {
+    display: inline-block;
+    margin-left: 8px;
+    transition: transform 0.3s ease;
+}
+
+.filter-toggle-btn.active .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* 필터 패널 */
+.filter-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+    z-index: 100;
+    transform-origin: top;
+    transform: scaleY(0);
+    opacity: 0;
+    transition: all 0.3s ease;
+    visibility: hidden;
+}
+
+.filter-panel.active {
+    transform: scaleY(1);
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 필터 섹션 */
+.filter-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.filter-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.filter-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 12px;
+    color: #333;
+}
+
+/* 필터 칩 스타일 */
+.filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-chip {
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+    background: #ffcc80;
+    border-color: #ffcc80;
+}
+
+.filter-chip.active {
+    background: #ff7043;
+    border-color: #ff7043;
+    color: white;
+}
+
+/* 가격 범위 슬라이더 */
+.range-slider-container {
+    padding: 10px 0;
+}
+
+.price-inputs {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.price-input {
+    position: relative;
+}
+
+.price-field {
+    width: 100px;
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.price-label {
+    margin-left: 5px;
+}
+
+.price-separator {
+    margin: 0 15px;
+    color: #666;
+}
+
+.range-slider {
+    position: relative;
+    height: 5px;
+    margin-top: 20px;
+}
+
+.slider-track {
+    position: absolute;
+    width: 100%;
+    height: 5px;
+    background: #e0e0e0;
+    border-radius: 5px;
+}
+
+.slider-track::before {
+    content: '';
+    position: absolute;
+    height: 100%;
+    background: #ff7043;
+    border-radius: 5px;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    position: absolute;
+    width: 100%;
+    height: 5px;
+    background: transparent;
+    pointer-events: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border: 2px solid #ff7043;
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+/* 평점 필터 */
+.rating-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.rating-chip {
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rating-chip:hover {
+    background: #ffcc80;
+    border-color: #ffcc80;
+}
+
+.rating-chip.active {
+    background: #ff7043;
+    border-color: #ff7043;
+    color: white;
+}
+
+/* 필터 작업 버튼 */
+.filter-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.btn-reset-filters, .btn-apply-filters {
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-reset-filters {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.btn-reset-filters:hover {
+    background: #e0e0e0;
+}
+
+.btn-apply-filters {
+    background: #ff7043;
+    color: white;
+}
+
+.btn-apply-filters:hover {
+    background: #ff5722;
+}
+
+/* 정렬 컨테이너 */
+.sort-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.sort-container label {
+    margin-right: 10px;
+    font-weight: 500;
+}
+
+.sort-select {
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: 1px solid #e0e0e0;
+    background-color: white;
+    cursor: pointer;
+}
+
+/* 활성화된 필터 표시 */
+.active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.active-filter {
+    display: flex;
+    align-items: center;
+    background: #ff7043;
+    color: white;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 14px;
+    animation: scaleIn 0.2s ease;
+}
+
+.active-filter-remove {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.active-filter-remove:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+    .filter-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        max-width: none;
+        height: 100vh;
+        border-radius: 0;
+        transform: translateY(-100%);
+        z-index: 1000;
+        overflow-y: auto;
+    }
+    
+    .filter-panel.active {
+        transform: translateY(0);
+    }
+    
+    .filter-actions {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 15px 0;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+}

@@ -33,6 +33,203 @@
     width: 100%;
     height: 200px;
     object-fit: cover;
+    border-radius: 8px 8px 0 0;
+    transition: transform 0.3s ease;
+}
+
+.keyboard-card:hover .keyboard-image {
+    transform: scale(1.05);
+}
+
+/* 이미지 로딩 효과 */
+.keyboard-image.loading {
+    opacity: 0;
+}
+
+.keyboard-image.loaded {
+    opacity: 1;
+    transition: opacity 0.5s ease-in;
+}
+
+/* 스켈레톤 로딩 애니메이션 */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 4px;
+}
+
+.keyboard-skeleton {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.keyboard-skeleton-image {
+    width: 100%;
+    height: 200px;
+}
+
+.keyboard-skeleton-title {
+    height: 24px;
+    margin: 16px 16px 8px;
+}
+
+.keyboard-skeleton-tags {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 16px;
+}
+
+.keyboard-skeleton-tag {
+    width: 60px;
+    height: 24px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+
+.keyboard-skeleton-specs {
+    margin: 8px 16px;
+}
+
+.keyboard-skeleton-spec {
+    height: 16px;
+    margin-bottom: 6px;
+    width: 90%;
+}
+
+.keyboard-skeleton-spec:last-child {
+    width: 70%;
+}
+
+/* 페이드인 애니메이션 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* 키보드 콘텐츠 스타일링 */
+.keyboard-content {
+    padding: 15px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.keyboard-title {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.3;
+    transition: color 0.2s;
+}
+
+.keyboard-card:hover .keyboard-title {
+    color: #ff7043;
+}
+
+.keyboard-tags {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+    gap: 5px;
+}
+
+.keyboard-tag {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    background-color: rgba(255, 204, 128, 0.5);
+    color: #333;
+    font-size: 12px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.keyboard-tag:hover {
+    background-color: #ffcc80;
+    transform: scale(1.05);
+}
+
+.keyboard-specs {
+    margin-top: auto;
+    margin-bottom: 10px;
+}
+
+.keyboard-price {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 5px;
+    color: #ff7043;
+}
+
+.keyboard-rating {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.rating-count {
+    margin-left: 5px;
+    font-size: 12px;
+    color: #777;
+}
+
+.keyboard-description {
+    font-size: 13px;
+    color: #666;
+    margin: 8px 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.keyboard-action-btn {
+    display: block;
+    text-align: center;
+    padding: 8px 15px;
+    background-color: #ffcc80;
+    color: #333;
+    border-radius: 20px;
+    font-weight: 500;
+    transition: all 0.2s;
+    text-decoration: none;
+    margin-top: auto;
+}
+
+.keyboard-action-btn:hover {
+    background-color: #ff7043;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 5px rgba(0,0,0,0.1);
+}
+
+.keyboard-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
 }
 
 .keyboard-content {

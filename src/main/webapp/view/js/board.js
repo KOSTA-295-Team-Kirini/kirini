@@ -1560,9 +1560,6 @@ function updateCommentPolicy(boardType) {
     case 'qna':
       policyText = 'QnA 게시판의 댓글은 질문자와 답변 작성자만 삭제할 수 있습니다.';
       break;
-    case 'news':
-      policyText = '뉴스 게시판의 댓글은 운영원칙에 의해 관리됩니다. 욕설, 비방 등의 내용은 삭제될 수 있습니다.';
-      break;
     default:
       policyText = '댓글 작성 시 커뮤니티 가이드라인을 준수해주세요.';
   }

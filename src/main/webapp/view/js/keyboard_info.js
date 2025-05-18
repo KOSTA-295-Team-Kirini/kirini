@@ -14,6 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // 검색 기능 설정
   setupSearchControls();
+  
+  // 필터 패널 설정
+  setupFilterPanel();
+  
+  // 맨 위로 버튼 설정
+  setupBackToTopButton();
 });
 
 /**
@@ -22,8 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 async function loadKeyboards(params = {}) {
   try {
-    // 로딩 상태 표시
-    showLoadingState();
+    // 스켈레톤 로딩 상태 표시
+    showSkeletonLoading();
     
     // 캐싱 적용 (같은 파라미터로 최근 30초 이내 조회시 캐시 사용)
     const cacheKey = `keyboard_list_${JSON.stringify(params)}`;
@@ -45,6 +51,8 @@ async function loadKeyboards(params = {}) {
     // 캐시가 없거나 오래된 경우 API 호출
     if (!keyboardData) {
       console.log('키보드 목록 API 호출');
+      // 인위적인 지연으로 스켈레톤 효과를 더 잘 보여줌 (실제 환경에서는 제거)
+      await new Promise(resolve => setTimeout(resolve, 800));
       keyboardData = await KeyboardService.getKeyboards(params);
       
       // 결과 캐싱
@@ -91,7 +99,7 @@ async function loadKeyboards(params = {}) {
  * @param {Array} keyboards 키보드 데이터 배열
  */
 function renderKeyboardList(keyboards) {
-  const keyboardContainer = document.querySelector('.keyboard-listing');
+  const keyboardContainer = document.querySelector('.keyboard-grid');
   
   // 컨테이너가 없으면 종료
   if (!keyboardContainer) return;
@@ -113,10 +121,13 @@ function renderKeyboardList(keyboards) {
     return;
   }
   
-  // 키보드 카드 생성 및 추가
-  keyboards.forEach(keyboard => {
-    const keyboardCard = createKeyboardCard(keyboard);
-    keyboardContainer.appendChild(keyboardCard);
+  // 키보드 카드 생성 및 추가 (지연된 페이드인 효과 적용)
+  keyboards.forEach((keyboard, index) => {
+    setTimeout(() => {
+      const keyboardCard = createKeyboardCard(keyboard);
+      keyboardCard.classList.add('fade-in');
+      keyboardContainer.appendChild(keyboardCard);
+    }, index * 50); // 카드당 50ms 간격으로 표시
   });
   
   // 태그 클릭 이벤트 재설정
@@ -142,32 +153,29 @@ function createKeyboardCard(keyboard) {
   
   // 카드 내용 설정
   cardElement.innerHTML = `
-    <div class="card">
-      <div class="card-image">
-        <img src="${keyboard.imageUrl || '/view/img/keyboard-placeholder.jpg'}" alt="${keyboard.name}">
+    <img src="${keyboard.imageUrl || '/view/img/keyboard-placeholder.jpg'}" 
+         alt="${keyboard.name}" 
+         class="keyboard-image loading"
+         onload="this.classList.remove('loading'); this.classList.add('loaded')">    <div class="keyboard-content">
+      <h3 class="keyboard-title">${keyboard.name}</h3>
+      <div class="keyboard-tags">
+        ${tagsHtml}
       </div>
-      <div class="card-content">
-        <h3 class="card-title">${keyboard.name}</h3>
-        <div class="card-price">₩${formatPrice(keyboard.price)}</div>
-        <div class="card-rating">
+      <div class="keyboard-specs">
+        <div class="keyboard-price">₩${formatPrice(keyboard.price)}</div>
+        <div class="keyboard-rating">
           ${generateStarRating(keyboard.rating || 0)}
           <span class="rating-count">(${keyboard.reviewCount || 0})</span>
         </div>
-        <p class="card-description">${keyboard.description || ''}</p>
-        <div class="card-tags">
-          ${tagsHtml}
-        </div>
+        <p class="keyboard-description">${keyboard.description || '매력적인 타이핑 경험을 선사하는 고품질 키보드'}</p>
       </div>
-      <div class="card-actions">
-        <a href="/view/keyboard/detail.html?id=${keyboard.id}" class="btn btn-primary">자세히 보기</a>
-      </div>
+      <a href="/view/keyboard/detail.html?id=${keyboard.id}" class="keyboard-action-btn">자세히 보기</a>
     </div>
   `;
-  
-  // 카드 클릭 이벤트 (상세 페이지로 이동)
-  cardElement.querySelector('.card').addEventListener('click', function(e) {
+    // 카드 클릭 이벤트 (상세 페이지로 이동)
+  cardElement.addEventListener('click', function(e) {
     // 태그나 버튼 클릭은 별도 처리
-    if (e.target.classList.contains('keyboard-tag') || e.target.classList.contains('btn')) {
+    if (e.target.classList.contains('keyboard-tag') || e.target.classList.contains('keyboard-action-btn')) {
       return;
     }
     window.location.href = `/view/keyboard/detail.html?id=${keyboard.id}`;
@@ -411,27 +419,48 @@ function updateUrlAndLoadKeyboards(urlParams) {
 }
 
 /**
- * 로딩 상태 표시
+ * 스켈레톤 로딩 표시
+ * @param {number} count 표시할 스켈레톤 카드 수
  */
-function showLoadingState() {
+function showSkeletonLoading(count = 8) {
   // 기존 오류 메시지 제거
   hideErrorState();
   
-  const container = document.querySelector('.keyboard-listing');
+  const container = document.querySelector('.keyboard-grid');
   if (!container) return;
   
-  // 로딩 인디케이터 추가
-  const loadingElement = document.createElement('div');
-  loadingElement.className = 'loading-indicator';
-  loadingElement.innerHTML = `
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">로딩 중...</span>
-    </div>
-    <p>키보드 목록을 불러오는 중입니다...</p>
-  `;
-  
+  // 기존 내용 비우기
   container.innerHTML = '';
-  container.appendChild(loadingElement);
+  
+  // 스켈레톤 로딩 카드 추가
+  for (let i = 0; i < count; i++) {
+    const skeletonCard = document.createElement('div');
+    skeletonCard.className = 'keyboard-card keyboard-skeleton';
+    skeletonCard.innerHTML = `
+      <div class="skeleton keyboard-skeleton-image"></div>
+      <div class="keyboard-skeleton-content">
+        <div class="skeleton keyboard-skeleton-title"></div>
+        <div class="keyboard-skeleton-tags">
+          <div class="skeleton keyboard-skeleton-tag"></div>
+          <div class="skeleton keyboard-skeleton-tag"></div>
+          <div class="skeleton keyboard-skeleton-tag"></div>
+        </div>
+        <div class="keyboard-skeleton-specs">
+          <div class="skeleton keyboard-skeleton-spec"></div>
+          <div class="skeleton keyboard-skeleton-spec"></div>
+          <div class="skeleton keyboard-skeleton-spec"></div>
+        </div>
+      </div>
+    `;
+    container.appendChild(skeletonCard);
+  }
+}
+
+/**
+ * 로딩 상태 표시
+ */
+function showLoadingState() {
+  showSkeletonLoading();
 }
 
 /**
@@ -582,47 +611,415 @@ function updateCategoryFilters(categories) {
 }
 
 /**
+ * 필터 패널 토글 기능 설정
+ */
+function setupFilterPanel() {
+  const filterToggleBtn = document.getElementById('filter-toggle');
+  const filterPanel = document.getElementById('filter-panel');
+  
+  if (!filterToggleBtn || !filterPanel) return;
+  
+  // 필터 패널 토글 기능
+  filterToggleBtn.addEventListener('click', function() {
+    const isActive = filterPanel.classList.contains('active');
+    
+    // 애니메이션과 함께 토글
+    if (isActive) {
+      filterPanel.classList.remove('active');
+      filterToggleBtn.classList.remove('active');
+    } else {
+      filterPanel.classList.add('active');
+      filterToggleBtn.classList.add('active');
+    }
+  });
+  
+  // 패널 외부 클릭 시 패널 닫기
+  document.addEventListener('click', function(e) {
+    if (!filterPanel.contains(e.target) && !filterToggleBtn.contains(e.target) && filterPanel.classList.contains('active')) {
+      filterPanel.classList.remove('active');
+      filterToggleBtn.classList.remove('active');
+    }
+  });
+  
+  // 필터 칩 클릭 이벤트
+  const filterChips = document.querySelectorAll('.filter-chip');
+  filterChips.forEach(chip => {
+    chip.addEventListener('click', function() {
+      // 카테고리 필터인 경우 다른 카테고리 필터 비활성화
+      if (this.dataset.filter === 'all') {
+        filterChips.forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+      } else {
+        // 전체보기 필터 비활성화
+        document.querySelector('.filter-chip[data-filter="all"]').classList.remove('active');
+        
+        // 현재 칩 토글
+        this.classList.toggle('active');
+      }
+      
+      // 활성화된 필터가 없으면 전체보기 활성화
+      const activeFilters = document.querySelectorAll('.filter-chip.active');
+      if (activeFilters.length === 0) {
+        document.querySelector('.filter-chip[data-filter="all"]').classList.add('active');
+      }
+      
+      // 활성화된 필터 표시 업데이트
+      updateActiveFiltersDisplay();
+    });
+  });
+  
+  // 평점 칩 클릭 이벤트
+  const ratingChips = document.querySelectorAll('.rating-chip');
+  ratingChips.forEach(chip => {
+    chip.addEventListener('click', function() {
+      ratingChips.forEach(c => c.classList.remove('active'));
+      this.classList.toggle('active');
+      updateActiveFiltersDisplay();
+    });
+  });
+  
+  // 가격 범위 슬라이더 설정
+  setupPriceRangeSlider();
+  
+  // 필터 적용 버튼
+  document.querySelector('.btn-apply-filters').addEventListener('click', function() {
+    applyFilters();
+    // 필터 패널 닫기
+    filterPanel.classList.remove('active');
+    filterToggleBtn.classList.remove('active');
+  });
+  
+  // 필터 초기화 버튼
+  document.querySelector('.btn-reset-filters').addEventListener('click', resetAllFilters);
+  
+  // 정렬 옵션 변경 이벤트
+  document.getElementById('sort-select').addEventListener('change', function() {
+    applyFilters();
+  });
+}
+
+/**
+ * 가격 범위 슬라이더 설정
+ */
+function setupPriceRangeSlider() {
+  const rangeMin = document.getElementById('range-min');
+  const rangeMax = document.getElementById('range-max');
+  const inputMin = document.getElementById('price-min');
+  const inputMax = document.getElementById('price-max');
+  const sliderTrack = document.querySelector('.slider-track');
+  
+  if (!rangeMin || !rangeMax || !inputMin || !inputMax || !sliderTrack) return;
+  
+  // 슬라이더 트랙 업데이트 함수
+  function updateSliderTrack() {
+    const percent1 = (rangeMin.value / rangeMin.max) * 100;
+    const percent2 = (rangeMax.value / rangeMax.max) * 100;
+    
+    sliderTrack.style.background = `linear-gradient(to right, #e0e0e0 ${percent1}%, #ff7043 ${percent1}%, #ff7043 ${percent2}%, #e0e0e0 ${percent2}%)`;
+  }
+  
+  // 초기 슬라이더 트랙 업데이트
+  updateSliderTrack();
+  
+  // 레인지 및 입력 필드 이벤트
+  rangeMin.addEventListener('input', function() {
+    // 최소값이 최대값을 넘지 않도록
+    if (parseInt(rangeMin.value) > parseInt(rangeMax.value) - 10000) {
+      rangeMin.value = parseInt(rangeMax.value) - 10000;
+    }
+    
+    inputMin.value = rangeMin.value;
+    updateSliderTrack();
+    updateActiveFiltersDisplay();
+  });
+  
+  rangeMax.addEventListener('input', function() {
+    // 최대값이 최소값보다 작지 않도록
+    if (parseInt(rangeMax.value) < parseInt(rangeMin.value) + 10000) {
+      rangeMax.value = parseInt(rangeMin.value) + 10000;
+    }
+    
+    inputMax.value = rangeMax.value;
+    updateSliderTrack();
+    updateActiveFiltersDisplay();
+  });
+  
+  inputMin.addEventListener('input', function() {
+    // 값이 범위 내에 있는지 확인
+    let value = parseInt(inputMin.value);
+    if (isNaN(value)) value = 0;
+    if (value < 0) value = 0;
+    if (value > parseInt(rangeMax.value) - 10000) value = parseInt(rangeMax.value) - 10000;
+    
+    rangeMin.value = value;
+    inputMin.value = value;
+    updateSliderTrack();
+    updateActiveFiltersDisplay();
+  });
+  
+  inputMax.addEventListener('input', function() {
+    // 값이 범위 내에 있는지 확인
+    let value = parseInt(inputMax.value);
+    if (isNaN(value)) value = 500000;
+    if (value > 500000) value = 500000;
+    if (value < parseInt(rangeMin.value) + 10000) value = parseInt(rangeMin.value) + 10000;
+    
+    rangeMax.value = value;
+    inputMax.value = value;
+    updateSliderTrack();
+    updateActiveFiltersDisplay();
+  });
+}
+
+/**
+ * 활성화된 필터 표시 업데이트
+ */
+function updateActiveFiltersDisplay() {
+  const activeFiltersContainer = document.getElementById('active-filters');
+  if (!activeFiltersContainer) return;
+  
+  activeFiltersContainer.innerHTML = '';
+  
+  // 카테고리 필터
+  const activeCategories = Array.from(document.querySelectorAll('.filter-chip.active')).filter(chip => chip.dataset.filter !== 'all');
+  activeCategories.forEach(category => {
+    addActiveFilterChip(category.textContent, 'category', category.dataset.filter);
+  });
+  
+  // 평점 필터
+  const activeRating = document.querySelector('.rating-chip.active');
+  if (activeRating) {
+    addActiveFilterChip(activeRating.textContent, 'rating', activeRating.dataset.rating);
+  }
+  
+  // 가격 범위 필터
+  const minPrice = document.getElementById('price-min').value;
+  const maxPrice = document.getElementById('price-max').value;
+  const defaultMin = 0;
+  const defaultMax = 500000;
+  
+  if (minPrice != defaultMin || maxPrice != defaultMax) {
+    const formattedMin = formatPrice(minPrice);
+    const formattedMax = formatPrice(maxPrice);
+    addActiveFilterChip(`₩${formattedMin} ~ ₩${formattedMax}`, 'price', `${minPrice}-${maxPrice}`);
+  }
+  
+  // 정렬 옵션
+  const sortSelect = document.getElementById('sort-select');
+  if (sortSelect && sortSelect.value !== 'popular') {
+    const sortText = sortSelect.options[sortSelect.selectedIndex].text;
+    addActiveFilterChip(sortText, 'sort', sortSelect.value);
+  }
+}
+
+/**
+ * 활성화된 필터 칩 추가
+ */
+function addActiveFilterChip(text, type, value) {
+  const activeFiltersContainer = document.getElementById('active-filters');
+  if (!activeFiltersContainer) return;
+  
+  const chipElement = document.createElement('div');
+  chipElement.className = 'active-filter';
+  chipElement.dataset.type = type;
+  chipElement.dataset.value = value;
+  chipElement.innerHTML = `
+    ${text}
+    <button class="active-filter-remove" aria-label="필터 제거">×</button>
+  `;
+  
+  // 칩 제거 이벤트
+  chipElement.querySelector('.active-filter-remove').addEventListener('click', function() {
+    // 필터 유형에 따른 처리
+    switch (type) {
+      case 'category':
+        // 카테고리 필터 비활성화
+        document.querySelector(`.filter-chip[data-filter="${value}"]`).classList.remove('active');
+        // 활성 필터가 없으면 '전체보기' 활성화
+        if (document.querySelectorAll('.filter-chip.active').length === 0) {
+          document.querySelector('.filter-chip[data-filter="all"]').classList.add('active');
+        }
+        break;
+        
+      case 'rating':
+        // 평점 필터 비활성화
+        document.querySelector(`.rating-chip[data-rating="${value}"]`).classList.remove('active');
+        break;
+        
+      case 'price':
+        // 가격 범위 초기화
+        const [min, max] = value.split('-');
+        document.getElementById('price-min').value = 0;
+        document.getElementById('price-max').value = 500000;
+        document.getElementById('range-min').value = 0;
+        document.getElementById('range-max').value = 500000;
+        
+        // 슬라이더 트랙 업데이트
+        const sliderTrack = document.querySelector('.slider-track');
+        if (sliderTrack) {
+          sliderTrack.style.background = 'linear-gradient(to right, #e0e0e0 0%, #ff7043 0%, #ff7043 100%, #e0e0e0 100%)';
+        }
+        break;
+        
+      case 'sort':
+        // 정렬 옵션 초기화
+        document.getElementById('sort-select').value = 'popular';
+        break;
+    }
+    
+    // 필터 칩 제거 및 필터 적용
+    chipElement.remove();
+    applyFilters();
+  });
+  
+  activeFiltersContainer.appendChild(chipElement);
+}
+
+/**
  * 모든 필터 초기화
  */
 function resetAllFilters() {
-  // URL의 검색 파라미터만 제거
-  const newUrl = window.location.pathname;
-  window.history.pushState({ path: newUrl }, '', newUrl);
+  // 카테고리 필터 초기화
+  document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active'));
+  document.querySelector('.filter-chip[data-filter="all"]').classList.add('active');
   
-  // 활성화된 필터 버튼 초기화
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
+  // 평점 필터 초기화
+  document.querySelectorAll('.rating-chip').forEach(chip => chip.classList.remove('active'));
   
-  // '전체' 버튼 활성화
-  const allButton = document.querySelector('.filter-btn[data-filter="all"]');
-  if (allButton) {
-    allButton.classList.add('active');
+  // 가격 범위 초기화
+  document.getElementById('price-min').value = 0;
+  document.getElementById('price-max').value = 500000;
+  document.getElementById('range-min').value = 0;
+  document.getElementById('range-max').value = 500000;
+  
+  // 슬라이더 트랙 초기화
+  const sliderTrack = document.querySelector('.slider-track');
+  if (sliderTrack) {
+    sliderTrack.style.background = 'linear-gradient(to right, #e0e0e0 0%, #ff7043 0%, #ff7043 100%, #e0e0e0 100%)';
   }
   
-  // 검색 필드 초기화
-  const searchInput = document.querySelector('#keyboard-search-input');
-  if (searchInput) {
-    searchInput.value = '';
-  }
+  // 정렬 옵션 초기화
+  document.getElementById('sort-select').value = 'popular';
   
-  // 가격 필터 초기화
-  const minInput = document.querySelector('#price-min');
-  const maxInput = document.querySelector('#price-max');
-  if (minInput) minInput.value = '';
-  if (maxInput) maxInput.value = '';
+  // 활성화된 필터 표시 초기화
+  document.getElementById('active-filters').innerHTML = '';
   
-  // 정렬 기본값으로 초기화
-  const sortSelect = document.querySelector('#sort-select');
-  if (sortSelect) {
-    sortSelect.value = 'popular';
-  }
-  
-  // 키보드 목록 다시 로드 (필터 없이)
-  loadKeyboards();
+  // 필터 적용
+  applyFilters();
 }
 
-// 페이지 로드 완료 시 가격 필터 설정
+/**
+ * 필터 적용
+ */
+function applyFilters() {
+  // 선택된 카테고리 가져오기
+  const selectedCategories = Array.from(document.querySelectorAll('.filter-chip.active'))
+    .filter(chip => chip.dataset.filter !== 'all')
+    .map(chip => chip.dataset.filter);
+  
+  // 선택된 평점 가져오기
+  const ratingChip = document.querySelector('.rating-chip.active');
+  const selectedRating = ratingChip ? parseInt(ratingChip.dataset.rating) : 0;
+  
+  // 가격 범위 가져오기
+  const minPrice = parseInt(document.getElementById('price-min').value);
+  const maxPrice = parseInt(document.getElementById('price-max').value);
+  
+  // 정렬 옵션 가져오기
+  const sortBy = document.getElementById('sort-select').value;
+  
+  // 필터링 파라미터 구성
+  const filterParams = {
+    categories: selectedCategories,
+    minPrice: minPrice,
+    maxPrice: maxPrice,
+    minRating: selectedRating,
+    sortBy: sortBy
+  };
+  
+  // 키보드 목록 로드 (실제 API 연동 시 사용할 파라미터)
+  console.log('필터 적용:', filterParams);
+  loadKeyboards(filterParams);
+  
+  // 활성화된 필터 표시 업데이트
+  updateActiveFiltersDisplay();
+  
+  // TODO: API가 완성되면 필터링된 키보드 목록을 가져오는 코드로 대체
+  filterKeyboardCards(filterParams);
+}
+
+/**
+ * 키보드 카드 클라이언트 측 필터링 (API 구현 전 임시 기능)
+ */
+function filterKeyboardCards(filterParams) {
+  const cards = document.querySelectorAll('.keyboard-card');
+  
+  cards.forEach(card => {
+    let visible = true;
+    
+    // 카테고리 필터링
+    if (filterParams.categories.length > 0) {
+      const cardCategories = card.dataset.categories?.split(' ') || [];
+      const hasMatchingCategory = filterParams.categories.some(category => 
+        cardCategories.includes(category)
+      );
+      
+      if (!hasMatchingCategory) {
+        visible = false;
+      }
+    }
+    
+    // 가격 필터링 (임시 데이터 사용)
+    const priceText = card.querySelector('.keyboard-price')?.textContent || '';
+    const priceMatch = priceText.match(/[\d,]+/);
+    if (priceMatch) {
+      const price = parseInt(priceMatch[0].replace(/,/g, ''));
+      if (price < filterParams.minPrice || price > filterParams.maxPrice) {
+        visible = false;
+      }
+    }
+    
+    // 카드 표시/숨김
+    card.style.display = visible ? '' : 'none';
+  });
+}
+
+/**
+ * 맨 위로 버튼 기능 설정
+ */
+function setupBackToTopButton() {
+  const backToTopBtn = document.getElementById('back-to-top');
+  
+  if (!backToTopBtn) return;
+  
+  // 스크롤 이벤트
+  window.addEventListener('scroll', function() {
+    // 스크롤 위치에 따라 버튼 표시/숨김
+    if (window.pageYOffset > 300) {
+      backToTopBtn.classList.add('visible');
+    } else {
+      backToTopBtn.classList.remove('visible');
+    }
+  });
+  
+  // 버튼 클릭 이벤트
+  backToTopBtn.addEventListener('click', function() {
+    // 부드럽게 맨 위로 스크롤
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  });
+}
+
+// 문서 로드 시 맨 위로 버튼 설정
 document.addEventListener('DOMContentLoaded', () => {
-  setupPriceFilter();
+  // 기존 이벤트 설정
+  // ...existing code...
+  
+  // 필터 패널 설정
+  setupFilterPanel();
+  
+  // 맨 위로 버튼 설정
+  setupBackToTopButton();
 });

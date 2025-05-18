@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>키보드 정보 - KIRINI</title>  <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/keyboard_tag.css">
+  <link rel="stylesheet" href="../css/keyboard_info.css">
+  <link rel="stylesheet" href="../css/keyboard_filters.css">
+  <link rel="stylesheet" href="../css/back-to-top.css">
   <script src="../js/main.js" defer></script>
   <script src="../js/auth.js"></script>
   <script src="../js/components.js"></script>
@@ -15,20 +18,83 @@
   <!-- 헤더 플레이스홀더 -->
   <div id="header-placeholder"></div>
 
+  <!-- 맨 위로 버튼 -->
+  <button id="back-to-top" class="back-to-top" title="맨 위로">↑</button>
+
   <section class="page-title">
     <h1>⌨️ 키보드 정보</h1>
     <p>키보드 유형별 특징과 추천 제품을 알아보세요</p>
   </section>
-
-  <div class="filter-container">
-    <div class="filter-title">카테고리별 필터링</div>
-    <div class="filter-options">
-      <button class="filter-btn active" data-filter="all">전체보기</button>
-      <button class="filter-btn" data-filter="gaming">게이밍</button>
-      <button class="filter-btn" data-filter="office">사무용</button>
-      <button class="filter-btn" data-filter="mechanical">기계식</button>
-      <button class="filter-btn" data-filter="wireless">무선</button>
-      <button class="filter-btn" data-filter="custom">커스텀</button>
+  <div class="keyboard-controls">
+    <div class="filter-container">
+      <button class="filter-toggle-btn" id="filter-toggle">
+        필터 옵션 <span class="toggle-icon">▼</span>
+      </button>
+      
+      <div class="filter-panel" id="filter-panel">
+        <div class="filter-section">
+          <h3 class="filter-section-title">카테고리</h3>
+          <div class="filter-options filter-chips">
+            <button class="filter-chip active" data-filter="all">전체보기</button>
+            <button class="filter-chip" data-filter="gaming">게이밍</button>
+            <button class="filter-chip" data-filter="office">사무용</button>
+            <button class="filter-chip" data-filter="mechanical">기계식</button>
+            <button class="filter-chip" data-filter="wireless">무선</button>
+            <button class="filter-chip" data-filter="custom">커스텀</button>
+          </div>
+        </div>
+        
+        <div class="filter-section">
+          <h3 class="filter-section-title">가격 범위</h3>
+          <div class="range-slider-container">
+            <div class="price-inputs">
+              <div class="price-input">
+                <input type="number" id="price-min" min="0" max="500000" value="0" class="price-field">
+                <span class="price-label">원</span>
+              </div>
+              <span class="price-separator">~</span>
+              <div class="price-input">
+                <input type="number" id="price-max" min="0" max="500000" value="500000" class="price-field">
+                <span class="price-label">원</span>
+              </div>
+            </div>
+            <div class="range-slider">
+              <div class="slider-track"></div>
+              <input type="range" min="0" max="500000" value="0" step="10000" id="range-min">
+              <input type="range" min="0" max="500000" value="500000" step="10000" id="range-max">
+            </div>
+          </div>
+        </div>
+        
+        <div class="filter-section">
+          <h3 class="filter-section-title">평점</h3>
+          <div class="rating-filter">
+            <button class="rating-chip" data-rating="4">4★ 이상</button>
+            <button class="rating-chip" data-rating="3">3★ 이상</button>
+            <button class="rating-chip" data-rating="2">2★ 이상</button>
+          </div>
+        </div>
+        
+        <div class="filter-actions">
+          <button class="btn-reset-filters">필터 초기화</button>
+          <button class="btn-apply-filters">적용하기</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sort-container">
+      <label for="sort-select">정렬:</label>
+      <select id="sort-select" class="sort-select">
+        <option value="popular">인기순</option>
+        <option value="newest">최신순</option>
+        <option value="price-low">가격 낮은순</option>
+        <option value="price-high">가격 높은순</option>
+        <option value="rating">평점 높은순</option>
+      </select>
+    </div>
+    
+    <div class="active-filters" id="active-filters">
+      <!-- 활성화된 필터가 여기에 표시됩니다 -->
     </div>
   </div>
 
