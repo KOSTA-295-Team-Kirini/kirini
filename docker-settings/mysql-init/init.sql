@@ -1,4 +1,4 @@
-drop database kirini_db if exists;
+drop database if exists kirini_db;
 create database kirini_db;
 
 use kirini_db;
