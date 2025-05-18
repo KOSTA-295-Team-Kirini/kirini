@@ -2,61 +2,86 @@
 const urlParams = new URLSearchParams(window.location.search);
 const keyboardId = urlParams.get('id');
 
-// 키보드 ID에 따라 데이터 로드 (실제로는 서버에서 데이터를 가져올 것)
-function loadKeyboardData() {
-  // 여기서는 간단한 예시로 ID에 따라 다른 데이터 표시
-  if (keyboardId === '1') {
-    // 이미 기본 데이터가 설정되어 있음 (스틸시리즈 에이펙스 프로)
-  } else if (keyboardId === '2') {
-    document.getElementById('keyboardName').textContent = '로지텍 MX Keys';
-    document.getElementById('keyboardPrice').textContent = '129,000원';
-    document.querySelector('.stars').textContent = '★★★★★';
-    document.querySelector('.rate-count').textContent = '(4.9/5, 리뷰 329개)';
-    // 이미지도 변경 (실제 구현 시 이미지 경로 설정)
-    document.getElementById('mainImage').src = '../img/keyboard2.jpg';
+// 키보드 상세 정보 로드 (API 사용)
+async function loadKeyboardData() {
+  try {
+    // API를 통해 키보드 정보 가져오기
+    const keyboard = await API.keyboard.getDetail(keyboardId);
+    
+    // 상세 정보 화면에 표시
+    document.getElementById('keyboardName').textContent = keyboard.keyboardName;
+    document.getElementById('keyboardPrice').textContent = `${keyboard.keyboardPrice.toLocaleString()}원`;
+    
+    // 별점 표시
+    const avgScore = keyboard.avgScore || 0;
+    const fullStars = Math.floor(avgScore);
+    const halfStar = avgScore - fullStars >= 0.5;
+    
+    let starsText = '';
+    for (let i = 0; i < fullStars; i++) {
+      starsText += '★';
+    }
+    if (halfStar) {
+      starsText += '☆';
+    }
+    for (let i = 0; i < 5 - fullStars - (halfStar ? 1 : 0); i++) {
+      starsText += '☆';
+    }
+    
+    document.querySelector('.stars').textContent = starsText;
+    document.querySelector('.rate-count').textContent = `(${avgScore.toFixed(1)}/5, 리뷰 ${keyboard.reviewCount}개)`;
+    
+    // 이미지 설정
+    if (keyboard.keyboardImageUrl) {
+      document.getElementById('mainImage').src = keyboard.keyboardImageUrl;
+    } else {
+      document.getElementById('mainImage').src = '../img/keyboard_default.jpg';
+    }
     document.getElementById('mainImage').onerror = function() {
-      this.src = 'https://via.placeholder.com/500x300?text=로지텍+MX+Keys';
+      this.src = `https://via.placeholder.com/500x300?text=${encodeURIComponent(keyboard.keyboardName)}`;
     };
-  } else if (keyboardId === '3') {
-    document.getElementById('keyboardName').textContent = 'GMMK Pro';
-    document.getElementById('keyboardPrice').textContent = '249,000원';
-    document.querySelector('.stars').textContent = '★★★★☆';
-    document.querySelector('.rate-count').textContent = '(4.5/5, 리뷰 275개)';
-    document.getElementById('mainImage').src = '../img/keyboard3.jpg';
-    document.getElementById('mainImage').onerror = function() {
-      this.src = 'https://via.placeholder.com/500x300?text=GMMK+Pro';
-    };
-  } else if (keyboardId === '4') {
-    document.getElementById('keyboardName').textContent = '레이저 블랙위도우 V3 Pro';
-    document.getElementById('keyboardPrice').textContent = '279,000원';
-    document.querySelector('.stars').textContent = '★★★★☆';
-    document.querySelector('.rate-count').textContent = '(4.6/5, 리뷰 192개)';
-    document.getElementById('mainImage').src = '../img/keyboard4.jpg';
-    document.getElementById('mainImage').onerror = function() {
-      this.src = 'https://via.placeholder.com/500x300?text=레이저+블랙위도우';
-    };
-  } else if (keyboardId === '5') {
-    document.getElementById('keyboardName').textContent = '레오폴드 FC900R';
-    document.getElementById('keyboardPrice').textContent = '149,000원';
-    document.querySelector('.stars').textContent = '★★★★★';
-    document.querySelector('.rate-count').textContent = '(4.8/5, 리뷰 412개)';
-    document.getElementById('mainImage').src = '../img/keyboard5.jpg';
-    document.getElementById('mainImage').onerror = function() {
-      this.src = 'https://via.placeholder.com/500x300?text=레오폴드+FC900R';
-    };
-  } else if (keyboardId === '6') {
-    document.getElementById('keyboardName').textContent = 'ToFu60 DIY 키트';
-    document.getElementById('keyboardPrice').textContent = '189,000원';
-    document.querySelector('.stars').textContent = '★★★★☆';
-    document.querySelector('.rate-count').textContent = '(4.4/5, 리뷰 157개)';
-    document.getElementById('mainImage').src = '../img/keyboard6.jpg';
-    document.getElementById('mainImage').onerror = function() {
-      this.src = 'https://via.placeholder.com/500x300?text=ToFu60+DIY';
-    };
+    
+    // 키보드 설명 표시
+    if (document.getElementById('keyboard-description')) {
+      document.getElementById('keyboard-description').textContent = keyboard.keyboardDescription;
+    }
+    
+    // 태그 표시
+    if (keyboard.tags && keyboard.tags.length > 0) {
+      const tagsContainer = document.querySelector('.keyboard-tags');
+      
+      // 기존 태그 삭제 (태그 추가 버튼 제외)
+      const addButton = tagsContainer.querySelector('.keyboard-tag-add');
+      while (tagsContainer.firstChild && tagsContainer.firstChild !== addButton) {
+        tagsContainer.removeChild(tagsContainer.firstChild);
+      }
+      
+      // 새 태그 추가
+      keyboard.tags.forEach(tag => {
+        const tagElement = document.createElement('span');
+        tagElement.className = 'keyboard-tag ' + (tag.isAdmin ? 'tag-admin' : 'tag-user');
+        tagElement.setAttribute('data-tag', tag.tagName);
+        
+        const tagText = document.createTextNode(tag.tagName);
+        tagElement.appendChild(tagText);
+        
+        if (!tag.isAdmin) {
+          const tagCount = document.createElement('span');
+          tagCount.className = 'tag-count';
+          tagCount.textContent = tag.voteCount;
+          tagElement.appendChild(tagCount);
+        }
+        
+        tagsContainer.insertBefore(tagElement, addButton);
+      });
+    }
+    
+    // 현재 키보드 이름을 태그 모달에 설정
+    document.getElementById('currentKeyboard').textContent = keyboard.keyboardName;
+  } catch (error) {
+    console.error('키보드 정보를 불러오는데 실패했습니다:', error);
+    alert('키보드 정보를 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
   }
-  
-  // 현재 키보드 이름을 태그 모달에 설정
-  document.getElementById('currentKeyboard').textContent = document.getElementById('keyboardName').textContent;
 }
 
 // 이미지 갤러리 기능
@@ -102,7 +127,7 @@ function closeTagModal() {
 }
 
 // 추천 태그 추가 기능
-function addRecommendedTag(tagName) {
+async function addRecommendedTag(tagName) {
   const tagsContainer = document.querySelector('.keyboard-tags');
   const tagExists = Array.from(tagsContainer.querySelectorAll('.keyboard-tag')).some(
     tag => tag.textContent.trim().replace(/\d+/g, '').includes(tagName)
@@ -113,23 +138,35 @@ function addRecommendedTag(tagName) {
     return;
   }
   
-  // 새로운 태그 요소 생성
-  const newTag = document.createElement('span');
-  newTag.className = 'keyboard-tag tag-user';
-  newTag.setAttribute('data-tag', tagName);
-  newTag.innerHTML = tagName + '<span class="tag-count">1</span>';
-  
-  // 태그 추가 버튼 앞에 삽입
-  const addButton = tagsContainer.querySelector('.keyboard-tag-add');
-  tagsContainer.insertBefore(newTag, addButton);
-  
-  // 알림 표시 후 모달 닫기
-  alert(`'${tagName}' 태그가 추가되었습니다.`);
-  closeTagModal();
+  try {
+    // API를 통해 태그 제안
+    const response = await API.keyboard.suggestTag(keyboardId, tagName);
+    
+    if (response && response.success) {
+      // 새로운 태그 요소 생성
+      const newTag = document.createElement('span');
+      newTag.className = 'keyboard-tag tag-user';
+      newTag.setAttribute('data-tag', tagName);
+      newTag.innerHTML = tagName + '<span class="tag-count">1</span>';
+      
+      // 태그 추가 버튼 앞에 삽입
+      const addButton = tagsContainer.querySelector('.keyboard-tag-add');
+      tagsContainer.insertBefore(newTag, addButton);
+      
+      // 알림 표시 후 모달 닫기
+      alert(`'${tagName}' 태그가 추가되었습니다.`);
+      closeTagModal();
+    } else {
+      alert(response?.message || '태그 추가 중 오류가 발생했습니다.');
+    }
+  } catch (error) {
+    console.error('태그 추가 중 오류 발생:', error);
+    alert('태그 추가 중 오류가 발생했습니다. 로그인이 필요할 수 있습니다.');
+  }
 }
 
 // 태그 추천/비추천 기능
-function voteTag(tagName, voteType) {
+async function voteTag(tagName, voteType) {
   // 해당 태그의 투표 카운트 요소 찾기
   const tagId = 'vote-' + tagName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   const voteCountElement = document.getElementById(tagId);
@@ -139,47 +176,31 @@ function voteTag(tagName, voteType) {
     return;
   }
   
-  // 현재 투표 수 가져오기
-  let voteCount = parseInt(voteCountElement.textContent);
-  
-  // 이미 투표했는지 체크 (실제 구현에서는 서버에 저장)
-  const storageKey = `voted-${tagName}`;
-  const alreadyVoted = localStorage.getItem(storageKey);
-  
-  if (alreadyVoted === voteType) {
-    alert('이미 이 태그에 투표하셨습니다.');
-    return;
-  }
-  
-  // 이전에 반대로 투표한 경우, 이전 투표 취소하고 새로운 투표 반영
-  if (alreadyVoted) {
-    if (alreadyVoted === 'up' && voteType === 'down') {
-      voteCount -= 2; // 추천에서 비추천으로 변경
-    } else if (alreadyVoted === 'down' && voteType === 'up') {
-      voteCount += 2; // 비추천에서 추천으로 변경
-    }
-  } else {
-    // 첫 투표인 경우
-    if (voteType === 'up') {
-      voteCount += 1;
+  try {
+    // API를 통해 태그 투표
+    const response = await API.keyboard.voteTag(keyboardId, tagId, voteType);
+    
+    if (response.success) {
+      // 현재 투표 수 가져오기
+      let voteCount = response.newCount || parseInt(voteCountElement.textContent);
+      
+      // UI 업데이트
+      voteCountElement.textContent = voteCount;
+      
+      // 키보드 상세 영역의 태그에도 업데이트
+      updateMainTagCount(tagName, voteCount);
+      
+      // 투표 버튼 스타일 업데이트
+      updateVoteButtonStyles(tagName, voteType);
+      
+      alert(`'${tagName}' 태그에 ${voteType === 'up' ? '추천' : '비추천'}하셨습니다.`);
     } else {
-      voteCount -= 1;
+      alert(response.message || '태그 투표 처리 중 오류가 발생했습니다.');
     }
+  } catch (error) {
+    console.error('태그 투표 처리 중 오류 발생:', error);
+    alert('태그 투표 처리 중 오류가 발생했습니다. 로그인이 필요할 수 있습니다.');
   }
-  
-  // UI 업데이트
-  voteCountElement.textContent = voteCount;
-  
-  // 키보드 상세 영역의 태그에도 업데이트
-  updateMainTagCount(tagName, voteCount);
-  
-  // 태그 투표 상태 저장 (실제 구현에서는 서버로 전송)
-  localStorage.setItem(storageKey, voteType);
-  
-  // 투표 버튼 스타일 업데이트
-  updateVoteButtonStyles(tagName, voteType);
-  
-  alert(`'${tagName}' 태그에 ${voteType === 'up' ? '추천' : '비추천'}하셨습니다.`);
 }
 
 // 메인 태그 영역의 태그 카운트 업데이트
@@ -246,19 +267,139 @@ function initTagClickEvents() {
 function initTagForm() {
   const tagForm = document.getElementById('tagForm');
   if (tagForm) {
-    tagForm.addEventListener('submit', function(e) {
+    tagForm.addEventListener('submit', async function(e) {
       e.preventDefault();
       
       const tagName = document.getElementById('tagName').value;
       const tagReason = document.getElementById('tagReason').value;
       
       if (tagName && tagReason) {
-        alert("'" + tagName + "' 태그 신청이 접수되었습니다. \n관리자 검토 후 추가될 예정입니다.");
-        this.reset();
-        closeTagModal();
+        try {
+          // API 호출을 위해 suggestTag 함수에 tagReason도 넘길 수 있게 API 확장이 필요
+          const response = await API.keyboard.suggestTag(keyboardId, tagName, tagReason);
+          
+          if (response && response.success) {
+            alert("'" + tagName + "' 태그 신청이 접수되었습니다. \n관리자 검토 후 추가될 예정입니다.");
+            this.reset();
+            closeTagModal();
+          } else {
+            alert(response?.message || '태그 신청 중 오류가 발생했습니다.');
+          }
+        } catch (error) {
+          console.error('태그 신청 중 오류 발생:', error);
+          alert('태그 신청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        }
+      } else {
+        alert('태그 이름과 추천 이유를 모두 입력해주세요.');
       }
     });
   }
+}
+
+// 별점 입력 폼 초기화
+function initRatingForm() {
+  // 리뷰 탭 컨텐츠 찾기
+  const reviewsTab = document.getElementById('tab-reviews');
+  if (!reviewsTab) return;
+  
+  // 리뷰 폼이 이미 있는지 확인
+  let ratingFormContainer = reviewsTab.querySelector('.rating-form-container');
+  if (ratingFormContainer) return;
+  
+  // 리뷰 폼 추가
+  const formHtml = `
+    <div class="rating-form-container">
+      <h3>리뷰 작성하기</h3>
+      <form id="ratingForm" class="review-form">
+        <div class="rating-stars">
+          <span>별점 선택:</span>
+          <div class="star-input">
+            <i class="star" data-value="1">★</i>
+            <i class="star" data-value="2">★</i>
+            <i class="star" data-value="3">★</i>
+            <i class="star" data-value="4">★</i>
+            <i class="star" data-value="5">★</i>
+            <input type="hidden" id="ratingValue" name="ratingValue" value="0">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="reviewContent">한줄평</label>
+          <textarea id="reviewContent" name="reviewContent" rows="3" placeholder="이 키보드에 대한 의견을 작성해주세요" required></textarea>
+        </div>
+        <button type="submit" class="submit-review-btn">리뷰 등록</button>
+      </form>
+    </div>
+  `;
+  
+  // 리뷰 폼 추가
+  reviewsTab.insertAdjacentHTML('afterbegin', formHtml);
+  
+  // 별점 선택 기능 추가
+  const stars = reviewsTab.querySelectorAll('.star');
+  stars.forEach(star => {
+    star.addEventListener('click', function() {
+      const value = parseInt(this.getAttribute('data-value'));
+      document.getElementById('ratingValue').value = value;
+      
+      // 별점 표시
+      stars.forEach(s => {
+        const starValue = parseInt(s.getAttribute('data-value'));
+        s.classList.toggle('active', starValue <= value);
+      });
+    });
+    
+    // 마우스 오버 효과
+    star.addEventListener('mouseover', function() {
+      const value = parseInt(this.getAttribute('data-value'));
+      
+      stars.forEach(s => {
+        const starValue = parseInt(s.getAttribute('data-value'));
+        s.classList.toggle('hover', starValue <= value);
+      });
+    });
+  });
+  
+  // 마우스가 나가면 원래 선택한 별점으로 돌아가기
+  const starInput = reviewsTab.querySelector('.star-input');
+  starInput.addEventListener('mouseout', function() {
+    const value = parseInt(document.getElementById('ratingValue').value);
+    
+    stars.forEach(s => {
+      s.classList.remove('hover');
+      const starValue = parseInt(s.getAttribute('data-value'));
+      s.classList.toggle('active', starValue <= value);
+    });
+  });
+  
+  // 폼 제출 처리
+  const reviewForm = document.getElementById('ratingForm');
+  reviewForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const scoreValue = parseInt(document.getElementById('ratingValue').value);
+    const review = document.getElementById('reviewContent').value;
+    
+    if (scoreValue === 0) {
+      alert('별점을 선택해주세요.');
+      return;
+    }
+    
+    try {
+      // API 호출하여 별점 등록
+      const response = await API.keyboard.rate(keyboardId, scoreValue, review);
+      
+      if (response && response.success) {
+        alert('리뷰가 성공적으로 등록되었습니다.');
+        // 페이지 새로고침하여 업데이트된 리뷰 목록 보기
+        location.reload();
+      } else {
+        alert(response?.message || '리뷰 등록 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('리뷰 등록 중 오류 발생:', error);
+      alert('리뷰 등록 중 오류가 발생했습니다. 로그인이 필요할 수 있습니다.');
+    }
+  });
 }
 
 // 페이지 초기화 함수
@@ -267,6 +408,7 @@ function initKeyboardDetail() {
   initTabs();
   initTagClickEvents();
   initTagForm();
+  initRatingForm();
 }
 
 // 페이지 로드 시 초기화
