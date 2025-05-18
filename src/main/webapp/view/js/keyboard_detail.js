@@ -5,8 +5,14 @@ const keyboardId = urlParams.get('id');
 // 키보드 상세 정보 로드 (API 사용)
 async function loadKeyboardData() {
   try {
-    // API를 통해 키보드 정보 가져오기
-    const keyboard = await API.keyboard.getDetail(keyboardId);
+    // 로딩 상태 표시
+    const contentArea = document.querySelector('.keyboard-detail-content');
+    if (contentArea) {
+      contentArea.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>키보드 정보를 불러오는 중입니다...</p></div>';
+    }
+    
+    // API를 통해 키보드 정보 가져오기 (.do 접미사 사용)
+    const keyboard = await KeyboardService.getKeyboardDetails(keyboardId);
     
     // 상세 정보 화면에 표시
     document.getElementById('keyboardName').textContent = keyboard.keyboardName;
@@ -41,9 +47,60 @@ async function loadKeyboardData() {
       this.src = `https://via.placeholder.com/500x300?text=${encodeURIComponent(keyboard.keyboardName)}`;
     };
     
+    // 이미지 갤러리 생성
+    if (keyboard.images && keyboard.images.length > 0) {
+      const galleryContainer = document.querySelector('.image-gallery');
+      if (galleryContainer) {
+        galleryContainer.innerHTML = '';
+        
+        keyboard.images.forEach(imageUrl => {
+          const imgElement = document.createElement('img');
+          imgElement.className = 'gallery-image';
+          imgElement.src = imageUrl;
+          imgElement.alt = keyboard.keyboardName;
+          imgElement.onclick = function() {
+            changeImage(this, imageUrl);
+          };
+          
+          galleryContainer.appendChild(imgElement);
+        });
+        
+        // 첫 번째 이미지 활성화
+        if (galleryContainer.firstChild) {
+          galleryContainer.firstChild.classList.add('active');
+        }
+      }
+    }
+    
     // 키보드 설명 표시
     if (document.getElementById('keyboard-description')) {
       document.getElementById('keyboard-description').textContent = keyboard.keyboardDescription;
+    }
+    
+    // 사양 정보 표시
+    if (keyboard.specifications && document.getElementById('keyboard-specs')) {
+      const specsContainer = document.getElementById('keyboard-specs');
+      specsContainer.innerHTML = '';
+      
+      // 사양 테이블 생성
+      const table = document.createElement('table');
+      table.className = 'specs-table';
+      
+      Object.entries(keyboard.specifications).forEach(([key, value]) => {
+        const row = document.createElement('tr');
+        
+        const keyCell = document.createElement('th');
+        keyCell.textContent = key;
+        
+        const valueCell = document.createElement('td');
+        valueCell.textContent = value;
+        
+        row.appendChild(keyCell);
+        row.appendChild(valueCell);
+        table.appendChild(row);
+      });
+      
+      specsContainer.appendChild(table);
     }
     
     // 태그 표시
@@ -78,9 +135,214 @@ async function loadKeyboardData() {
     
     // 현재 키보드 이름을 태그 모달에 설정
     document.getElementById('currentKeyboard').textContent = keyboard.keyboardName;
+    
+    // 리뷰 불러오기
+    loadReviews(keyboardId);
+    
+    // 관련 키보드 불러오기
+    loadRelatedKeyboards(keyboardId);
+    
+    // 로딩 상태 제거
+    if (contentArea) {
+      contentArea.querySelector('.loading-indicator')?.remove();
+    }
+    
   } catch (error) {
     console.error('키보드 정보를 불러오는데 실패했습니다:', error);
-    alert('키보드 정보를 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
+    
+    // 오류 메시지 표시
+    const contentArea = document.querySelector('.keyboard-detail-content');
+    if (contentArea) {
+      contentArea.innerHTML = '<div class="error-message"><p>키보드 정보를 불러오는데 실패했습니다. <button id="retry-load">다시 시도</button></p></div>';
+      
+      // 다시 시도 버튼
+      document.getElementById('retry-load')?.addEventListener('click', () => {
+        loadKeyboardData();
+      });
+    }
+  }
+}
+
+// 키보드 리뷰 불러오기
+async function loadReviews(keyboardId) {
+  try {
+    const reviewsContainer = document.getElementById('keyboard-reviews');
+    if (!reviewsContainer) return;
+    
+    reviewsContainer.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>리뷰를 불러오는 중입니다...</p></div>';
+    
+    // API를 통해 리뷰 목록 가져오기 (.do 접미사 사용)
+    const response = await ReviewService.getReviews(keyboardId, {
+      page: 1,
+      size: 10,
+      sort: 'newest'
+    });
+    
+    if (!response || !response.reviews) {
+      throw new Error('리뷰를 불러오는데 실패했습니다.');
+    }
+    
+    const reviews = response.reviews;
+    
+    // 리뷰 목록 표시
+    reviewsContainer.innerHTML = '';
+    
+    if (reviews.length === 0) {
+      reviewsContainer.innerHTML = `
+        <div class="no-reviews">
+          <p>아직 리뷰가 없습니다. 첫 리뷰를 작성해보세요!</p>
+          <button class="btn write-review-btn">리뷰 작성하기</button>
+        </div>
+      `;
+      
+      reviewsContainer.querySelector('.write-review-btn')?.addEventListener('click', openReviewForm);
+      return;
+    }
+    
+    // 리뷰 컨테이너 생성
+    const reviewsList = document.createElement('div');
+    reviewsList.className = 'reviews-list';
+    
+    reviews.forEach(review => {
+      const reviewElement = document.createElement('div');
+      reviewElement.className = 'review-item';
+      
+      // 별점 생성
+      let starsText = '';
+      for (let i = 0; i < 5; i++) {
+        starsText += i < review.score ? '★' : '☆';
+      }
+      
+      reviewElement.innerHTML = `
+        <div class="review-header">
+          <div class="review-author">${review.authorName}</div>
+          <div class="review-date">${new Date(review.createdAt).toLocaleDateString()}</div>
+        </div>
+        <div class="review-rating">
+          <span class="stars">${starsText}</span>
+          <span class="score">${review.score}/5</span>
+        </div>
+        <div class="review-content">${review.content}</div>
+        <div class="review-footer">
+          <button class="review-helpful" data-review-id="${review.id}">
+            도움됨 <span class="helpful-count">${review.helpfulCount || 0}</span>
+          </button>
+        </div>
+      `;
+      
+      reviewsList.appendChild(reviewElement);
+    });
+    
+    reviewsContainer.appendChild(reviewsList);
+    
+    // 리뷰 하단 페이지네이션 및 작성 버튼
+    const reviewsFooter = document.createElement('div');
+    reviewsFooter.className = 'reviews-footer';
+    reviewsFooter.innerHTML = `
+      <button class="btn write-review-btn">리뷰 작성하기</button>
+    `;
+    
+    reviewsContainer.appendChild(reviewsFooter);
+    
+    // 리뷰 작성 버튼 이벤트
+    reviewsContainer.querySelector('.write-review-btn')?.addEventListener('click', openReviewForm);
+    
+    // 리뷰 도움됨 버튼 이벤트
+    reviewsContainer.querySelectorAll('.review-helpful').forEach(button => {
+      button.addEventListener('click', async function() {
+        const reviewId = this.dataset.reviewId;
+        try {
+          await ReviewService.rateReviewHelpfulness(reviewId, true);
+          
+          const countElement = this.querySelector('.helpful-count');
+          if (countElement) {
+            const currentCount = parseInt(countElement.textContent);
+            countElement.textContent = (currentCount + 1).toString();
+          }
+          
+          this.disabled = true;
+          this.classList.add('clicked');
+        } catch (error) {
+          console.error('리뷰 평가 중 오류 발생:', error);
+        }
+      });
+    });
+    
+  } catch (error) {
+    console.error('리뷰를 불러오는 중 오류 발생:', error);
+    
+    const reviewsContainer = document.getElementById('keyboard-reviews');
+    if (reviewsContainer) {
+      reviewsContainer.innerHTML = '<div class="error-message"><p>리뷰를 불러오는데 실패했습니다.</p></div>';
+    }
+  }
+}
+
+// 관련 키보드 불러오기
+async function loadRelatedKeyboards(keyboardId) {
+  try {
+    const relatedContainer = document.getElementById('related-keyboards');
+    if (!relatedContainer) return;
+    
+    relatedContainer.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>관련 키보드를 불러오는 중입니다...</p></div>';
+    
+    // API를 통해 관련 키보드 가져오기 (.do 접미사 사용)
+    const response = await KeyboardService.getRelatedKeyboards(keyboardId);
+    
+    if (!response || !response.keyboards) {
+      throw new Error('관련 키보드를 불러오는데 실패했습니다.');
+    }
+    
+    const relatedKeyboards = response.keyboards;
+    
+    // 관련 키보드 표시
+    relatedContainer.innerHTML = '';
+    
+    if (relatedKeyboards.length === 0) {
+      relatedContainer.innerHTML = '<p>관련 키보드가 없습니다.</p>';
+      return;
+    }
+    
+    // 관련 키보드 그리드 생성
+    const relatedGrid = document.createElement('div');
+    relatedGrid.className = 'related-keyboards-grid';
+    
+    relatedKeyboards.forEach(keyboard => {
+      const keyboardElement = document.createElement('div');
+      keyboardElement.className = 'related-keyboard-item';
+      
+      keyboardElement.innerHTML = `
+        <a href="keyboard_detail.html?id=${keyboard.id}">
+          <img src="${keyboard.imageUrl || '../img/keyboard_default.jpg'}" alt="${keyboard.name}" 
+               onerror="this.src='https://via.placeholder.com/200x100?text=${encodeURIComponent(keyboard.name)}'">
+          <div class="related-keyboard-info">
+            <h4>${keyboard.name}</h4>
+            <div class="price">${keyboard.price.toLocaleString()}원</div>
+          </div>
+        </a>
+      `;
+      
+      relatedGrid.appendChild(keyboardElement);
+    });
+    
+    relatedContainer.appendChild(relatedGrid);
+    
+  } catch (error) {
+    console.error('관련 키보드를 불러오는 중 오류 발생:', error);
+    
+    const relatedContainer = document.getElementById('related-keyboards');
+    if (relatedContainer) {
+      relatedContainer.innerHTML = '<div class="error-message"><p>관련 키보드를 불러오는데 실패했습니다.</p></div>';
+    }
+  }
+}
+
+// 리뷰 작성 폼 열기
+function openReviewForm() {
+  // 리뷰 작성 모달 표시 로직
+  const reviewModal = document.getElementById('review-modal');
+  if (reviewModal) {
+    reviewModal.style.display = 'block';
   }
 }
 

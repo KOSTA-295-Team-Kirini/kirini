@@ -60,19 +60,32 @@ document.addEventListener('DOMContentLoaded', () => {
 // 키보드 데이터 로드 함수
 async function loadKeyboardList() {
   try {
-    // API에서 키보드 목록 가져오기
-    const response = await API.keyboard.getList();
+    // 로딩 상태 표시
+    const keyboardGrid = document.querySelector('.keyboard-grid');
+    keyboardGrid.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>키보드 정보를 불러오는 중입니다...</p></div>';
+    
+    // API에서 키보드 목록 가져오기 (.do 접미사 사용)
+    const response = await KeyboardService.getKeyboards({
+      page: 1,
+      size: 20,
+      sort: 'popular'
+    });
     
     if (!response || !response.keyboardList) {
       console.error('키보드 목록을 불러오는데 실패했습니다.');
+      keyboardGrid.innerHTML = '<div class="error-message">키보드 정보를 불러오는데 실패했습니다. 새로고침을 시도해주세요.</div>';
       return;
     }
     
     const keyboardList = response.keyboardList;
-    const keyboardGrid = document.querySelector('.keyboard-grid');
     
     // 기존 키보드 카드 삭제
     keyboardGrid.innerHTML = '';
+    
+    if (keyboardList.length === 0) {
+      keyboardGrid.innerHTML = '<div class="empty-state">표시할 키보드 정보가 없습니다.</div>';
+      return;
+    }
     
     // 키보드 카드 생성 및 추가
     keyboardList.forEach(keyboard => {

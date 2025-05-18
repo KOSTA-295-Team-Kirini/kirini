@@ -274,4 +274,260 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 300);
     });
   });
+  
+  // 게시판 API를 통해 게시물 목록 로드
+  async function loadBoardData(boardType, page = 1, size = 10) {
+    try {
+      // API를 통해 게시물 목록 가져오기 (.do 접미사 사용)
+      const response = await BoardService.getPosts(boardType, {
+        page: page,
+        size: size,
+        sort: 'latest'
+      });
+      
+      if (!response || !response.posts) {
+        console.error(`${boardType} 게시판의 게시물을 불러오는데 실패했습니다.`);
+        return;
+      }
+      
+      const posts = response.posts;
+      const boardTable = document.querySelector(`#${boardType}-board .board-table tbody`);
+      
+      if (!boardTable) {
+        console.error(`${boardType} 게시판의 테이블을 찾을 수 없습니다.`);
+        return;
+      }
+      
+      // 기존 데이터 삭제
+      boardTable.innerHTML = '';
+      
+      // 게시물 목록 생성
+      posts.forEach(post => {
+        const row = document.createElement('tr');
+        row.className = 'clickable-row';
+        row.dataset.postId = post.id;
+        
+        row.innerHTML = `
+          <td class="post-id">${post.id}</td>
+          <td class="post-title">${post.title} ${post.commentCount > 0 ? `<span class="comment-count">[${post.commentCount}]</span>` : ''}</td>
+          <td class="post-author">${post.author}</td>
+          <td class="post-date">${formatDate(post.createdAt)}</td>
+          <td class="post-views">${post.views}</td>
+          <td class="post-likes">${post.likes}</td>
+        `;
+        
+        boardTable.appendChild(row);
+      });
+      
+      // 게시물 클릭 이벤트 다시 연결
+      attachPostClickEvents();
+      
+    } catch (error) {
+      console.error(`게시물 목록 로딩 중 오류 발생:`, error);
+    }
+  }
+  
+  // 게시물 상세 정보 로드
+  async function loadPostDetail(boardType, postId) {
+    try {
+      // API를 통해 게시물 상세 정보 가져오기 (.do 접미사 사용)
+      const post = await BoardService.getPost(boardType, postId);
+      
+      if (!post) {
+        console.error(`게시물 정보를 불러오는데 실패했습니다.`);
+        return;
+      }
+      
+      // 상세 정보 표시
+      detailTitle.textContent = post.title;
+      detailAuthor.textContent = post.author;
+      detailDate.textContent = formatDate(post.createdAt);
+      document.getElementById('detail-views').textContent = post.views;
+      document.getElementById('detail-likes').textContent = post.likes;
+      document.getElementById('post-like-count-display').textContent = post.likes;
+      detailContent.innerHTML = post.content;
+      
+      // 댓글 불러오기
+      loadPostComments(boardType, postId);
+      
+    } catch (error) {
+      console.error(`게시물 상세 정보 로딩 중 오류 발생:`, error);
+    }
+  }
+  
+  // 게시물 댓글 로드
+  async function loadPostComments(boardType, postId) {
+    try {
+      // API를 통해 댓글 목록 가져오기 (.do 접미사 사용)
+      const response = await BoardService.getComments(boardType, postId);
+      
+      if (!response || !response.comments) {
+        console.error(`댓글을 불러오는데 실패했습니다.`);
+        return;
+      }
+      
+      const comments = response.comments;
+      
+      // 댓글 수 업데이트
+      detailCommentCount.textContent = comments.length;
+      
+      // 댓글 목록 생성
+      detailCommentList.innerHTML = '';
+      
+      if (comments.length === 0) {
+        detailCommentList.innerHTML = '<p class="no-comments">아직 댓글이 없습니다. 첫 댓글을 작성해보세요!</p>';
+        return;
+      }
+      
+      comments.forEach(comment => {
+        const commentElement = document.createElement('div');
+        commentElement.className = 'comment-item';
+        
+        commentElement.innerHTML = `
+          <div class="comment-header">
+            <span class="comment-author">${comment.author}</span>
+            <span class="comment-date">${formatDate(comment.createdAt)}</span>
+          </div>
+          <div class="comment-content">${comment.content}</div>
+        `;
+        
+        detailCommentList.appendChild(commentElement);
+      });
+      
+    } catch (error) {
+      console.error(`댓글 로딩 중 오류 발생:`, error);
+    }
+  }
+  
+  // 날짜 포맷 함수
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+  
+  // 게시물 클릭 이벤트 연결 함수
+  function attachPostClickEvents() {
+    const clickableRows = document.querySelectorAll('.board-table .clickable-row');
+    clickableRows.forEach(row => {
+      row.addEventListener('click', function() {
+        const postId = this.dataset.postId;
+        const parentBoardElement = this.closest('.board-content');
+        let boardType = '';
+        
+        if (parentBoardElement && parentBoardElement.id) {
+          boardType = parentBoardElement.id.replace('-board', '');
+        } else {
+          const activeNav = document.querySelector('.board-nav a.active');
+          if (activeNav && activeNav.dataset.board) {
+            boardType = activeNav.dataset.board;
+          }
+        }
+        
+        // 게시물 상세 정보 로드
+        if (boardType && postId) {
+          loadPostDetail(boardType, postId);
+          postDetailView.style.display = 'block';
+        }
+      });
+    });
+  }
+
+  // 초기화 시 각 게시판의 데이터 로드
+  function initBoardData() {
+    // 키보드 소식 게시판 (news) 데이터 로드
+    loadBoardData('news');
+    
+    // 자유게시판 (free) 데이터 로드
+    loadBoardData('free');
+    
+    // 익명게시판의 경우 필요시 구현 (비동기 로드 또는 탭 클릭 시 로드)
+  }
+  
+  // 탭 클릭 시 해당 게시판 데이터 다시 로드 (선택적)
+  boardLinks.forEach(link => {
+    const originalClickHandler = link.onclick;
+    
+    link.onclick = function(e) {
+      if (originalClickHandler) {
+        originalClickHandler.call(this, e);
+      }
+      
+      const boardType = this.dataset.board;
+      if (boardType && boardType !== 'anonymous') {
+        loadBoardData(boardType);
+      }
+      
+      return false;
+    };
+  });
+  
+  // 댓글 작성 기능
+  if (detailCommentInput) {
+    const commentForm = detailCommentInput.closest('form');
+    if (commentForm) {
+      commentForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const commentText = detailCommentInput.value.trim();
+        if (!commentText) return;
+        
+        try {
+          const activeNav = document.querySelector('.board-nav a.active');
+          if (!activeNav || !activeNav.dataset.board) return;
+          
+          const boardType = activeNav.dataset.board;
+          const postId = document.querySelector('.clickable-row.active')?.dataset.postId;
+          
+          if (!postId) return;
+          
+          // API를 통해 댓글 작성 (.do 접미사 사용)
+          await BoardService.createComment(boardType, postId, commentText);
+          
+          // 댓글 작성 후 댓글 목록 다시 로드
+          loadPostComments(boardType, postId);
+          
+          // 입력 필드 초기화
+          detailCommentInput.value = '';
+          
+        } catch (error) {
+          console.error(`댓글 작성 중 오류 발생:`, error);
+          alert('댓글 작성에 실패했습니다. 다시 시도해주세요.');
+        }
+      });
+    }
+  }
+  
+  // 게시글 추천 기능
+  if (postLikeButton) {
+    const originalClickHandler = postLikeButton.onclick;
+    
+    postLikeButton.onclick = async function(e) {
+      if (originalClickHandler) {
+        originalClickHandler.call(this, e);
+      }
+      
+      try {
+        const activeNav = document.querySelector('.board-nav a.active');
+        if (!activeNav || !activeNav.dataset.board) return;
+        
+        const boardType = activeNav.dataset.board;
+        const postId = document.querySelector('.clickable-row.active')?.dataset.postId;
+        
+        if (!postId) return;
+        
+        // API를 통해 게시글 추천 (.do 접미사 사용)
+        await BoardService.reactToPost(boardType, postId, 'like');
+        
+      } catch (error) {
+        console.error(`게시글 추천 중 오류 발생:`, error);
+      }
+      
+      return false;
+    };
+  }
+  
+  // 페이지 초기화 시 데이터 로드
+  initBoardData();
+  
+  // ...existing code...
 });
