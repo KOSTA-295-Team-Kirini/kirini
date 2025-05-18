@@ -7,26 +7,29 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import dto.user.UserDTO;
 import util.db.DBConnectionUtil;
+import util.logging.LoggerConfig;
 
 public class UserDAO {
     private Connection conn = null;
     private PreparedStatement pstmt = null;
     private ResultSet rs = null;
     
+    private static final Logger logger = LoggerConfig.getLogger(UserDAO.class);
+    
     // 사용자 등록 - 3가지 필드만 사용
     public boolean registerUser(UserDTO user) throws SQLException {
         Connection conn = null;
         PreparedStatement pstmt = null;
         
-        try {
-            conn = DBConnectionUtil.getConnection();
-            System.out.println("DB 연결 성공: " + conn);
+        try {            conn = DBConnectionUtil.getConnection();
+            logger.info("DB 연결 성공: " + conn);
             
             // 디버깅용 로그
-            System.out.println("회원가입 정보: " + user.getEmail() + ", " + user.getNickname());
+            logger.info("회원가입 정보: " + user.getEmail() + ", " + user.getNickname());
             
             // 데이터베이스 스키마에 맞는 SQL 쿼리 - user_id 제외
             String sql = "INSERT INTO user (user_password, user_name, user_email, " +
@@ -46,16 +49,14 @@ public class UserDAO {
             } else {
                 pstmt.setString(4, user.getIntroduce());
             }
-            
-            // SQL 실행 및 결과 확인
+              // SQL 실행 및 결과 확인
             int result = pstmt.executeUpdate();
-            System.out.println("SQL 실행 결과: " + result + "행 삽입됨");
+            logger.info("SQL 실행 결과: " + result + "행 삽입됨");
             return result > 0;
         } catch (SQLException e) {
-            System.err.println("회원가입 SQL 오류: " + e.getMessage());
-            System.err.println("SQL 상태 코드: " + e.getSQLState());
-            System.err.println("오류 코드: " + e.getErrorCode());
-            e.printStackTrace();
+            logger.severe("회원가입 SQL 오류: " + e.getMessage() + 
+                         ", SQL 상태 코드: " + e.getSQLState() + 
+                         ", 오류 코드: " + e.getErrorCode());
             throw e;
         } finally {
             if (pstmt != null) try { pstmt.close(); } catch (SQLException e) {}
@@ -138,8 +139,7 @@ public class UserDAO {
         
         return false;
     }
-    
-    /**
+      /**
      * 닉네임 중복 검사
      * @param nickname 검사할 닉네임
      * @return 중복이면 true, 아니면 false
@@ -154,9 +154,16 @@ public class UserDAO {
             pstmt.setString(1, nickname);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getInt(1) > 0;
+                    boolean exists = rs.getInt(1) > 0;
+                    if (exists) {
+                        logger.info("중복된 닉네임 발견: " + nickname);
+                    }
+                    return exists;
                 }
             }
+        } catch (SQLException e) {
+            logger.severe("닉네임 중복 검사 중 오류 발생: " + e.getMessage());
+            throw e;
         }
         
         return false;

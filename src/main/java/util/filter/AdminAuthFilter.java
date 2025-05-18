@@ -20,15 +20,16 @@ public class AdminAuthFilter implements Filter {
         
         boolean isLoggedIn = (session != null && session.getAttribute("user") != null);
         boolean isAdmin = false;
-        
-        if (isLoggedIn) {
+          if (isLoggedIn) {
             // 사용자 객체에서 관리자 권한 확인
-            // dto.user.UserDTO user = (dto.user.UserDTO) session.getAttribute("user");
-            // isAdmin = "ADMIN".equals(user.getRole());
+            dto.user.UserDTO user = (dto.user.UserDTO) session.getAttribute("user");
+            isAdmin = user != null && user.getUserLevel() == 3; // 3: 관리자
             
-            // 임시 구현: 세션에서 직접 role 확인
-            String userRole = (String) session.getAttribute("userRole");
-            isAdmin = "ADMIN".equals(userRole);
+            // 세션에 직접 역할 저장이 있는 경우도 체크 (하위 호환성 유지)
+            if (!isAdmin) {
+                String userRole = (String) session.getAttribute("userRole");
+                isAdmin = "ADMIN".equals(userRole);
+            }
         }
         
         if (isAdmin) {

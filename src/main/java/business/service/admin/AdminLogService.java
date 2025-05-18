@@ -6,6 +6,7 @@ import java.util.List;
 import dto.admin.AdminDeleteLogDTO;
 import repository.dao.admin.AdminContentRecoveryDAO;
 import repository.dao.admin.AdminDeleteLogDAO;
+import util.logging.LoggerConfig;
 
 /**
  * 삭제된 게시물/댓글 로그 관리를 위한 서비스 클래스
@@ -28,15 +29,11 @@ public class AdminLogService {
      * @param params 메소드 호출 시 사용된 파라미터 (선택적)
      */
     private void logError(String errorType, Exception e, String methodName, String params) {
-        System.err.println("=== 에러 발생 ===");
-        System.err.println("유형: " + errorType);
-        System.err.println("위치: AdminLogService." + methodName);
-        System.err.println("메시지: " + e.getMessage());
+        String message = "유형: " + errorType;
         if (params != null) {
-            System.err.println("파라미터: " + params);
+            message += ", 파라미터: " + params;
         }
-        e.printStackTrace();
-        System.err.println("================");
+        LoggerConfig.logError(AdminLogService.class, methodName, message, e);
     }
     
     /**

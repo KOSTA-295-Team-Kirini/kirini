@@ -7,14 +7,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.log4j.Logger;
+import java.util.logging.Logger;
 
 import dto.board.ChatboardDTO;
 import util.db.DBConnectionUtil;
+import util.logging.LoggerConfig;
 
 public class ChatboardDAO {
-    private static final Logger logger = Logger.getLogger(ChatboardDAO.class);
+    private static final Logger logger = LoggerConfig.getLogger(ChatboardDAO.class);
     private Connection conn = null;
     private PreparedStatement pstmt = null;
     private ResultSet rs = null;
@@ -96,10 +96,15 @@ public class ChatboardDAO {
                 if (rs.next()) {
                     chat.setChatboardUid(rs.getLong(1));
                 }
+                logger.info("새 채팅 메시지 등록 성공: " + chat.getChatboardTitle().substring(0, Math.min(chat.getChatboardTitle().length(), 20)) + "...");
                 return true;
             }
             
+            logger.warning("채팅 메시지 등록 실패");
             return false;
+        } catch (SQLException e) {
+            logger.severe("채팅 메시지 등록 중 오류 발생: " + e.getMessage());
+            throw e;
         } finally {
             closeResources();
         }
@@ -117,7 +122,17 @@ public class ChatboardDAO {
             pstmt.setLong(2, chat.getChatboardUid());
             
             int result = pstmt.executeUpdate();
-            return result > 0;
+            
+            if (result > 0) {
+                logger.info("채팅 메시지 수정 성공: ID=" + chat.getChatboardUid());
+                return true;
+            } else {
+                logger.warning("채팅 메시지 수정 실패: ID=" + chat.getChatboardUid() + ", 영향받은 행 없음");
+                return false;
+            }
+        } catch (SQLException e) {
+            logger.severe("채팅 메시지 수정 중 오류 발생: ID=" + chat.getChatboardUid() + ", 오류=" + e.getMessage());
+            throw e;
         } finally {
             closeResources();
         }
@@ -133,7 +148,17 @@ public class ChatboardDAO {
             pstmt.setLong(1, chatId);
             
             int result = pstmt.executeUpdate();
-            return result > 0;
+            
+            if (result > 0) {
+                logger.info("채팅 메시지 삭제 성공: ID=" + chatId);
+                return true;
+            } else {
+                logger.warning("채팅 메시지 삭제 실패: ID=" + chatId + ", 영향받은 행 없음");
+                return false;
+            }
+        } catch (SQLException e) {
+            logger.severe("채팅 메시지 삭제 중 오류 발생: ID=" + chatId + ", 오류=" + e.getMessage());
+            throw e;
         } finally {
             closeResources();
         }
@@ -144,6 +169,7 @@ public class ChatboardDAO {
         // 채팅 작성자 ID 조회
         long targetUserId = getUserIdByChatId(chatId);
         if (targetUserId == -1) {
+            logger.warning("신고 실패: 대상 채팅 없음 (ID=" + chatId + ")");
             return false; // 대상 채팅이 없음
         }
         
@@ -161,7 +187,17 @@ public class ChatboardDAO {
             pstmt.setLong(4, targetUserId); // 신고 대상 사용자 ID
             
             int result = pstmt.executeUpdate();
-            return result > 0;
+            
+            if (result > 0) {
+                logger.info("채팅 신고 성공: 채팅 ID=" + chatId + ", 신고 유형=" + category);
+                return true;
+            } else {
+                logger.warning("채팅 신고 실패: 채팅 ID=" + chatId);
+                return false;
+            }
+        } catch (SQLException e) {
+            logger.severe("채팅 신고 중 오류 발생: 채팅 ID=" + chatId + ", 오류=" + e.getMessage());
+            throw e;
         } finally {
             closeResources();
         }
@@ -187,15 +223,18 @@ public class ChatboardDAO {
             
             if (result > 0) {
                 conn.commit();
+                logger.info("사용자 제재 성공: 사용자 ID=" + userId + ", 제재 유형=" + penaltyType + ", 기간=" + duration + "일");
                 return true;
             } else {
                 conn.rollback();
+                logger.warning("사용자 제재 실패: 사용자 ID=" + userId);
                 return false;
             }
         } catch (SQLException e) {
             if (conn != null) {
                 conn.rollback();
             }
+            logger.severe("사용자 제재 중 오류 발생: 사용자 ID=" + userId + ", 오류=" + e.getMessage());
             throw e;
         } finally {
             if (conn != null) {
@@ -212,7 +251,7 @@ public class ChatboardDAO {
             if (pstmt != null) pstmt.close();
             if (conn != null) conn.close();
         } catch (SQLException e) {
-            logger.error("자원 해제 중 오류 발생", e);
+            logger.severe("자원 해제 중 오류 발생: " + e.getMessage());
         }
     }
 }

@@ -286,8 +286,7 @@ public class FreeboardDAO {
             closeResources();
         }
     }
-    
-    // 게시글 삭제 (소프트 삭제)
+      // 게시글 삭제 (소프트 삭제)
     public boolean deleteFreeboardById(long postId) throws SQLException {
         String sql = "UPDATE freeboard SET freeboard_deleted = 'deleted' WHERE freeboard_uid = ?";
         
@@ -297,7 +296,18 @@ public class FreeboardDAO {
             pstmt.setLong(1, postId);
             
             int result = pstmt.executeUpdate();
-            return result > 0;
+            boolean success = result > 0;
+            
+            if (success) {
+                logger.info("게시글 삭제 성공: ID=" + postId);
+            } else {
+                logger.warning("게시글 삭제 실패: ID=" + postId + ", 영향받은 행 없음");
+            }
+            
+            return success;
+        } catch (SQLException e) {
+            logger.severe("게시글 삭제 중 오류 발생: ID=" + postId + ", 오류=" + e.getMessage());
+            throw e;
         } finally {
             closeResources();
         }
