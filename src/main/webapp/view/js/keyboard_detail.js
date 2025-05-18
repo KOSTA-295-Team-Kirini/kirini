@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // 이미지 갤러리 설정
   setupImageGalleryEvents();
+  
+  // 이미지 줌 기능 설정
+  setupImageZoom();
 });
 
 /**
@@ -96,25 +99,30 @@ async function loadKeyboardDetail(keyboardId) {
  */
 function renderKeyboardDetail(keyboard) {
   // 메인 정보 업데이트
-  document.querySelector('.keyboard-name').textContent = keyboard.name;
-  document.querySelector('.keyboard-brand').textContent = keyboard.brand;
-  document.querySelector('.keyboard-price').textContent = `₩${formatPrice(keyboard.price)}`;
+  document.querySelector('.keyboard-title').textContent = keyboard.name || '키보드 이름';
+  document.querySelector('.keyboard-price').textContent = keyboard.price ? `₩${formatPrice(keyboard.price)}` : '가격 정보 없음';
   
   // 별점 표시
-  updateRatingDisplay(keyboard.rating, keyboard.reviewCount);
-  
-  // 메인 이미지 설정
-  const mainImage = document.querySelector('.keyboard-main-image');
-  if (mainImage) {
-    mainImage.src = keyboard.imageUrl || '/view/img/keyboard-placeholder.jpg';
-    mainImage.alt = keyboard.name;
+  const ratingElement = document.querySelector('.keyboard-rate .stars');
+  if (ratingElement) {
+    updateRatingDisplay(keyboard.rating || 0, keyboard.reviewCount || 0);
   }
   
-  // 이미지 갤러리 설정
-  setupImageGallery(keyboard.images || []);
-  
-  // 키보드 사양 테이블 업데이트
-  updateSpecsTable(keyboard.specs || {});
+  // 메인 이미지 설정
+  const mainImage = document.getElementById('mainImage');
+  if (mainImage) {
+    mainImage.src = keyboard.imageUrl || '../img/keyboard1.png';
+    mainImage.alt = keyboard.name;
+    
+    // 이미지 로딩 애니메이션
+    mainImage.style.opacity = 0;
+    mainImage.onload = function() {
+      setTimeout(() => {
+        mainImage.style.transition = 'opacity 0.5s ease';
+        mainImage.style.opacity = 1;
+      }, 100);
+    };
+  }
   
   // 태그 목록 업데이트
   updateTags(keyboard.tags || []);
@@ -123,10 +131,7 @@ function renderKeyboardDetail(keyboard) {
   updateRelatedKeyboards(keyboard.relatedKeyboards || []);
   
   // 메타데이터 업데이트 (페이지 제목 등)
-  document.title = `${keyboard.name} - 키리니`;
-  
-  // SNS 공유 링크 업데이트
-  updateSharingLinks(keyboard);
+  document.title = `${keyboard.name || '키보드 상세 정보'} - KIRINI`;
 }
 
 /**
@@ -923,26 +928,168 @@ function updateReviewForm(keyboardId) {
  * 탭 전환 이벤트 설정
  */
 function setupTabEvents() {
-  const tabLinks = document.querySelectorAll('.nav-tabs .nav-link');
-  const tabContents = document.querySelectorAll('.tab-content .tab-pane');
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
   
-  tabLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
+  // 탭 인디케이터 요소 생성
+  const tabButtonContainer = document.querySelector('.tab-buttons');
+  const tabIndicator = document.createElement('div');
+  tabIndicator.className = 'tab-indicator';
+  tabButtonContainer.appendChild(tabIndicator);
+  
+  // 초기 활성 탭 설정
+  const initialActiveTab = document.querySelector('.tab-btn.active');
+  if (initialActiveTab) {
+    updateTabIndicator(initialActiveTab);
+  }
+  
+  tabButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const tabId = button.getAttribute('data-tab');
       
-      // 활성 탭 변경
-      tabLinks.forEach(tab => tab.classList.remove('active'));
-      link.classList.add('active');
+      // 모든 탭 버튼에서 active 클래스 제거
+      tabButtons.forEach((btn) => btn.classList.remove('active'));
       
-      // 탭 컨텐츠 표시 전환
-      const targetId = link.getAttribute('href').substring(1);
-      tabContents.forEach(content => {
-        content.classList.remove('active');
-        if (content.id === targetId) {
-          content.classList.add('active');
-        }
-      });
+      // 모든 탭 콘텐츠에서 active 클래스 제거
+      tabContents.forEach((content) => content.classList.remove('active'));
+      
+      // 클릭한 탭 버튼과 연결된 콘텐츠에 active 클래스 추가
+      button.classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+      
+      // 탭 인디케이터 업데이트
+      updateTabIndicator(button);
     });
+  });
+}
+
+/**
+ * 탭 인디케이터 위치 업데이트
+ * @param {HTMLElement} activeTab 활성 탭 요소
+ */
+function updateTabIndicator(activeTab) {
+  const tabIndicator = document.querySelector('.tab-indicator');
+  if (!tabIndicator) return;
+  
+  const tabLeft = activeTab.offsetLeft;
+  const tabWidth = activeTab.offsetWidth;
+  
+  tabIndicator.style.width = `${tabWidth}px`;
+  tabIndicator.style.left = `${tabLeft}px`;
+}
+
+/**
+ * 이미지 갤러리 이벤트 설정
+ */
+function setupImageGalleryEvents() {
+  const galleryImages = document.querySelectorAll('.gallery-image');
+  const mainImage = document.getElementById('mainImage');
+  
+  if (!mainImage) return;
+  
+  galleryImages.forEach((image) => {
+    image.addEventListener('click', function() {
+      // 메인 이미지 변경
+      const newSrc = this.getAttribute('src');
+      
+      // 현재 활성화된 이미지에서 active 클래스 제거
+      document.querySelectorAll('.gallery-image.active').forEach((img) => {
+        img.classList.remove('active');
+      });
+      
+      // 클릭한 이미지에 active 클래스 추가
+      this.classList.add('active');
+      
+      // 메인 이미지 페이드 아웃 후 변경 후 페이드 인
+      mainImage.style.opacity = 0;
+      
+      setTimeout(() => {
+        mainImage.src = newSrc;
+        mainImage.onload = function() {
+          mainImage.style.opacity = 1;
+        };
+      }, 300);
+    });
+  });
+}
+
+/**
+ * 이미지 줌 기능 설정
+ */
+function setupImageZoom() {
+  const mainImage = document.getElementById('mainImage');
+  
+  if (!mainImage) return;
+  
+  mainImage.addEventListener('click', function() {
+    this.classList.toggle('zoomed');
+    
+    if (this.classList.contains('zoomed')) {
+      // 이미지 확대 시 드래그로 이미지 이동 가능하게 설정
+      let isDragging = false;
+      let startX, startY, startLeft, startTop;
+      
+      const imageContainer = this.parentElement;
+      
+      this.addEventListener('mousedown', startDrag);
+      document.addEventListener('mousemove', drag);
+      document.addEventListener('mouseup', endDrag);
+      
+      // 터치 이벤트 지원
+      this.addEventListener('touchstart', startDrag);
+      document.addEventListener('touchmove', drag);
+      document.addEventListener('touchend', endDrag);
+      
+      function startDrag(e) {
+        if (!mainImage.classList.contains('zoomed')) return;
+        
+        isDragging = true;
+        e.preventDefault();
+        
+        if (e.type === 'touchstart') {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        } else {
+          startX = e.clientX;
+          startY = e.clientY;
+        }
+        
+        startLeft = parseInt(mainImage.style.left || 0);
+        startTop = parseInt(mainImage.style.top || 0);
+        
+        // 커서 스타일 변경
+        mainImage.style.cursor = 'grabbing';
+      }
+      
+      function drag(e) {
+        if (!isDragging) return;
+        
+        let clientX, clientY;
+        if (e.type === 'touchmove') {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+          e.preventDefault(); // 스크롤 방지
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        
+        const deltaX = clientX - startX;
+        const deltaY = clientY - startY;
+        
+        mainImage.style.left = `${startLeft + deltaX}px`;
+        mainImage.style.top = `${startTop + deltaY}px`;
+      }
+      
+      function endDrag() {
+        isDragging = false;
+        mainImage.style.cursor = 'zoom-out';
+      }
+    } else {
+      // 확대 해제 시 위치 초기화
+      this.style.left = '0';
+      this.style.top = '0';
+    }
   });
 }
 

@@ -1,0 +1,242 @@
+/* 키보드 스펙 시각화 스타일 */
+.spec-visualization {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #fafafa;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.spec-viz-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #424242;
+  display: flex;
+  align-items: center;
+}
+
+.spec-viz-title svg {
+  margin-right: 10px;
+  color: #ff7043;
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.spec-card {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.spec-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.spec-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #424242;
+  display: flex;
+  align-items: center;
+}
+
+.spec-card-title .spec-icon {
+  margin-right: 8px;
+  color: #ff7043;
+}
+
+/* 슬라이더형 시각화 */
+.spec-slider {
+  height: 8px;
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  margin: 15px 0;
+  position: relative;
+}
+
+.spec-slider-value {
+  height: 100%;
+  background: linear-gradient(90deg, #ff9a8b 0%, #ff6b95 100%);
+  border-radius: 4px;
+  position: relative;
+}
+
+.spec-slider-value::after {
+  content: '';
+  position: absolute;
+  right: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background-color: #ff6b95;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(255, 107, 149, 0.2);
+}
+
+.spec-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 0.8rem;
+  color: #757575;
+}
+
+/* 도넛 차트형 시각화 */
+.spec-donut {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  margin: 0 auto;
+}
+
+.spec-donut-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+}
+
+.spec-donut-segment {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  clip: rect(0px, 120px, 120px, 60px);
+}
+
+.spec-donut-segment.show-more {
+  clip: rect(auto, auto, auto, auto);
+}
+
+.spec-donut-fill {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  clip: rect(0px, 60px, 120px, 0px);
+  background-color: #ff7043;
+  transform: rotate(0deg);
+  transition: transform 1s ease;
+}
+
+.spec-donut-segment.show-more .spec-donut-fill {
+  clip: rect(auto, auto, auto, auto);
+}
+
+.spec-donut-center {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  background-color: white;
+  border-radius: 50%;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ff7043;
+}
+
+/* 바 차트형 시각화 */
+.spec-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.spec-bar-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.spec-bar-label {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #616161;
+}
+
+.spec-bar-container {
+  flex: 2;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.spec-bar-value {
+  height: 100%;
+  background: linear-gradient(90deg, #5c6bc0 0%, #3949ab 100%);
+  border-radius: 4px;
+  width: 0;
+  transition: width 1s ease;
+}
+
+.spec-bar-text {
+  flex: 0 0 40px;
+  text-align: right;
+  font-size: 0.9rem;
+  color: #616161;
+  font-weight: 500;
+}
+
+/* 아이콘형 시각화 */
+.spec-icons {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin: 10px 0;
+}
+
+.spec-icon-item {
+  color: #fafafa;
+  margin-right: 2px;
+  transition: color 0.3s ease;
+}
+
+.spec-icon-item.filled {
+  color: #ff7043;
+}
+
+/* 애니메이션 */
+@keyframes fillDonut {
+  from { transform: rotate(0deg); }
+}
+
+@keyframes fillBar {
+  from { width: 0; }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .spec-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .spec-donut {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .spec-donut-center {
+    width: 70px;
+    height: 70px;
+    top: 15px;
+    left: 15px;
+    font-size: 1rem;
+  }
+}

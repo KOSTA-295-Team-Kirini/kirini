@@ -1,0 +1,784 @@
+/* 키보드 리뷰 시스템 스타일 */
+
+/* 리뷰 통계 영역 */
+.review-stats {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.review-stats-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.review-average {
+  flex: 0 0 200px;
+  text-align: center;
+  padding: 20px 10px;
+  background: linear-gradient(135deg, rgba(255,236,210,0.4) 0%, rgba(252,182,159,0.3) 100%);
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.review-average-score {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ff7043;
+  line-height: 1;
+  margin-bottom: 5px;
+  position: relative;
+  display: inline-block;
+}
+
+.review-average-score::after {
+  content: '/5';
+  font-size: 1rem;
+  color: #9e9e9e;
+  position: absolute;
+  right: -20px;
+  bottom: 8px;
+}
+
+.review-stars-large {
+  font-size: 1.5rem;
+  color: #ff7043;
+  margin-bottom: 10px;
+}
+
+.review-count {
+  font-size: 0.9rem;
+  color: #757575;
+}
+
+.review-distribution {
+  flex: 1;
+  min-width: 300px;
+}
+
+.review-bar-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.review-bar-label {
+  flex: 0 0 40px;
+  text-align: right;
+  padding-right: 10px;
+  font-size: 0.9rem;
+  color: #616161;
+}
+
+.review-bar-container {
+  flex: 1;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0 10px;
+}
+
+.review-bar-value {
+  height: 100%;
+  background: linear-gradient(90deg, #ff9a8b 0%, #ff6b95 100%);
+  border-radius: 4px;
+  transition: width 1s ease;
+}
+
+.review-bar-count {
+  flex: 0 0 40px;
+  font-size: 0.9rem;
+  color: #616161;
+}
+
+/* 리뷰 필터링 영역 */
+.review-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 20px;
+}
+
+.review-filter-button {
+  background-color: #f5f5f5;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  color: #616161;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.review-filter-button:hover {
+  background-color: #e0e0e0;
+}
+
+.review-filter-button.active {
+  background-color: #ff7043;
+  color: white;
+  box-shadow: 0 2px 5px rgba(255, 112, 67, 0.3);
+}
+
+.review-sort {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.review-sort label {
+  font-size: 0.9rem;
+  color: #616161;
+  margin-right: 8px;
+}
+
+.review-sort select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  background-color: white;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* 리뷰 아이템 */
+.reviews-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.review-item {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.review-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.review-author {
+  display: flex;
+  align-items: center;
+}
+
+.author-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #ff7043;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.author-name {
+  font-weight: 600;
+  color: #424242;
+}
+
+.verified-buyer {
+  font-size: 0.8rem;
+  background-color: #4caf50;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+}
+
+.review-date {
+  font-size: 0.85rem;
+  color: #9e9e9e;
+}
+
+.review-rating {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.stars {
+  color: #ffc107;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+
+.rating-text {
+  margin-left: 10px;
+  font-size: 0.9rem;
+  color: #424242;
+}
+
+.review-content {
+  color: #616161;
+  line-height: 1.6;
+}
+
+.review-details {
+  margin-top: 10px;
+}
+
+.review-details summary {
+  cursor: pointer;
+  color: #ff7043;
+  font-weight: 500;
+  outline: none;
+}
+
+.review-details p {
+  margin-top: 10px;
+  padding-left: 16px;
+  border-left: 2px solid #fbe9e7;
+}
+
+.review-images {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  scrollbar-width: thin;
+  scrollbar-color: #ffcc80 #f5f5f5;
+}
+
+.review-image-container {
+  flex: 0 0 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.review-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.review-image:hover {
+  transform: scale(1.05);
+}
+
+.review-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.review-tag {
+  font-size: 0.8rem;
+  background-color: #f5f5f5;
+  color: #616161;
+  padding: 4px 10px;
+  border-radius: 16px;
+}
+
+.review-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.review-action-btn {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background-color: transparent;
+  border: 1px solid #e0e0e0;
+  color: #616161;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.review-action-btn .material-icons {
+  font-size: 1.1rem;
+  margin-right: 5px;
+}
+
+.helpful-count {
+  margin-left: 5px;
+  font-weight: 600;
+}
+
+.helpful-btn:hover, .helpful-btn.active {
+  background-color: #e8f5e9;
+  border-color: #81c784;
+  color: #4caf50;
+}
+
+.report-btn:hover {
+  background-color: #ffebee;
+  border-color: #e57373;
+  color: #f44336;
+}
+
+/* 리뷰 페이지네이션 */
+.review-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  gap: 5px;
+}
+
+.page-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #e0e0e0;
+  background-color: white;
+  color: #616161;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.page-btn.active {
+  background-color: #ff7043;
+  border-color: #ff7043;
+  color: white;
+  box-shadow: 0 2px 5px rgba(255, 112, 67, 0.3);
+}
+
+.next-page {
+  width: auto;
+  padding: 0 15px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.next-page .material-icons {
+  font-size: 18px;
+  margin-left: 5px;
+}
+
+/* 리뷰 작성 폼 */
+.review-form-container {
+  margin-top: 40px;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+.review-form-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #424242;
+  position: relative;
+  padding-left: 16px;
+}
+
+.review-form-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 70%;
+  background-color: #ff7043;
+  border-radius: 2px;
+}
+
+.rating-input {
+  margin-bottom: 20px;
+}
+
+.rating-input p {
+  margin-bottom: 10px;
+  color: #424242;
+  font-weight: 500;
+}
+
+.rating-stars {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 5px;
+}
+
+.rating-stars input {
+  display: none;
+}
+
+.rating-stars label {
+  font-size: 2rem;
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.rating-stars label::before {
+  content: '★';
+}
+
+.rating-stars input:checked ~ label,
+.rating-stars label:hover,
+.rating-stars input:checked + label:hover,
+.rating-stars input:checked ~ label:hover,
+.rating-stars label:hover ~ input:checked ~ label {
+  color: #ffc107;
+}
+
+.rating-selected-text {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #9e9e9e;
+  height: 20px;
+  animation: fadeInUp 0.3s ease;
+}
+
+.review-form-field {
+  margin-bottom: 20px;
+}
+
+.review-form-field label {
+  display: block;
+  margin-bottom: 8px;
+  color: #424242;
+  font-weight: 500;
+}
+
+.review-form input,
+.review-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.review-form input:focus,
+.review-form textarea:focus {
+  border-color: #ff7043;
+  box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.1);
+  outline: none;
+}
+
+.character-count {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #9e9e9e;
+  margin-top: 5px;
+}
+
+.review-tag-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.review-tag-option {
+  padding: 6px 14px;
+  background-color: #f5f5f5;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  color: #616161;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.review-tag-option:hover {
+  background-color: #e0e0e0;
+}
+
+.review-tag-option.selected {
+  background-color: #ff7043;
+  color: white;
+}
+
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 30px;
+}
+
+.selected-tag {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  background-color: #fbe9e7;
+  color: #ff7043;
+  border-radius: 16px;
+  font-size: 0.9rem;
+}
+
+.remove-tag {
+  cursor: pointer;
+  margin-left: 5px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.review-image-upload {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.review-image-input {
+  display: none;
+}
+
+.review-image-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  border: 2px dashed #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #9e9e9e;
+  flex-direction: column;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.review-image-upload-btn:hover {
+  border-color: #ff7043;
+  color: #ff7043;
+}
+
+.image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.image-preview {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 24px;
+  height: 24px;
+  background-color: rgba(244, 67, 54, 0.8);
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s ease;
+}
+
+.remove-image:hover {
+  background-color: #f44336;
+}
+
+.image-upload-note {
+  font-size: 0.8rem;
+  color: #9e9e9e;
+  margin-top: 5px;
+}
+
+.review-form-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+}
+
+.review-cancel-btn,
+.review-submit-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.review-cancel-btn {
+  background-color: transparent;
+  border: 1px solid #e0e0e0;
+  color: #9e9e9e;
+}
+
+.review-cancel-btn:hover {
+  background-color: #f5f5f5;
+}
+
+.review-submit-btn {
+  background-color: #ff7043;
+  border: none;
+  color: white;
+  box-shadow: 0 2px 5px rgba(255, 112, 67, 0.3);
+}
+
+.review-submit-btn:hover {
+  background-color: #f4511e;
+  box-shadow: 0 4px 10px rgba(255, 112, 67, 0.4);
+}
+
+/* 애니메이션 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .review-stats-summary {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .review-average {
+    width: 100%;
+    flex: 0 1 auto;
+  }
+  
+  .review-filter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .review-sort {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .review-form-actions {
+    flex-direction: column;
+  }
+  
+  .review-cancel-btn,
+  .review-submit-btn {
+    width: 100%;
+  }
+}
+
+/* 리뷰 이미지 라이트박스 */
+.review-lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.review-lightbox-content {
+  max-width: 90%;
+  max-height: 90%;
+  position: relative;
+  transform: translateY(20px);
+  transition: transform 0.3s ease;
+}
+
+.review-lightbox-content img {
+  max-width: 100%;
+  max-height: 90vh;
+  display: block;
+  border-radius: 4px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.review-lightbox-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  color: white;
+  font-size: 2rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.review-lightbox-close:hover {
+  transform: scale(1.2);
+}
+
+/* 리뷰 태그 애니메이션 */
+.selected-tag {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.selected-tag.removing {
+  opacity: 0;
+  transform: scale(0.8);
+}

@@ -5,11 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>키보드 상세정보 - KIRINI</title>  <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/keyboard_tag.css">
+  <link rel="stylesheet" href="../css/keyboard_tag_improved.css">
   <link rel="stylesheet" href="../css/keyboard_detail.css">
+  <link rel="stylesheet" href="../css/keyboard_specs_visualization.css">
+  <link rel="stylesheet" href="../css/keyboard_review.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="../js/auth.js"></script>
   <script src="../js/components.js"></script>
   <script src="../js/api-client.js"></script>
   <script src="../js/keyboard_detail.js"></script>
+  <script src="../js/keyboard_specs_visualization.js"></script>
+  <script src="../js/keyboard_review.js"></script>
+  <script src="../js/keyboard_tag_interactive.js"></script>
 </head>
 <body>
   <!-- 헤더 플레이스홀더 -->
@@ -113,41 +120,261 @@
         <h4>견고한 알루미늄 합금 프레임</h4>
         <p>항공기급 알루미늄 합금 상판으로 제작되어 내구성이 뛰어나며 프리미엄 디자인을 자랑합니다. 또한 탈착식 마그네틱 손목 받침대가 제공되어 장시간 게임에도 편안한 타이핑 경험을 제공합니다.</p>
       </div>
-      
-      <div class="tab-content" id="tab-reviews">
+        <div class="tab-content" id="tab-reviews">
         <h3>사용자 리뷰</h3>
         
-        <div class="review-item">
-          <div class="review-header">
-            <div class="review-author">게이머킴</div>
-            <div class="review-date">2025.04.15</div>
+        <div class="review-stats">
+          <div class="review-stats-summary">
+            <div class="review-average">
+              <div class="review-average-score">4.7</div>
+              <div class="review-stars-large">★★★★★</div>
+              <div class="review-count">총 483개의 리뷰</div>
+            </div>
+            <div class="review-distribution">
+              <div class="review-bar-item">
+                <div class="review-bar-label">5점</div>
+                <div class="review-bar-container">
+                  <div class="review-bar-value" style="width: 75%"></div>
+                </div>
+                <div class="review-bar-count">362</div>
+              </div>
+              <div class="review-bar-item">
+                <div class="review-bar-label">4점</div>
+                <div class="review-bar-container">
+                  <div class="review-bar-value" style="width: 15%"></div>
+                </div>
+                <div class="review-bar-count">73</div>
+              </div>
+              <div class="review-bar-item">
+                <div class="review-bar-label">3점</div>
+                <div class="review-bar-container">
+                  <div class="review-bar-value" style="width: 8%"></div>
+                </div>
+                <div class="review-bar-count">37</div>
+              </div>
+              <div class="review-bar-item">
+                <div class="review-bar-label">2점</div>
+                <div class="review-bar-container">
+                  <div class="review-bar-value" style="width: 1%"></div>
+                </div>
+                <div class="review-bar-count">6</div>
+              </div>
+              <div class="review-bar-item">
+                <div class="review-bar-label">1점</div>
+                <div class="review-bar-container">
+                  <div class="review-bar-value" style="width: 1%"></div>
+                </div>
+                <div class="review-bar-count">5</div>
+              </div>
+            </div>
           </div>
-          <div class="stars">★★★★★</div>
-          <div class="review-content">
-            옴니포인트 스위치의 작동점 조절 기능이 정말 획기적입니다. FPS 게임에서는 민감한 반응을 위해 1.5mm로 설정하고, 타이핑할 때는 3.0mm로 설정해서 오타를 줄일 수 있어요. 게이머라면 무조건 추천합니다.
+          
+          <div class="review-filter">
+            <button class="review-filter-button active" data-filter="all">전체 리뷰</button>
+            <button class="review-filter-button" data-filter="positive">긍정적 (4-5점)</button>
+            <button class="review-filter-button" data-filter="critical">개선점 언급 (1-3점)</button>
+            <div class="review-sort">
+              <label for="reviewSort">정렬:</label>
+              <select id="reviewSort">
+                <option value="recent">최신순</option>
+                <option value="helpful">추천순</option>
+                <option value="highRating">높은 평점순</option>
+                <option value="lowRating">낮은 평점순</option>
+              </select>
+            </div>
           </div>
         </div>
         
-        <div class="review-item">
-          <div class="review-header">
-            <div class="review-author">기계식매니아</div>
-            <div class="review-date">2025.03.22</div>
+        <div class="reviews-container">
+          <!-- 리뷰 아이템들 -->
+          <div class="review-item" data-rating="5">
+            <div class="review-header">
+              <div class="review-author">
+                <span class="author-avatar">G</span>
+                <span class="author-name">게이머킴</span>
+                <span class="verified-buyer">구매 인증</span>
+              </div>
+              <div class="review-date">2025.04.15</div>
+            </div>
+            <div class="review-rating">
+              <div class="stars">★★★★★</div>
+              <div class="rating-text">탁월함</div>
+            </div>
+            <div class="review-content">
+              <p>옴니포인트 스위치의 작동점 조절 기능이 정말 획기적입니다. FPS 게임에서는 민감한 반응을 위해 1.5mm로 설정하고, 타이핑할 때는 3.0mm로 설정해서 오타를 줄일 수 있어요. 게이머라면 무조건 추천합니다.</p>
+              
+              <div class="review-tags">
+                <span class="review-tag">빠른 응답 속도</span>
+                <span class="review-tag">게이밍 최적화</span>
+                <span class="review-tag">프리미엄</span>
+              </div>
+            </div>
+            <div class="review-actions">
+              <button class="review-action-btn helpful-btn" data-id="review1">
+                <span class="material-icons">thumb_up</span> 도움됨
+                <span class="helpful-count">24</span>
+              </button>
+              <button class="review-action-btn report-btn" data-id="review1">
+                <span class="material-icons">flag</span> 신고
+              </button>
+            </div>
           </div>
-          <div class="stars">★★★★☆</div>
-          <div class="review-content">
-            스위치 조절 기능과 OLED 디스플레이는 좋지만 가격이 조금 부담스럽습니다. PBT 키캡의 품질은 훌륭하고 타건감도 좋지만, 비슷한 가격대의 다른 프리미엄 키보드와 비교했을 때 가성비는 조금 떨어지는 것 같아요.
+          
+          <div class="review-item" data-rating="4">
+            <div class="review-header">
+              <div class="review-author">
+                <span class="author-avatar">K</span>
+                <span class="author-name">기계식매니아</span>
+                <span class="verified-buyer">구매 인증</span>
+              </div>
+              <div class="review-date">2025.03.22</div>
+            </div>
+            <div class="review-rating">
+              <div class="stars">★★★★☆</div>
+              <div class="rating-text">매우 좋음</div>
+            </div>
+            <div class="review-content">
+              <p>스위치 조절 기능과 OLED 디스플레이는 좋지만 가격이 조금 부담스럽습니다. PBT 키캡의 품질은 훌륭하고 타건감도 좋지만, 비슷한 가격대의 다른 프리미엄 키보드와 비교했을 때 가성비는 조금 떨어지는 것 같아요.</p>
+              
+              <div class="review-images">
+                <div class="review-image-container">
+                  <img src="../img/review-photo1.jpg" alt="리뷰 사진" class="review-image" onerror="this.src='https://via.placeholder.com/100x100?text=리뷰사진'">
+                </div>
+                <div class="review-image-container">
+                  <img src="../img/review-photo2.jpg" alt="리뷰 사진" class="review-image" onerror="this.src='https://via.placeholder.com/100x100?text=리뷰사진'">
+                </div>
+              </div>
+              
+              <div class="review-tags">
+                <span class="review-tag">고품질 키캡</span>
+                <span class="review-tag">고가</span>
+              </div>
+            </div>
+            <div class="review-actions">
+              <button class="review-action-btn helpful-btn" data-id="review2">
+                <span class="material-icons">thumb_up</span> 도움됨
+                <span class="helpful-count">18</span>
+              </button>
+              <button class="review-action-btn report-btn" data-id="review2">
+                <span class="material-icons">flag</span> 신고
+              </button>
+            </div>
+          </div>
+          
+          <div class="review-item" data-rating="5">
+            <div class="review-header">
+              <div class="review-author">
+                <span class="author-avatar">T</span>
+                <span class="author-name">타이핑고수</span>
+                <span class="verified-buyer">구매 인증</span>
+              </div>
+              <div class="review-date">2025.02.10</div>
+            </div>
+            <div class="review-rating">
+              <div class="stars">★★★★★</div>
+              <div class="rating-text">탁월함</div>
+            </div>
+            <div class="review-content">
+              <p>프로그래머로서 하루 종일 코딩을 하는데 손목 통증이 많이 줄었어요. 손목 받침대가 정말 편안하고 높이 조절도 가능해서 자세 교정에도 도움이 됩니다. 옴니포인트 스위치를 2.8mm로 설정하니 타이핑이 정말 쾌적해요.</p>
+              
+              <details class="review-details">
+                <summary>더 보기</summary>
+                <p>키보드의 특징이라면 역시 옴니포인트 스위치인데요. 작동점을 사용자가 커스터마이징할 수 있어 정말 혁신적입니다. 저는 코딩할 때는 2.8mm로 설정하고, 게임할 때는 1.8mm로 낮춰서 사용하고 있어요. 마치 두 개의 키보드를 사용하는 느낌입니다.</p>
+                <p>제 손목은 항상 민감해서 장시간 타이핑을 하면 통증이 있었는데, 이 키보드의 손목 받침대와 높이 조절 기능 덕분에 많이 개선되었습니다. 특히 손목 받침대의 자석 탈부착 방식이 편리해요.</p>
+              </details>
+              
+              <div class="review-tags">
+                <span class="review-tag">인체공학</span>
+                <span class="review-tag">프로그래밍</span>
+                <span class="review-tag">조절 가능</span>
+              </div>
+            </div>
+            <div class="review-actions">
+              <button class="review-action-btn helpful-btn active" data-id="review3">
+                <span class="material-icons">thumb_up</span> 도움됨
+                <span class="helpful-count">32</span>
+              </button>
+              <button class="review-action-btn report-btn" data-id="review3">
+                <span class="material-icons">flag</span> 신고
+              </button>
+            </div>
           </div>
         </div>
         
-        <div class="review-item">
-          <div class="review-header">
-            <div class="review-author">타이핑고수</div>
-            <div class="review-date">2025.02.10</div>
-          </div>
-          <div class="stars">★★★★★</div>
-          <div class="review-content">
-            프로그래머로서 하루 종일 코딩을 하는데 손목 통증이 많이 줄었어요. 손목 받침대가 정말 편안하고 높이 조절도 가능해서 자세 교정에도 도움이 됩니다. 옴니포인트 스위치를 2.8mm로 설정하니 타이핑이 정말 쾌적해요.
-          </div>
+        <div class="review-pagination">
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn next-page">다음 <span class="material-icons">chevron_right</span></button>
+        </div>
+        
+        <div class="review-form-container">
+          <h4 class="review-form-title">리뷰 작성하기</h4>
+          <form id="reviewForm" class="review-form">
+            <div class="rating-input">
+              <p>평점</p>
+              <div class="rating-stars">
+                <input type="radio" id="star5" name="rating" value="5">
+                <label for="star5" title="5점"></label>
+                <input type="radio" id="star4" name="rating" value="4">
+                <label for="star4" title="4점"></label>
+                <input type="radio" id="star3" name="rating" value="3">
+                <label for="star3" title="3점"></label>
+                <input type="radio" id="star2" name="rating" value="2">
+                <label for="star2" title="2점"></label>
+                <input type="radio" id="star1" name="rating" value="1">
+                <label for="star1" title="1점"></label>
+              </div>
+              <div class="rating-selected-text">평점을 선택하세요</div>
+            </div>
+            
+            <div class="review-form-field">
+              <label for="reviewTitle">제목</label>
+              <input type="text" id="reviewTitle" name="title" placeholder="리뷰 제목을 입력하세요" maxlength="50">
+              <div class="character-count"><span>0</span>/50</div>
+            </div>
+            
+            <div class="review-form-field">
+              <label for="reviewContent">내용</label>
+              <textarea id="reviewContent" name="content" placeholder="키보드 사용 경험을 자세히 작성해주세요" rows="5" maxlength="2000"></textarea>
+              <div class="character-count"><span>0</span>/2000</div>
+            </div>
+            
+            <div class="review-form-field">
+              <label>추천 태그 선택 (선택사항)</label>
+              <div class="review-tag-selector">
+                <span class="review-tag-option" data-tag="게이밍">게이밍</span>
+                <span class="review-tag-option" data-tag="사무용">사무용</span>
+                <span class="review-tag-option" data-tag="인체공학">인체공학</span>
+                <span class="review-tag-option" data-tag="휴대성">휴대성</span>
+                <span class="review-tag-option" data-tag="고품질">고품질</span>
+                <span class="review-tag-option" data-tag="조용함">조용함</span>
+                <span class="review-tag-option" data-tag="타건감">타건감</span>
+                <span class="review-tag-option" data-tag="RGB">RGB</span>
+                <span class="review-tag-option" data-tag="가성비">가성비</span>
+                <span class="review-tag-option" data-tag="고급형">고급형</span>
+              </div>
+              <div id="selectedTags" class="selected-tags"></div>
+            </div>
+            
+            <div class="review-form-field">
+              <label>이미지 첨부 (선택사항, 최대 3장)</label>
+              <div class="review-image-upload">
+                <input type="file" id="reviewImages" name="images" accept="image/*" multiple class="review-image-input">
+                <label for="reviewImages" class="review-image-upload-btn">
+                  <span class="material-icons">add_photo_alternate</span>
+                  이미지 선택
+                </label>
+                <div class="image-preview-container"></div>
+              </div>
+              <p class="image-upload-note">* 5MB 이하의 JPG, PNG 파일만 업로드 가능합니다.</p>
+            </div>
+            
+            <div class="review-form-actions">
+              <button type="button" class="review-cancel-btn">취소</button>
+              <button type="submit" class="review-submit-btn">리뷰 등록</button>
+            </div>
+          </form>
         </div>
       </div>
       
@@ -226,20 +453,22 @@
       </div>
     </div>
   </div>
-  
-  <!-- 태그 모달 -->  
+    <!-- 태그 모달 -->  
   <div class="tag-modal" id="tagModal">
     <div class="tag-modal-content">
       <div class="tag-modal-header">
         <h3 class="tag-modal-title">태그 설정</h3>
-        <button class="close-tag-modal" onclick="closeTagModal()">&times;</button>
+        <button class="close-tag-modal">&times;</button>
       </div>
       
-      <p><span id="currentKeyboard"></span> 키보드의 태그를 평가하세요.</p>
+      <p class="tag-intro"><span id="currentKeyboard"></span> 키보드의 태그를 평가하세요.</p>
       
       <!-- 태그 평가 목록 -->
       <div class="tag-list">
-        <h4 class="tag-section-title">태그 추천/비추천</h4>
+        <h4 class="tag-section-title">
+          <span class="material-icons tag-icon">sell</span>
+          태그 추천/비추천
+        </h4>
         <div class="tag-list-items">
           <div class="tag-list-item">
             <div class="tag-list-name">
@@ -247,9 +476,13 @@
               게이밍
             </div>
             <div class="tag-actions">
-              <button class="tag-vote-btn upvote" onclick="voteTag('게이밍', 'up')"><i>👍</i> 추천</button>
+              <button class="tag-vote-btn upvote">
+                <span class="material-icons">thumb_up</span> 추천
+              </button>
               <span class="vote-count" id="vote-gaming">24</span>
-              <button class="tag-vote-btn downvote" onclick="voteTag('게이밍', 'down')"><i>👎</i> 비추천</button>
+              <button class="tag-vote-btn downvote">
+                <span class="material-icons">thumb_down</span> 비추천
+              </button>
             </div>
           </div>
           <div class="tag-list-item">
@@ -258,9 +491,13 @@
               기계식
             </div>
             <div class="tag-actions">
-              <button class="tag-vote-btn upvote" onclick="voteTag('기계식', 'up')"><i>👍</i> 추천</button>
+              <button class="tag-vote-btn upvote">
+                <span class="material-icons">thumb_up</span> 추천
+              </button>
               <span class="vote-count" id="vote-mechanical">32</span>
-              <button class="tag-vote-btn downvote" onclick="voteTag('기계식', 'down')"><i>👎</i> 비추천</button>
+              <button class="tag-vote-btn downvote">
+                <span class="material-icons">thumb_down</span> 비추천
+              </button>
             </div>
           </div>
           <div class="tag-list-item">
@@ -269,9 +506,13 @@
               텐키리스
             </div>
             <div class="tag-actions">
-              <button class="tag-vote-btn upvote" onclick="voteTag('텐키리스', 'up')"><i>👍</i> 추천</button>
+              <button class="tag-vote-btn upvote">
+                <span class="material-icons">thumb_up</span> 추천
+              </button>
               <span class="vote-count" id="vote-tenkeyless">24</span>
-              <button class="tag-vote-btn downvote" onclick="voteTag('텐키리스', 'down')"><i>👎</i> 비추천</button>
+              <button class="tag-vote-btn downvote">
+                <span class="material-icons">thumb_down</span> 비추천
+              </button>
             </div>
           </div>
           <div class="tag-list-item">
@@ -280,9 +521,13 @@
               저소음
             </div>
             <div class="tag-actions">
-              <button class="tag-vote-btn upvote" onclick="voteTag('저소음', 'up')"><i>👍</i> 추천</button>
+              <button class="tag-vote-btn upvote">
+                <span class="material-icons">thumb_up</span> 추천
+              </button>
               <span class="vote-count" id="vote-quiet">18</span>
-              <button class="tag-vote-btn downvote" onclick="voteTag('저소음', 'down')"><i>👎</i> 비추천</button>
+              <button class="tag-vote-btn downvote">
+                <span class="material-icons">thumb_down</span> 비추천
+              </button>
             </div>
           </div>
           <div class="tag-list-item">
@@ -291,9 +536,28 @@
               고급형
             </div>
             <div class="tag-actions">
-              <button class="tag-vote-btn upvote" onclick="voteTag('고급형', 'up')"><i>👍</i> 추천</button>
+              <button class="tag-vote-btn upvote">
+                <span class="material-icons">thumb_up</span> 추천
+              </button>
               <span class="vote-count" id="vote-premium">15</span>
-              <button class="tag-vote-btn downvote" onclick="voteTag('고급형', 'down')"><i>👎</i> 비추천</button>
+              <button class="tag-vote-btn downvote">
+                <span class="material-icons">thumb_down</span> 비추천
+              </button>
+            </div>
+          </div>
+          <div class="tag-list-item">
+            <div class="tag-list-name">
+              <span class="tag-type-indicator user-tag-indicator"></span>
+              내구성 우수
+            </div>
+            <div class="tag-actions">
+              <button class="tag-vote-btn upvote">
+                <span class="material-icons">thumb_up</span> 추천
+              </button>
+              <span class="vote-count" id="vote-durable">12</span>
+              <button class="tag-vote-btn downvote">
+                <span class="material-icons">thumb_down</span> 비추천
+              </button>
             </div>
           </div>
         </div>
@@ -301,18 +565,26 @@
       
       <!-- 태그 신청 폼 -->
       <div class="tag-form-section">
-        <h4 class="tag-section-title">새로운 태그 신청</h4>
+        <h4 class="tag-section-title">
+          <span class="material-icons tag-icon">add_circle</span>
+          새로운 태그 신청
+        </h4>
         <p class="tag-section-desc">원하는 태그가 없으신가요? 새로운 태그를 직접 제안해보세요.</p>
         <form class="tag-form" id="tagForm">
           <div class="tag-form-group">
-            <label for="tagName">태그명 <span style="color: #f44336;">*</span></label>
+            <label for="tagName">태그명 <span class="required-mark">*</span></label>
             <input type="text" id="tagName" placeholder="예: 저소음, 입문용, 브렌드맨" required>
+            <div class="character-count"><span>0</span>/20</div>
           </div>
           <div class="tag-form-group">
-            <label for="tagReason">신청 사유 <span style="color: #f44336;">*</span></label>
-            <textarea id="tagReason" placeholder="이 태그가 필요한 이유를 적어주세요." required></textarea>
+            <label for="tagReason">신청 사유 <span class="required-mark">*</span></label>
+            <textarea id="tagReason" placeholder="이 태그가 필요한 이유를 적어주세요." required rows="3"></textarea>
+            <div class="character-count"><span>0</span>/200</div>
           </div>
-          <button type="submit" class="tag-submit-btn">태그 신청하기</button>
+          <button type="submit" class="tag-submit-btn">
+            <span class="material-icons">add_circle_outline</span>
+            태그 신청하기
+          </button>
         </form>
       </div>
     </div>

@@ -1,0 +1,313 @@
+/* 태그 모달 개선 스타일 */
+.tag-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.tag-modal.active {
+  display: flex;
+}
+
+.tag-modal-content {
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  overflow-y: auto;
+  padding: 30px;
+  position: relative;
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.tag-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.tag-modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: #424242;
+}
+
+.close-tag-modal {
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #757575;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.close-tag-modal:hover {
+  color: #f44336;
+  transform: rotate(90deg);
+}
+
+.tag-intro {
+  margin-bottom: 20px;
+  color: #616161;
+  font-size: 1rem;
+}
+
+#currentKeyboard {
+  font-weight: 600;
+  color: #ff7043;
+}
+
+/* 태그 목록 */
+.tag-list {
+  margin-bottom: 30px;
+}
+
+.tag-section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #424242;
+  display: flex;
+  align-items: center;
+}
+
+.tag-icon {
+  margin-right: 8px;
+  color: #ff7043;
+}
+
+.tag-list-items {
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 12px;
+}
+
+.tag-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #f0f0f0;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.tag-list-item:last-child {
+  border-bottom: none;
+}
+
+.tag-list-item:hover {
+  background-color: #f0f0f0;
+}
+
+.tag-list-name {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: #424242;
+}
+
+.tag-type-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.admin-tag-indicator {
+  background-color: #ff7043;
+  box-shadow: 0 0 0 2px rgba(255, 112, 67, 0.2);
+}
+
+.user-tag-indicator {
+  background-color: #42a5f5;
+  box-shadow: 0 0 0 2px rgba(66, 165, 245, 0.2);
+}
+
+.tag-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tag-vote-btn {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border: 1px solid #e0e0e0;
+  background-color: #fff;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.tag-vote-btn .material-icons {
+  font-size: 1.1rem;
+  margin-right: 4px;
+}
+
+.upvote:hover, .upvote.voted {
+  background-color: #e8f5e9;
+  border-color: #81c784;
+  color: #4caf50;
+}
+
+.downvote:hover, .downvote.voted {
+  background-color: #ffebee;
+  border-color: #e57373;
+  color: #f44336;
+}
+
+.vote-count {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #616161;
+  min-width: 30px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+/* 태그 폼 */
+.tag-form-section {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.tag-section-desc {
+  color: #757575;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+.tag-form-group {
+  margin-bottom: 15px;
+}
+
+.tag-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #424242;
+}
+
+.required-mark {
+  color: #f44336;
+}
+
+.tag-form input,
+.tag-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 5px;
+}
+
+.tag-form input:focus,
+.tag-form textarea:focus {
+  border-color: #ff7043;
+  box-shadow: 0 0 0 3px rgba(255, 112, 67, 0.1);
+  outline: none;
+}
+
+.character-count {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #9e9e9e;
+}
+
+.tag-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+  background-color: #ff7043;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(255, 112, 67, 0.3);
+}
+
+.tag-submit-btn:hover {
+  background-color: #f4511e;
+  box-shadow: 0 4px 10px rgba(255, 112, 67, 0.4);
+  transform: translateY(-2px);
+}
+
+.tag-submit-btn .material-icons {
+  margin-right: 8px;
+}
+
+/* 메인 페이지의 태그 애니메이션 */
+.keyboard-tag {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.keyboard-tag:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.keyboard-tag-add {
+  transition: all 0.3s ease;
+}
+
+.keyboard-tag-add:hover {
+  background-color: #ff7043;
+  color: white;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .tag-modal-content {
+    padding: 20px;
+  }
+  
+  .tag-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .tag-actions {
+    margin-top: 10px;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .tag-vote-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* 모달 오픈 시 body 스크롤 방지 */
+body.modal-open {
+  overflow: hidden;
+}
