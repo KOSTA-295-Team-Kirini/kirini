@@ -29,7 +29,7 @@ public class AdminLogService {
      * @param params 메소드 호출 시 사용된 파라미터 (선택적)
      */
     private void logError(String errorType, Exception e, String methodName, String params) {
-        String message = "유형: " + errorType;
+        String message = "유형: " + errorType;        
         if (params != null) {
             message += ", 파라미터: " + params;
         }
@@ -40,9 +40,10 @@ public class AdminLogService {
      * 전체 게시글 삭제 내역을 조회합니다.
      * 
      * @return 게시글 삭제 로그 목록
-     */    public List<AdminDeleteLogDTO> getAllDeletePostLogs() {
+     */
+    public List<AdminDeleteLogDTO> getAllDeletePostLogs() {
         try {
-            return logDAO.getAllDeletePostLogs();
+            return logDAO.getAllDeletePostLogs();        
         } catch (SQLException e) {
             logError("SQL", e, "getAllDeletePostLogs", null);
             return null;
@@ -53,9 +54,10 @@ public class AdminLogService {
      * 전체 댓글 삭제 내역을 조회합니다.
      * 
      * @return 댓글 삭제 로그 목록
-     */    public List<AdminDeleteLogDTO> getAllDeleteCommentLogs() {
+     */
+    public List<AdminDeleteLogDTO> getAllDeleteCommentLogs() {
         try {
-            return logDAO.getAllDeleteCommentLogs();
+            return logDAO.getAllDeleteCommentLogs();        
         } catch (SQLException e) {
             logError("SQL", e, "getAllDeleteCommentLogs", null);
             return null;
@@ -68,9 +70,10 @@ public class AdminLogService {
      * @param boardType 게시판 유형 (freeboard, news, notice, null: 전체)
      * @param keyword 검색어 (제목, 작성자)
      * @return 검색 결과 목록
-     */    public List<AdminDeleteLogDTO> getDeletePostLogsByCondition(String boardType, String keyword) {
+     */
+    public List<AdminDeleteLogDTO> getDeletePostLogsByCondition(String boardType, String keyword) {
         try {
-            return logDAO.getDeletePostLogsByCondition(boardType, keyword);
+            return logDAO.getDeletePostLogsByCondition(boardType, keyword);        
         } catch (SQLException e) {
             logError("SQL", e, "getDeletePostLogsByCondition", "boardType: " + boardType + ", keyword: " + keyword);
             return null;
@@ -83,9 +86,10 @@ public class AdminLogService {
      * @param boardType 게시판 유형 (freeboard, news, notice, null: 전체)
      * @param keyword 검색어 (내용, 작성자)
      * @return 검색 결과 목록
-     */    public List<AdminDeleteLogDTO> getDeleteCommentLogsByCondition(String boardType, String keyword) {
+     */
+    public List<AdminDeleteLogDTO> getDeleteCommentLogsByCondition(String boardType, String keyword) {
         try {
-            return logDAO.getDeleteCommentLogsByCondition(boardType, keyword);
+            return logDAO.getDeleteCommentLogsByCondition(boardType, keyword);        
         } catch (SQLException e) {
             logError("SQL", e, "getDeleteCommentLogsByCondition", "boardType: " + boardType + ", keyword: " + keyword);
             return null;
@@ -98,9 +102,10 @@ public class AdminLogService {
      * @param boardType 게시판 유형 (freeboard, news, notice, inquiry, chatboard)
      * @param postId 게시글 ID
      * @return 복원 성공 여부
-     */    public boolean recoverDeletedPost(String boardType, long postId) {
+     */
+    public boolean recoverDeletedPost(String boardType, long postId) {
         try {
-            return recoveryDAO.recoverDeletedPost(boardType, postId);
+            return recoveryDAO.recoverDeletedPost(boardType, postId);        
         } catch (SQLException e) {
             logError("SQL", e, "recoverDeletedPost", "boardType: " + boardType + ", postId: " + postId);
             return false;
@@ -113,9 +118,10 @@ public class AdminLogService {
      * @param boardType 게시판 유형 (freeboard, news)
      * @param commentId 댓글 ID
      * @return 복원 성공 여부
-     */    public boolean recoverDeletedComment(String boardType, long commentId) {
+     */
+    public boolean recoverDeletedComment(String boardType, long commentId) {
         try {
-            return recoveryDAO.recoverDeletedComment(boardType, commentId);
+            return recoveryDAO.recoverDeletedComment(boardType, commentId);        
         } catch (SQLException e) {
             logError("SQL", e, "recoverDeletedComment", "boardType: " + boardType + ", commentId: " + commentId);
             return false;
@@ -128,7 +134,8 @@ public class AdminLogService {
      * @param boardType 게시판 유형
      * @param attachId 첨부파일 ID
      * @return 복원 성공 여부
-     */    public boolean recoverDeletedAttach(String boardType, long attachId) {
+     */
+    public boolean recoverDeletedAttach(String boardType, long attachId) {
         try {
             return recoveryDAO.recoverDeletedAttach(boardType, attachId);
         } catch (SQLException e) {
