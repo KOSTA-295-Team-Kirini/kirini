@@ -57,12 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
       emailError.style.display = 'block';
       return;
     }
-    emailError.style.display = 'none';
+    emailError.style.display = 'none';    try {
+      const result = await UserService.checkEmailDuplicate(email);
 
-    try {
-      const response = await UserService.checkEmailDuplicate(email);
-
-      if (response.isAvailable) {
+      if (result.isAvailable) {
         emailError.style.display = 'none';
         emailCheckBtn.textContent = '확인완료';
         emailCheckBtn.disabled = true;
@@ -106,12 +104,10 @@ document.addEventListener('DOMContentLoaded', function() {
       nicknameError.style.display = 'block';
       return;
     }
-    nicknameError.style.display = 'none';
-
-    try {
-      const response = await UserService.checkNicknameDuplicate(nickname);
-
-      if (response.isAvailable) {
+    nicknameError.style.display = 'none';    try {
+      const result = await UserService.checkNicknameDuplicate(nickname);
+      
+      if (result.isAvailable) {
         nicknameError.style.display = 'none';
         nicknameCheckBtn.textContent = '확인완료';
         nicknameCheckBtn.disabled = true;
@@ -173,11 +169,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const email = emailInput.value;
     const nickname = nicknameInput.value;
-    const password = passwordInput.value;
-
-    try {
-      const userData = { email, nickname, password };
-      const result = await UserService.register(userData);
+    const password = passwordInput.value;    try {
+      const response = await fetch('/register.do', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, nickname, password }),
+      });
 
       if (result.status === 'success') {
         alert('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');

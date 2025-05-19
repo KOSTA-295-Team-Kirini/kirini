@@ -54,14 +54,19 @@ class ApiClient {
    * @param {Object} options - fetch 옵션
    * @returns {Promise} - API 응답 Promise
    */
-  static async fetch(endpoint, options = {}) {
-    // .do 접미사 추가 (이미 있는 경우 제외)
-    let url = endpoint;
-    if (!url.endsWith('.do')) {
-      url = `${url}.do`;
-    }
-    
-    // 기본 헤더와 사용자 제공 헤더 병합
+  static getAuthHeaders(headers = {}) {
+    const token = ApiClient.getAuthToken();
+    return token ? { ...headers, 'Authorization': `Bearer ${token}` } : headers;
+  }
+
+  /**
+   * API 요청 생성
+   * @param {string} endpoint API 엔드포인트 (예: 'login.do')
+   * @param {Object} options fetch 옵션
+   * @returns {Promise} API 응답
+   */
+  static async request(endpoint, options = {}) {
+    const url = `${API_CONFIG.baseUrl}${endpoint}`;
     const headers = {
       ...API_CONFIG.defaultHeaders,
       ...(options.headers || {})
@@ -83,15 +88,9 @@ class ApiClient {
       // API 요청 실행
       const response = await fetch(url, fetchOptions);
       
-      // HTTP 에러 처리
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw {
-          status: response.status,
-          statusText: response.statusText,
-          data: errorData,
-          message: errorData.message || `HTTP error ${response.status}: ${response.statusText}`
-        };
+      // 토큰 리프레시 로직 (401 응답 처리)
+      if (response.status === 401 && endpoint !== '/auth/refresh.do' && endpoint !== 'login.do') {
+        return ApiClient.handleUnauthorized(endpoint, options);
       }
       
       // 응답 데이터가 없는 경우 (204 No Content)
@@ -121,7 +120,6 @@ class ApiClient {
       method: 'GET' 
     });
   }
-  
   /**
    * POST 요청 헬퍼 함수
    * @param {string} endpoint - API 엔드포인트
@@ -129,26 +127,74 @@ class ApiClient {
    * @param {Object} options - 추가 fetch 옵션
    * @returns {Promise} - API 응답
    */
-  static async post(endpoint, data, options = {}) {
-    return this.fetch(endpoint, {
-      ...options,
+  static async post(endpoint, data = {}, withAuth = false) {
+    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
+    // Content-Type을 application/x-www-form-urlencoded로 변경
+    headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    
+    // URL 인코딩으로 데이터 변환
+    const urlEncodedData = Object.keys(data)
+      .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+      .join('&');
+    
+    return ApiClient.request(endpoint, {
+      method: 'POST',
+      headers,
+      body: urlEncodedData
+    });
+  }
+  /**
+   * POST 요청 (JSON 데이터)
+   * @param {string} endpoint API 엔드포인트
+   * @param {Object} data 요청 데이터
+   * @param {boolean} withAuth 인증 필요 여부
+   * @returns {Promise} API 응답
+   */
+  static async postJson(endpoint, data = {}, withAuth = false) {
+    const headers = withAuth ? ApiClient.getAuthHeaders({'Content-Type': 'application/json'}) : {'Content-Type': 'application/json'};
+    return ApiClient.request(endpoint, {
       method: 'POST',
       body: JSON.stringify(data)
     });
   }
   
   /**
-   * PUT 요청 헬퍼 함수
-   * @param {string} endpoint - API 엔드포인트
-   * @param {Object} data - 요청 본문 데이터
-   * @param {Object} options - 추가 fetch 옵션
-   * @returns {Promise} - API 응답
+   * POST 요청 (FormData)
+   * @param {string} endpoint API 엔드포인트
+   * @param {FormData} formData 요청 데이터
+   * @param {boolean} withAuth 인증 필요 여부
+   * @returns {Promise} API 응답
    */
-  static async put(endpoint, data, options = {}) {
-    return this.fetch(endpoint, {
-      ...options,
+  static async postFormData(endpoint, formData, withAuth = false) {
+    // FormData의 경우 Content-Type 헤더를 브라우저가 자동으로 설정하도록 비워둠
+    const headers = withAuth ? ApiClient.getAuthHeaders({}) : {};
+    return ApiClient.request(endpoint, {
+      method: 'POST',
+      headers,
+      body: formData
+    });
+  }
+  /**
+   * PUT 요청
+   * @param {string} endpoint API 엔드포인트
+   * @param {Object} data 요청 데이터
+   * @param {boolean} withAuth 인증 필요 여부
+   * @returns {Promise} API 응답
+   */
+  static async put(endpoint, data = {}, withAuth = false) {
+    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
+    // Content-Type을 application/x-www-form-urlencoded로 변경
+    headers['Content-Type'] = 'application/x-www-form-urlencoded';
+    
+    // URL 인코딩으로 데이터 변환
+    const urlEncodedData = Object.keys(data)
+      .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(data[key]))
+      .join('&');
+    
+    return ApiClient.request(endpoint, {
       method: 'PUT',
-      body: JSON.stringify(data)
+      headers,
+      body: urlEncodedData
     });
   }
   
@@ -177,67 +223,52 @@ class UserService {
    * @param {boolean} rememberMe 로그인 유지 여부
    * @returns {Promise} 로그인 결과
    */
-  static async login(email, password, rememberMe = false) {
-    return ApiClient.post('/login', { email, password, rememberMe });
+  static async login(email, password) {
+    return ApiClient.post('/login.do', { email, password });
   }
-
-  /**
-   * 로그아웃 요청
-   * @returns {Promise} 로그아웃 결과
-   */
-  static async logout() {
-    // 토큰 제거
-    ApiClient.removeAuthToken();
-    // 서버에 로그아웃 요청
-    return ApiClient.post('/logout', {});
-  }
-
   /**
    * 회원가입 요청
    * @param {Object} userData 사용자 데이터
    * @returns {Promise} 회원가입 결과
    */
   static async register(userData) {
-    return ApiClient.post('/signup', userData);
+    return ApiClient.post('/register.do', userData);
   }
-
   /**
    * 이메일 중복 확인
    * @param {string} email 확인할 이메일
    * @returns {Promise} 중복 확인 결과
    */
   static async checkEmailDuplicate(email) {
-    return ApiClient.get(`/signup?action=checkEmail&email=${encodeURIComponent(email)}`);
+    const response = await fetch(`/signup.do?action=checkEmail&email=${encodeURIComponent(email)}`);
+    return await response.json();
   }
-  
   /**
    * 닉네임 중복 확인
    * @param {string} nickname 확인할 닉네임
    * @returns {Promise} 중복 확인 결과
    */
   static async checkNicknameDuplicate(nickname) {
-    return ApiClient.get(`/signup?action=checkNickname&nickname=${encodeURIComponent(nickname)}`);
+    const response = await fetch(`/signup.do?action=checkNickname&nickname=${encodeURIComponent(nickname)}`);
+    return await response.json();
   }
-  
   /**
    * 사용자 프로필 조회
    * @param {number} userId 선택적 사용자 ID (생략 시 현재 사용자)
    * @returns {Promise} 사용자 프로필 정보
    */
-  static async getProfile(userId = null) {
-    const endpoint = userId ? `/profile?id=${userId}` : '/profile';
-    return ApiClient.get(endpoint);
+  static async getProfile(userId) {
+    const endpoint = userId ? `/profile.do?userId=${userId}` : '/profile.do';
+    return ApiClient.get(endpoint, {}, true);
   }
-  
   /**
    * 사용자 프로필 업데이트
    * @param {Object} profileData 업데이트할 프로필 데이터
    * @returns {Promise} 업데이트 결과
    */
   static async updateProfile(profileData) {
-    return ApiClient.post('/profile', profileData);
+    return ApiClient.put('/profile.do', profileData, true);
   }
-  
   /**
    * 비밀번호 변경
    * @param {string} currentPassword 현재 비밀번호
@@ -245,23 +276,28 @@ class UserService {
    * @returns {Promise} 비밀번호 변경 결과
    */
   static async changePassword(currentPassword, newPassword) {
-    return ApiClient.post('/profile', { 
-      action: 'changePassword',
+    return ApiClient.post('/password.do', {
       currentPassword,
       newPassword
     });
   }
-  
   /**
    * 비밀번호 찾기/재설정 요청
    * @param {string} email 사용자 이메일
    * @returns {Promise} 재설정 요청 결과
    */
-  static async requestPasswordReset(email) {
-    return ApiClient.post('/password', {
-      action: 'resetRequest',
-      email
-    });
+  static async forgotPassword(email) {
+    return ApiClient.post('/forgot-password.do', { email });
+  }
+
+  /**
+   * 로그아웃
+   * @returns {void}
+   */
+  static logout() {
+    ApiClient.removeAuthToken();
+    localStorage.removeItem('kirini_refresh_token');
+    window.dispatchEvent(new CustomEvent('auth:logout'));
   }
 }
 
@@ -314,15 +350,50 @@ class KeyboardService {
   }
 
   /**
-   * 키보드 평점 제출
+   * 키보드 태그 제안하기
    * @param {string} keyboardId 키보드 ID
-   * @param {number} rating 평점 (1-5)
-   * @returns {Promise} 제출 결과
+   * @param {string} tagName 제안할 태그 이름
+   * @param {string} reason 제안 이유 (선택사항)
+   * @returns {Promise} 제안 결과
    */
-  static async rateKeyboard(keyboardId, rating) {
-    return ApiClient.post('/keyboard/rate.do', {
+  static async suggestTag(keyboardId, tagName, reason = '') {
+    return ApiClient.post('/keyboard.do', {
+      action: 'suggestTag',
       keyboardId,
-      rating
+      tagName,
+      reason
+    }, true);
+  }
+
+  /**
+   * 키보드 태그에 투표하기
+   * @param {string} keyboardId 키보드 ID
+   * @param {string} tagId 태그 ID
+   * @param {string} voteType 투표 타입 ('up' 또는 'down')
+   * @returns {Promise} 투표 결과
+   */
+  static async voteTag(keyboardId, tagId, voteType) {
+    return ApiClient.post('/keyboard.do', {
+      action: 'voteTag',
+      keyboardId,
+      tagId,
+      voteType
+    }, true);
+  }
+
+  /**
+   * 키보드 평점 및 한줄평 등록
+   * @param {string} keyboardId 키보드 ID
+   * @param {number} scoreValue 평점 (1-5)
+   * @param {string} review 한줄평 (선택사항)
+   * @returns {Promise} 등록 결과
+   */
+  static async rateKeyboard(keyboardId, scoreValue, review = '') {
+    return ApiClient.post('/keyboard.do', {
+      action: 'addScore',
+      keyboardId,
+      scoreValue,
+      review
     }, true);
   }
 
@@ -531,6 +602,47 @@ class ReviewService {
   }
 }
 
+/**
+ * QnA 관련 API 서비스
+ */
+class QnaService {
+  /**
+   * 질문 생성
+   * @param {FormData} formData - 질문 데이터 (FormData)
+   * @returns {Promise} - 생성 결과
+   */
+  static async createQuestion(formData) {
+    // FormData를 사용하는 경우 Content-Type 헤더를 브라우저가 자동으로 설정하게 함
+    return ApiClient.request('/qna/create.do', {
+      method: 'POST',
+      body: formData,
+      headers: ApiClient.getAuthHeaders({})
+    });
+  }
+
+  /**
+   * 답변 생성
+   * @param {FormData} formData - 답변 데이터 (FormData)
+   * @returns {Promise} - 생성 결과
+   */
+  static async createAnswer(formData) {
+    return ApiClient.request('/qna/answer/create.do', {
+      method: 'POST',
+      body: formData,
+      headers: ApiClient.getAuthHeaders({})
+    });
+  }
+
+  /**
+   * 질문에 좋아요 처리
+   * @param {string} questionId - 질문 ID
+   * @returns {Promise} - 좋아요 결과
+   */
+  static async likeQuestion(questionId) {
+    return ApiClient.post('/qna/like.do', { questionId }, true);
+  }
+}
+
 // 브라우저에서 사용할 수 있도록 전역 객체에 노출
 window.ApiClient = ApiClient;
 window.UserService = UserService;
@@ -538,3 +650,4 @@ window.KeyboardService = KeyboardService;
 window.BoardService = BoardService;
 window.GlossaryService = GlossaryService;
 window.ReviewService = ReviewService;
+window.QnaService = QnaService;

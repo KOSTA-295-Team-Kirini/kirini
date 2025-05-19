@@ -526,7 +526,7 @@ async function addRecommendedTag(tagName) {
   
   try {
     // API를 통해 태그 제안
-    const response = await API.keyboard.suggestTag(keyboardId, tagName);
+    const response = await KeyboardService.suggestTag(keyboardId, tagName);
     
     if (response && response.success) {
       // 새로운 태그 요소 생성
@@ -564,7 +564,7 @@ async function voteTag(tagName, voteType) {
   
   try {
     // API를 통해 태그 투표
-    const response = await API.keyboard.voteTag(keyboardId, tagId, voteType);
+    const response = await KeyboardService.voteTag(keyboardId, tagId, voteType);
     
     if (response.success) {
       // 현재 투표 수 가져오기
@@ -662,7 +662,7 @@ function initTagForm() {
       if (tagName && tagReason) {
         try {
           // API 호출을 위해 suggestTag 함수에 tagReason도 넘길 수 있게 API 확장이 필요
-          const response = await API.keyboard.suggestTag(keyboardId, tagName, tagReason);
+          const response = await KeyboardService.suggestTag(keyboardId, tagName, tagReason);
           
           if (response && response.success) {
             alert("'" + tagName + "' 태그 신청이 접수되었습니다. \n관리자 검토 후 추가될 예정입니다.");
@@ -772,7 +772,7 @@ function initRatingForm() {
     
     try {
       // API 호출하여 별점 등록
-      const response = await API.keyboard.rate(keyboardId, scoreValue, review);
+      const response = await KeyboardService.rateKeyboard(keyboardId, scoreValue, review);
       
       if (response && response.success) {
         alert('리뷰가 성공적으로 등록되었습니다.');
