@@ -69,14 +69,9 @@ document.addEventListener("DOMContentLoaded", function () {
         emailCheckBtn.classList.add("completed");
         isEmailCheckedAndValid = true;
       } else {
-<<<<<<< HEAD
-        emailError.textContent = result.message || '이미 사용 중인 이메일입니다.';
-        emailError.style.display = 'block';
-=======
         emailError.textContent =
           result.message || "이미 사용 중인 이메일입니다.";
         emailError.style.display = "block";
->>>>>>> 946b9645f697d6fa8b4d96c3e7b5221e675dd710
         isEmailCheckedAndValid = false;
       }
     } catch (error) {
