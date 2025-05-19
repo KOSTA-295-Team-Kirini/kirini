@@ -1,34 +1,149 @@
 package presentation.controller.page.board;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.google.gson.Gson;
 import business.service.news.NewsService;
 import dto.board.NewsDTO;
 import dto.board.NewsCommentDTO;
 import dto.user.UserDTO;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import util.web.IpUtil;
+import util.web.RequestRouter;
 import presentation.controller.page.Controller;
 
 /**
  * 키보드 소식 게시판 관련 요청을 처리하는 컨트롤러
+ * URL 패턴: /news.do 형식 지원
  */
-public class NewsController implements Controller {
+@WebServlet({"/news/*", "/news.do"})
+public class NewsController extends HttpServlet implements Controller {
+    private static final long serialVersionUID = 1L;
     private NewsService newsService;
-    
-    public NewsController() {
-        newsService = new NewsService();
-    }
+    private RequestRouter router;
     
     @Override
+    public void init() throws ServletException {
+        super.init();
+        newsService = new NewsService();
+        
+        // 라우터 설정
+        initRequestRouter();
+    }
+    
+    /**
+     * 요청 라우터 초기화
+     */
+    private void initRequestRouter() {
+        router = new RequestRouter();
+        
+        // GET 요청 JSON 라우터 설정
+        router.getJson("/", req -> {
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("message", "뉴스 게시판 API");
+            return result;
+        });
+        
+        router.getJson("/list", req -> {
+            int page = 1;
+            int pageSize = 10;
+            
+            try {
+                if (req.getParameter("page") != null) {
+                    page = Integer.parseInt(req.getParameter("page"));
+                }
+                
+                if (req.getParameter("pageSize") != null) {
+                    pageSize = Integer.parseInt(req.getParameter("pageSize"));
+                }
+            } catch (NumberFormatException e) {
+                // 기본값 사용
+            }
+            
+            List<NewsDTO> newsList = newsService.getAllNews(page, pageSize);
+            int totalCount = newsService.getTotalNewsCount();
+            int totalPages = (int) Math.ceil((double) totalCount / pageSize);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("newsList", newsList);
+            result.put("currentPage", page);
+            result.put("totalPages", totalPages);
+            result.put("totalCount", totalCount);
+            
+            return result;
+        });
+        
+        router.getJson("/view", req -> {
+            try {
+                long newsId = Long.parseLong(req.getParameter("id"));
+                NewsDTO news = newsService.getNewsById(newsId);
+                
+                if (news == null) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("message", "뉴스를 찾을 수 없습니다.");
+                    return errorResult;
+                }
+                
+                Map<String, Object> result = new HashMap<>();
+                result.put("news", news);
+                
+                // 댓글 목록도 함께 조회
+                List<NewsCommentDTO> comments = newsService.getCommentsByNewsId(newsId);
+                result.put("comments", comments);
+                
+                return result;
+            } catch (NumberFormatException e) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("status", "error");
+                errorResult.put("message", "잘못된 뉴스 ID입니다.");
+                return errorResult;
+            }
+        });
+        
+        // POST 요청 JSON 라우터 설정은 추후 필요에 따라 추가
+    }
+    
+    /**
+     * JSON 응답 전송
+     */
+    private void sendJsonResponse(HttpServletResponse response, Object data) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        out.print(new Gson().toJson(data));
+        out.flush();
+    }
+      @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         String action = request.getParameter("action");
+        
+        // .do 요청일 경우 JSON 응답으로 처리
+        String requestURI = request.getRequestURI();
+        if (requestURI != null && requestURI.endsWith(".do")) {
+            // JSON 응답 처리
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("message", "뉴스 게시판 API");
+            sendJsonResponse(response, result);
+            return;
+        }
+        
+        // 라우터로 처리 시도
+        if (router.handle(request, response)) {
+            return;  // 라우터가 요청을 처리함
+        }
         
         if (action == null) {
             // 기본값은 목록 보기

@@ -1,27 +1,123 @@
 package presentation.controller.page.user;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 
+import com.google.gson.Gson;
 import business.service.user.UserService;
 import dto.user.UserDTO;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import presentation.controller.page.Controller;
+import util.web.RequestRouter;
 
 /**
  * 사용자 회원가입 관련 요청을 처리하는 컨트롤러
+ * URL 패턴: /register.do 형식 지원
  */
-public class UserRegisterController implements Controller {
+@WebServlet({"/register/*", "/register.do"})
+public class UserRegisterController extends HttpServlet implements Controller {
+    private static final long serialVersionUID = 1L;
     private UserService userService;
+    private RequestRouter router;
+    private final Gson gson = new Gson();
     
-    public UserRegisterController() {
+    @Override
+    public void init() throws ServletException {
+        super.init();
         userService = new UserService();
+        
+        // 라우터 설정
+        initRequestRouter();
+    }
+    
+    /**
+     * 요청 라우터 초기화
+     */    private void initRequestRouter() {
+        router = new RequestRouter();
+        
+        // GET 요청 JSON 라우터 설정
+        router.getJson("/", (req, res) -> {
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("message", "회원가입 API");
+            return result;
+        });
+        
+        // POST 요청 JSON 라우터 설정
+        router.postJson("/register", (req, res) -> {
+            // 필요한 파라미터 가져오기
+            String email = req.getParameter("email");
+            String nickname = req.getParameter("nickname");
+            String password = req.getParameter("password");
+            
+            // 비밀번호 확인
+            String confirmPassword = req.getParameter("passwordConfirm");
+            if (confirmPassword == null) {
+                confirmPassword = req.getParameter("password-confirm");
+            }
+            
+            // 유효성 검사
+            if (email == null || nickname == null || password == null || 
+                (confirmPassword != null && !password.equals(confirmPassword))) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "입력 정보를 확인해주세요.");
+                return error;
+            }
+            
+            // 회원 등록
+            UserDTO user = new UserDTO(password, email, nickname);
+            boolean success = userService.registerUser(user);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", success);
+            
+            if (success) {
+                result.put("message", "회원가입이 완료되었습니다.");
+                result.put("redirect", "login.html");
+            } else {
+                result.put("message", "회원가입 처리 중 오류가 발생했습니다.");
+            }
+            
+            return result;
+        });
+    }
+    
+    /**
+     * JSON 응답 전송
+     */
+    private void sendJsonResponse(HttpServletResponse response, Object data) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        out.print(gson.toJson(data));
+        out.flush();
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
+        // .do 요청일 경우 JSON 응답으로 처리
+        String requestURI = request.getRequestURI();
+        if (requestURI != null && requestURI.endsWith(".do")) {
+            // JSON 응답 처리
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("message", "회원가입 페이지 API");
+            sendJsonResponse(response, result);
+            return;
+        }
+        
+        // 라우터로 처리 시도
+        if (router.handle(request, response)) {
+            return;  // 라우터가 요청을 처리함
+        }
+        
         // 아이디 중복확인 및 비밀번호 유효성 검사 요청 처리
         String action = request.getParameter("action");
         
@@ -29,10 +125,10 @@ public class UserRegisterController implements Controller {
             if (action.equals("checkId")) {
                 checkDuplicateId(request, response);
                 return;
-            } else if (action.equals("checkEmail")) {  // 새로 추가: 이메일 중복 체크
+            } else if (action.equals("checkEmail")) {
                 checkDuplicateEmail(request, response);
                 return;
-            } else if (action.equals("checkNickname")) {  // 새로 추가: 닉네임 중복 체크
+            } else if (action.equals("checkNickname")) {
                 checkDuplicateNickname(request, response);
                 return;
             } else if (action.equals("checkPassword")) {
@@ -41,14 +137,23 @@ public class UserRegisterController implements Controller {
             }
         }
         
-        // 회원가입 페이지로 이동 - 경로 수정
+        // 회원가입 페이지로 이동
         request.getRequestDispatcher("/view/pages/signup.html").forward(request, response);
     }
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // 회원가입 처리 메소드 수정
+        // .do 요청일 경우 JSON 응답 형식으로 처리
+        String requestURI = request.getRequestURI();
+        boolean isDoRequest = (requestURI != null && requestURI.endsWith(".do"));
+        
+        // 라우터로 처리 시도
+        if (router.handle(request, response)) {
+            return;  // 라우터가 요청을 처리함
+        }
+        
+        // .do 요청이 아닌 경우 기존 로직 처리
         registerUserFromSignup(request, response);
     }
     
@@ -68,7 +173,7 @@ public class UserRegisterController implements Controller {
     }
     
     /**
-     * 이메일 중복 확인 (새로 추가)
+     * 이메일 중복 확인
      */
     private void checkDuplicateEmail(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
@@ -83,12 +188,12 @@ public class UserRegisterController implements Controller {
     }
     
     /**
-     * 닉네임 중복 확인 (새로 추가)
+     * 닉네임 중복 확인
      */
     private void checkDuplicateNickname(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         String nickname = request.getParameter("nickname");
-        boolean isDuplicate = userService.checkDuplicateNickname(nickname); // 실제 메서드 호출
+        boolean isDuplicate = userService.checkDuplicateNickname(nickname);
         
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
@@ -113,14 +218,14 @@ public class UserRegisterController implements Controller {
     }
     
     /**
-     * 회원가입 처리 - signup.html 양식에 맞춤
+     * 회원가입 처리
      */
     private void registerUserFromSignup(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         // 필요한 파라미터 가져오기
-        String email = request.getParameter("email");         // user_email
-        String nickname = request.getParameter("nickname");   // user_name
-        String password = request.getParameter("password");   // user_password
+        String email = request.getParameter("email");
+        String nickname = request.getParameter("nickname");
+        String password = request.getParameter("password");
         
         // 비밀번호 확인
         String confirmPassword = request.getParameter("passwordConfirm");
@@ -135,7 +240,7 @@ public class UserRegisterController implements Controller {
             return;
         }
         
-        // 회원 등록 - 필요한 3개 필드만 사용
+        // 회원 등록
         UserDTO user = new UserDTO(password, email, nickname);
         boolean success = userService.registerUser(user);
         

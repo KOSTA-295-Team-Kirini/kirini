@@ -4,16 +4,22 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import business.service.question.QuestionService;
+import com.google.gson.Gson;
 import dto.board.AnswerDTO;
 import dto.board.AttachmentDTO;
 import dto.board.QuestionDTO;
 import dto.user.UserDTO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -21,18 +27,216 @@ import jakarta.servlet.http.Part;
 import presentation.controller.page.Controller;
 import util.FileUtil;
 import util.config.AppConfig;
+import util.logging.LoggerConfig;
 import util.web.IpUtil;
+import util.web.RequestRouter;
 
+/**
+ * 질문 관련 기능을 처리하는 컨트롤러
+ * URL 패턴: /question/* 및 /question.do 형식 지원
+ */
+@WebServlet({"/question/*", "/question.do"})
 @MultipartConfig(
     fileSizeThreshold = 1024 * 1024,    // 1 MB
     maxFileSize = 1024 * 1024 * 10,     // 10 MB
     maxRequestSize = 1024 * 1024 * 50   // 50 MB
 )
-public class QuestionController implements Controller {
-    private final QuestionService questionService;
+public class QuestionController extends HttpServlet implements Controller {
+    private static final long serialVersionUID = 1L;
+    private QuestionService questionService;
+    private RequestRouter router;
+    private final Gson gson = new Gson();
     
-    public QuestionController() {
-        this.questionService = new QuestionService();
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        questionService = new QuestionService();
+        
+        // 라우터 설정
+        initRequestRouter();
+    }
+    
+    /**
+     * 요청 라우터 초기화
+     */
+    private void initRequestRouter() {
+        router = new RequestRouter();
+          // GET 요청 JSON 라우터 설정
+        router.getJson("/api/questions", (req, res) -> {
+            // 기본 페이지네이션 값 설정
+            int page = 1;
+            int pageSize = 10;
+            
+            // 요청에서 페이지네이션 파라미터 추출
+            try {
+                String pageParam = req.getParameter("page");
+                String sizeParam = req.getParameter("size");
+                
+                if (pageParam != null && !pageParam.trim().isEmpty()) {
+                    page = Integer.parseInt(pageParam);
+                }
+                
+                if (sizeParam != null && !sizeParam.trim().isEmpty()) {
+                    pageSize = Integer.parseInt(sizeParam);
+                }
+            } catch (NumberFormatException e) {
+                // 파라미터 변환 실패 시 기본값 사용
+            }
+            
+            List<QuestionDTO> questions = questionService.getAllQuestions(page, pageSize);
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("data", questions);
+            return result;
+        });
+        
+        router.getJson("/api/questions/([0-9]+)", (req, res) -> {
+            try {
+                long questionId = Long.parseLong(req.getPathInfo().split("/")[3]);
+                QuestionDTO question = questionService.getQuestionById(questionId);
+                
+                Map<String, Object> result = new HashMap<>();
+                if (question != null) {
+                    result.put("status", "success");
+                    result.put("data", question);
+                } else {
+                    result.put("status", "error");
+                    result.put("message", "질문을 찾을 수 없습니다.");
+                }
+                return result;
+            } catch (Exception e) {
+                LoggerConfig.logError(QuestionController.class, "getQuestionById", "질문 조회 오류", e);
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("status", "error");
+                errorResult.put("message", "질문 조회 중 오류가 발생했습니다.");
+                return errorResult;
+            }
+        });
+        
+        // POST 요청 JSON 라우터 설정
+        router.postJson("/api/questions", (req, res) -> {
+            try {
+                // 사용자 인증 확인
+                HttpSession session = req.getSession();
+                UserDTO user = (UserDTO) session.getAttribute("user");
+                
+                if (user == null) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("message", "로그인이 필요합니다.");
+                    return errorResult;
+                }
+                
+                // 질문 데이터 준비
+                String title = req.getParameter("title");
+                String content = req.getParameter("content");
+                
+                if (title == null || content == null || title.trim().isEmpty() || content.trim().isEmpty()) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("message", "제목과 내용을 입력해주세요.");
+                    return errorResult;
+                }
+                  QuestionDTO question = new QuestionDTO();
+                question.setTitle(title);
+                question.setContent(content);
+                question.setUserUid(user.getUserId());
+                
+                boolean success = questionService.createQuestion(question);
+                
+                Map<String, Object> result = new HashMap<>();
+                if (success) {
+                    result.put("status", "success");
+                    result.put("message", "질문이 등록되었습니다.");
+                    result.put("questionId", question.getQuestionId());
+                } else {
+                    result.put("status", "error");
+                    result.put("message", "질문 등록에 실패했습니다.");
+                }
+                return result;
+            } catch (Exception e) {
+                LoggerConfig.logError(QuestionController.class, "createQuestion", "질문 등록 오류", e);
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("status", "error");
+                errorResult.put("message", "질문 등록 중 오류가 발생했습니다.");
+                return errorResult;
+            }
+        });
+    }
+    
+    /**
+     * .do 요청 처리 메소드
+     */
+    @Override
+    protected void service(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        String uri = request.getRequestURI();
+        
+        // .do 요청 처리
+        if (uri.endsWith(".do")) {
+            String action = request.getParameter("action");
+            
+            if ("list".equals(action)) {
+                getAllQuestions(request, response);
+            } else if ("view".equals(action)) {
+                getQuestionById(request, response);
+            } else if ("write".equals(action)) {
+                showQuestionForm(request, response);
+            } else if ("edit".equals(action)) {
+                showEditQuestionForm(request, response);
+            } else if ("post".equals(action)) {
+                postQuestion(request, response);
+            } else if ("update".equals(action)) {
+                updateQuestion(request, response);
+            } else if ("delete".equals(action)) {
+                deleteQuestion(request, response);
+            } else if ("answer".equals(action)) {
+                postAnswer(request, response);
+            } else {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            }
+            return;
+        }
+        
+        // API 경로를 확인해서 라우터로 처리
+        if (request.getPathInfo() != null && request.getPathInfo().startsWith("/api/")) {
+            try {
+                boolean handled = false;
+                
+                if ("GET".equals(request.getMethod())) {
+                    handled = router.handleGetJson(request, response);
+                } else if ("POST".equals(request.getMethod())) {
+                    handled = router.handlePostJson(request, response);
+                }
+                
+                if (!handled) {
+                    sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                        Map.of("status", "error", "message", "API 경로를 찾을 수 없습니다."));
+                }
+                return;
+            } catch (Exception e) {
+                LoggerConfig.logError(QuestionController.class, "service", "API 처리 오류", e);
+                sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    Map.of("status", "error", "message", "서버 오류가 발생했습니다."));
+                return;
+            }
+        }
+        
+        // 기본 서블릿 처리
+        super.service(request, response);
+    }
+    
+    /**
+     * JSON 응답 전송 유틸리티 메소드
+     */
+    private void sendJsonResponse(HttpServletResponse response, int status, Object data) throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.setStatus(status);
+        
+        try (PrintWriter out = response.getWriter()) {
+            out.print(gson.toJson(data));
+        }
     }
 
     @Override
@@ -100,1105 +304,830 @@ public class QuestionController implements Controller {
     }
     
     /**
-     * Q&A 질문 작성 페이지 표시
-     */
-    private void showQuestionForm(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login?redirect=question&action=write");
-            return;
-        }
-        
-        request.getRequestDispatcher("/WEB-INF/views/board/question-form.jsp").forward(request, response);
-    }
-    
-    /**
-     * Q&A 질문 수정 페이지 표시
-     */
-    private void showEditQuestionForm(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login?redirect=question&action=edit");
-            return;
-        }
-        
-        try {
-            long questionId = Long.parseLong(request.getParameter("id"));
-            QuestionDTO question = questionService.getQuestionById(questionId);
-            
-            if (question == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "질문을 찾을 수 없습니다.");
-                return;
-            }
-            
-            // 작성자 본인 또는 관리자만 수정 가능
-            if (question.getUserUid() != user.getUserUid() && 
-                    !("admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority()))) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "수정 권한이 없습니다.");
-                return;
-            }
-            
-            request.setAttribute("question", question);
-            request.getRequestDispatcher("/WEB-INF/views/board/question-edit.jsp").forward(request, response);
-            
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 질문 ID입니다.");
-        } catch (Exception e) {
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
-        }
-    }
-    
-    /**
-     * Q&A 질문 작성
-     */
-    private void postQuestion(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"로그인이 필요합니다.\"}");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/login?redirect=question&action=write");
-            }
-            return;
-        }
-        
-        String title = request.getParameter("title");
-        String content = request.getParameter("content");
-        String category = request.getParameter("category");
-        String clientIp = IpUtil.getClientIpAddr(request);
-        
-        // 필수 입력값 검증
-        if (title == null || title.trim().isEmpty() || content == null || content.trim().isEmpty()) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"제목과 내용을 모두 입력해주세요.\"}");
-            } else {
-                request.setAttribute("error", "제목과 내용을 모두 입력해주세요.");
-                request.getRequestDispatcher("/WEB-INF/views/board/question-form.jsp").forward(request, response);
-            }
-            return;
-        }
-        
-        // category가 없으면 기본값 설정
-        if (category == null || category.trim().isEmpty()) {
-            category = "question"; // 기본값은 'question'
-        }
-        
-        // DTO 객체 생성
-        QuestionDTO question = new QuestionDTO();
-        question.setTitle(title);
-        question.setContent(content);
-        question.setCategory(category);
-        question.setAuthorIp(clientIp);
-        question.setUserUid(user.getUserUid());
-        
-        try {
-            boolean result = questionService.createQuestion(question);
-            
-            if (result) {
-                // 첨부파일이 있는 경우 처리 (멀티파트)
-                try {
-                    Part filePart = request.getPart("file");
-                    if (filePart != null && filePart.getSize() > 0) {
-                        // 파일 업로드 처리
-                        String fileName = filePart.getSubmittedFileName();
-                        String uploadPath = FileUtil.getUploadDirectoryPath();
-                        String uniqueFileName = FileUtil.generateUniqueFilename(fileName);
-                        String filePath = new File(uploadPath, uniqueFileName).getAbsolutePath();
-                        
-                        filePart.write(filePath);
-                        
-                        // DB에 첨부파일 정보 저장
-                        questionService.addAttachment(question.getQuestionId(), fileName, filePath, filePart.getSize());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    // 첨부파일 업로드 실패는 전체 등록 실패로 처리하지 않음
-                }
-                
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write(
-                        "{\"success\": true, \"message\": \"질문이 등록되었습니다.\", \"id\": " + question.getQuestionId() + "}"
-                    );
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question?action=view&id=" + question.getQuestionId());
-                }
-            } else {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"질문 등록에 실패했습니다.\"}");
-                } else {
-                    request.setAttribute("error", "질문 등록에 실패했습니다.");
-                    request.getRequestDispatcher("/WEB-INF/views/board/question-form.jsp").forward(request, response);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"서버 오류가 발생했습니다.\"}");
-            } else {
-                request.setAttribute("error", "서버 오류가 발생했습니다.");
-                request.getRequestDispatcher("/WEB-INF/views/board/question-form.jsp").forward(request, response);
-            }
-        }
-    }
-    
-    /**
-     * Q&A 질문 수정
-     */
-    private void updateQuestion(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"로그인이 필요합니다.\"}");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/login?redirect=question");
-            }
-            return;
-        }
-        
-        try {
-            long questionId = Long.parseLong(request.getParameter("id"));
-            QuestionDTO existingQuestion = questionService.getQuestionById(questionId);
-            
-            if (existingQuestion == null) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"질문을 찾을 수 없습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "질문을 찾을 수 없습니다.");
-                }
-                return;
-            }
-            
-            // 작성자 본인 또는 관리자만 수정 가능
-            if (existingQuestion.getUserUid() != user.getUserUid() && 
-                    !("admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority()))) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"수정 권한이 없습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "수정 권한이 없습니다.");
-                }
-                return;
-            }
-            
-            String title = request.getParameter("title");
-            String content = request.getParameter("content");
-            String category = request.getParameter("category");
-            
-            // 필수 입력값 검증
-            if (title == null || title.trim().isEmpty() || content == null || content.trim().isEmpty()) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"제목과 내용을 모두 입력해주세요.\"}");
-                } else {
-                    request.setAttribute("error", "제목과 내용을 모두 입력해주세요.");
-                    request.setAttribute("question", existingQuestion);
-                    request.getRequestDispatcher("/WEB-INF/views/board/question-edit.jsp").forward(request, response);
-                }
-                return;
-            }
-            
-            // 질문 객체 업데이트
-            existingQuestion.setTitle(title);
-            existingQuestion.setContent(content);
-            if (category != null && !category.trim().isEmpty()) {
-                existingQuestion.setCategory(category);
-            }
-            
-            boolean result = questionService.updateQuestion(existingQuestion, user.getUserUid(), user.getUserAuthority());
-            
-            if (result) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": true, \"message\": \"질문이 수정되었습니다.\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question?action=view&id=" + questionId);
-                }
-            } else {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"질문 수정에 실패했습니다.\"}");
-                } else {
-                    request.setAttribute("error", "질문 수정에 실패했습니다.");
-                    request.setAttribute("question", existingQuestion);
-                    request.getRequestDispatcher("/WEB-INF/views/board/question-edit.jsp").forward(request, response);
-                }
-            }
-        } catch (NumberFormatException e) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"잘못된 질문 ID입니다.\"}");
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 질문 ID입니다.");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"서버 오류가 발생했습니다.\"}");
-            } else {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
-            }
-        }
-    }
-    
-    /**
-     * Q&A 질문 삭제
-     */
-    private void deleteQuestion(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"로그인이 필요합니다.\"}");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/login?redirect=question");
-            }
-            return;
-        }
-        
-        try {
-            long questionId = Long.parseLong(request.getParameter("id"));
-            QuestionDTO question = questionService.getQuestionById(questionId);
-            
-            if (question == null) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"질문을 찾을 수 없습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "질문을 찾을 수 없습니다.");
-                }
-                return;
-            }
-            
-            // 작성자 본인 또는 관리자만 삭제 가능
-            if (question.getUserUid() != user.getUserUid() && 
-                    !("admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority()))) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"삭제 권한이 없습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "삭제 권한이 없습니다.");
-                }
-                return;
-            }
-            
-            String reason = request.getParameter("reason");
-            if (reason == null || reason.trim().isEmpty()) {
-                reason = "사용자에 의한 삭제";
-            }
-            
-            boolean result = questionService.deleteQuestion(questionId, user.getUserUid(), reason);
-            
-            if (result) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": true, \"message\": \"질문이 삭제되었습니다.\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question");
-                }
-            } else {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"질문 삭제에 실패했습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "질문 삭제에 실패했습니다.");
-                }
-            }
-        } catch (NumberFormatException e) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"잘못된 질문 ID입니다.\"}");
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 질문 ID입니다.");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"서버 오류가 발생했습니다.\"}");
-            } else {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
-            }
-        }
-    }
-    
-    /**
-     * Q&A 질문 열람 (권한 체크: 작성자 본인 또는 관리자만 확인 가능)
-     */
-    private void getQuestionById(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login?redirect=question");
-            return;
-        }
-        
-        try {
-            long questionId = Long.parseLong(request.getParameter("id"));
-            QuestionDTO question = questionService.getQuestionById(questionId);
-            
-            if (question == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "질문을 찾을 수 없습니다.");
-                return;
-            }
-            
-            // 작성자 본인 또는 관리자만 조회 가능
-            boolean isOwner = question.getUserUid() == user.getUserUid();
-            boolean isAdmin = "admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority());
-            
-            if (!isOwner && !isAdmin) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "열람 권한이 없습니다.");
-                return;
-            }
-            
-            // 조회수 증가 (중복 방지를 위해 세션 확인)
-            String viewedQuestions = (String) session.getAttribute("viewedQuestions");
-            if (viewedQuestions == null) {
-                viewedQuestions = "," + questionId + ",";
-                questionService.increaseViewCount(questionId);
-            } else if (!viewedQuestions.contains("," + questionId + ",")) {
-                viewedQuestions += questionId + ",";
-                questionService.increaseViewCount(questionId);
-            }
-            session.setAttribute("viewedQuestions", viewedQuestions);
-            
-            // 첨부파일 정보 조회
-            List<AttachmentDTO> attachments = questionService.getAttachmentsByQuestionId(questionId);
-            
-            // 답변 목록 조회
-            List<AnswerDTO> answers = questionService.getAnswersByQuestionId(questionId);
-            
-            // 사용자 정보 (작성자)
-            UserDTO author = questionService.getUserById(question.getUserUid());
-            
-            request.setAttribute("question", question);
-            request.setAttribute("attachments", attachments);
-            request.setAttribute("answers", answers);
-            request.setAttribute("author", author);
-            request.setAttribute("isOwner", isOwner);
-            request.setAttribute("isAdmin", isAdmin);
-            
-            request.getRequestDispatcher("/WEB-INF/views/board/question-view.jsp").forward(request, response);
-            
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 질문 ID입니다.");
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
-        }
-    }
-    
-    /**
-     * 내가 작성한 Q&A 목록 조회
-     */
-    private void getMyQuestions(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login?redirect=question&action=myquestions");
-            return;
-        }
-        
-        // 페이징 처리
-        int page = 1;
-        int pageSize = 10;
-        
-        try {
-            if (request.getParameter("page") != null) {
-                page = Integer.parseInt(request.getParameter("page"));
-            }
-        } catch (NumberFormatException e) {
-            // 기본값인 1 사용
-        }
-        
-        try {
-            List<QuestionDTO> myQuestions = questionService.getQuestionsByUserId(user.getUserUid(), page, pageSize);
-            int totalQuestions = questionService.getTotalQuestionsByUserId(user.getUserUid());
-            int totalPages = (int) Math.ceil((double) totalQuestions / pageSize);
-            
-            request.setAttribute("questions", myQuestions);
-            request.setAttribute("currentPage", page);
-            request.setAttribute("totalPages", totalPages);
-            request.setAttribute("pageSize", pageSize);
-            request.setAttribute("totalQuestions", totalQuestions);
-            request.setAttribute("isMyQuestions", true);
-            
-            request.getRequestDispatcher("/WEB-INF/views/board/question-list.jsp").forward(request, response);
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
-        }
-    }
-    
-    /**
-     * 모든 사용자의 Q&A 목록 조회 (관리자용)
+     * 모든 질문 목록을 조회하여 표시
      */
     private void getAllQuestions(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login?redirect=question");
-            return;
-        }
-        
-        // 관리자만 모든 질문 조회 가능 (일반 사용자는 자신의 질문만 조회)
-        boolean isAdmin = "admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority());
-        
-        if (!isAdmin) {
-            getMyQuestions(request, response);
-            return;
-        }
-        
-        // 페이징 처리
-        int page = 1;
-        int pageSize = 10;
-        
         try {
-            if (request.getParameter("page") != null) {
-                page = Integer.parseInt(request.getParameter("page"));
-            }
-        } catch (NumberFormatException e) {
-            // 기본값인 1 사용
-        }
-        
-        try {
-            List<QuestionDTO> allQuestions = questionService.getAllQuestions(page, pageSize);
-            int totalQuestions = questionService.getTotalQuestions();
-            int totalPages = (int) Math.ceil((double) totalQuestions / pageSize);
-            
-            request.setAttribute("questions", allQuestions);
-            request.setAttribute("currentPage", page);
-            request.setAttribute("totalPages", totalPages);
-            request.setAttribute("pageSize", pageSize);
-            request.setAttribute("totalQuestions", totalQuestions);
-            request.setAttribute("isAdmin", isAdmin);
-            
-            request.getRequestDispatcher("/WEB-INF/views/board/question-list.jsp").forward(request, response);
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
-        }
-    }
-    
-    /**
-     * 특정 사용자의 Q&A 목록 조회 (관리자용)
-     */
-    private void getQuestionsByUserId(HttpServletRequest request, HttpServletResponse response) 
-            throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login?redirect=question");
-            return;
-        }
-        
-        // 관리자 권한 확인
-        boolean isAdmin = "admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority());
-        
-        if (!isAdmin) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자 권한이 필요합니다.");
-            return;
-        }
-        
-        try {
-            long targetUserId = Long.parseLong(request.getParameter("userId"));
-            
-            // 페이징 처리
+            // 기본 페이지네이션 값 설정
             int page = 1;
             int pageSize = 10;
             
-            try {
-                if (request.getParameter("page") != null) {
-                    page = Integer.parseInt(request.getParameter("page"));
-                }
-            } catch (NumberFormatException e) {
-                // 기본값인 1 사용
+            // 요청에서 페이지네이션 파라미터 추출
+            String pageParam = request.getParameter("page");
+            String sizeParam = request.getParameter("size");
+            
+            if (pageParam != null && !pageParam.trim().isEmpty()) {
+                page = Integer.parseInt(pageParam);
             }
             
-            List<QuestionDTO> userQuestions = questionService.getQuestionsByUserId(targetUserId, page, pageSize);
-            int totalQuestions = questionService.getTotalQuestionsByUserId(targetUserId);
+            if (sizeParam != null && !sizeParam.trim().isEmpty()) {
+                pageSize = Integer.parseInt(sizeParam);
+            }
+            
+            // 질문 목록 조회
+            List<QuestionDTO> questions = questionService.getAllQuestions(page, pageSize);
+            int totalQuestions = questionService.getTotalQuestions();
             int totalPages = (int) Math.ceil((double) totalQuestions / pageSize);
             
-            // 사용자 정보 조회
-            UserDTO targetUser = questionService.getUserById(targetUserId);
+            // JSON 응답 보내기
+            Map<String, Object> result = new HashMap<>();
+            result.put("questions", questions);
+            result.put("currentPage", page);
+            result.put("totalPages", totalPages);
+            result.put("totalQuestions", totalQuestions);
             
-            request.setAttribute("questions", userQuestions);
-            request.setAttribute("currentPage", page);
-            request.setAttribute("totalPages", totalPages);
-            request.setAttribute("pageSize", pageSize);
-            request.setAttribute("totalQuestions", totalQuestions);
-            request.setAttribute("targetUser", targetUser);
-            request.setAttribute("isAdmin", isAdmin);
-            
-            request.getRequestDispatcher("/WEB-INF/views/board/question-user-list.jsp").forward(request, response);
-            
-        } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 사용자 ID입니다.");
+            sendJsonResponse(response, HttpServletResponse.SC_OK, result);
         } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
+            LoggerConfig.logError(QuestionController.class, "getAllQuestions", "질문 목록 조회 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "질문 목록을 불러오는 중 오류가 발생했습니다."));
         }
     }
     
     /**
-     * Q&A 답변 작성
+     * 특정 질문의 상세 정보 조회
+     */
+    private void getQuestionById(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        try {
+            String questionIdParam = request.getParameter("id");
+            
+            if (questionIdParam == null || questionIdParam.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "질문 ID가 제공되지 않았습니다."));
+                return;
+            }
+            
+            long questionId = Long.parseLong(questionIdParam);
+            QuestionDTO question = questionService.getQuestionById(questionId);
+            
+            if (question == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                    Map.of("status", "error", "message", "해당 ID의 질문을 찾을 수 없습니다."));
+                return;
+            }
+            
+            // 해당 질문에 대한 답변 목록도 조회
+            List<AnswerDTO> answers = questionService.getAnswersByQuestionId(questionId);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("question", question);
+            result.put("answers", answers);
+            
+            sendJsonResponse(response, HttpServletResponse.SC_OK, result);
+        } catch (NumberFormatException e) {
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                Map.of("status", "error", "message", "잘못된 질문 ID 형식입니다."));
+        } catch (Exception e) {
+            LoggerConfig.logError(QuestionController.class, "getQuestionById", "질문 상세 조회 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "질문 상세 정보를 불러오는 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 새 질문 작성 페이지 표시
+     */
+    private void showQuestionForm(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        // HTML/JSON 응답으로 질문 폼 관련 데이터 반환
+        Map<String, Object> result = new HashMap<>();
+        result.put("status", "success");
+        result.put("message", "새 질문 작성 페이지");
+        
+        sendJsonResponse(response, HttpServletResponse.SC_OK, result);
+    }
+    
+    /**
+     * 질문 수정 페이지 표시
+     */
+    private void showEditQuestionForm(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        try {
+            String questionIdParam = request.getParameter("id");
+            
+            if (questionIdParam == null || questionIdParam.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "질문 ID가 제공되지 않았습니다."));
+                return;
+            }
+            
+            long questionId = Long.parseLong(questionIdParam);
+            QuestionDTO question = questionService.getQuestionById(questionId);
+            
+            if (question == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                    Map.of("status", "error", "message", "해당 ID의 질문을 찾을 수 없습니다."));
+                return;
+            }
+            
+            // 사용자 인증 확인
+            HttpSession session = request.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
+            
+            if (user == null || user.getUserId() != question.getUserUid()) {
+                sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN, 
+                    Map.of("status", "error", "message", "이 질문을 수정할 권한이 없습니다."));
+                return;
+            }
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("question", question);
+            
+            sendJsonResponse(response, HttpServletResponse.SC_OK, result);
+        } catch (NumberFormatException e) {
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                Map.of("status", "error", "message", "잘못된 질문 ID 형식입니다."));
+        } catch (Exception e) {
+            LoggerConfig.logError(QuestionController.class, "showEditQuestionForm", "질문 수정 폼 로딩 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "질문 수정 정보를 불러오는 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 새 질문 등록 처리
+     */
+    private void postQuestion(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        try {
+            // 사용자 인증 확인
+            HttpSession session = request.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
+            
+            if (user == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED, 
+                    Map.of("status", "error", "message", "로그인이 필요합니다."));
+                return;
+            }
+            
+            // 요청 데이터 가져오기
+            String title = request.getParameter("title");
+            String content = request.getParameter("content");
+            
+            // 유효성 검사
+            if (title == null || content == null || title.trim().isEmpty() || content.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "제목과 내용을 모두 입력해야 합니다."));
+                return;
+            }
+            
+            // DTO 객체 생성 및 값 설정
+            QuestionDTO question = new QuestionDTO();
+            question.setTitle(title);
+            question.setContent(content);
+            question.setUserUid(user.getUserId());
+            
+            // IP 주소 기록
+            String ipAddress = IpUtil.getClientIpAddr(request);
+            question.setAuthorIp(ipAddress);
+            
+            // 질문 등록
+            boolean success = questionService.createQuestion(question);
+            
+            if (success) {
+                sendJsonResponse(response, HttpServletResponse.SC_CREATED, 
+                    Map.of("status", "success", 
+                           "message", "질문이 성공적으로 등록되었습니다.", 
+                           "questionId", question.getQuestionId()));
+            } else {
+                sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    Map.of("status", "error", "message", "질문 등록에 실패했습니다."));
+            }
+        } catch (Exception e) {
+            LoggerConfig.logError(QuestionController.class, "postQuestion", "질문 등록 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "질문 등록 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 질문 수정 처리
+     */
+    private void updateQuestion(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        try {
+            // 사용자 인증 확인
+            HttpSession session = request.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
+            
+            if (user == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED, 
+                    Map.of("status", "error", "message", "로그인이 필요합니다."));
+                return;
+            }
+            
+            // 요청 데이터 가져오기
+            String questionIdParam = request.getParameter("id");
+            String title = request.getParameter("title");
+            String content = request.getParameter("content");
+            
+            // 유효성 검사
+            if (questionIdParam == null || title == null || content == null || 
+                questionIdParam.trim().isEmpty() || title.trim().isEmpty() || content.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "질문 ID, 제목, 내용을 모두 입력해야 합니다."));
+                return;
+            }
+            
+            long questionId = Long.parseLong(questionIdParam);
+            
+            // 기존 질문 정보 가져오기
+            QuestionDTO originalQuestion = questionService.getQuestionById(questionId);
+            
+            if (originalQuestion == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                    Map.of("status", "error", "message", "해당 ID의 질문을 찾을 수 없습니다."));
+                return;
+            }
+            
+            // 작성자 확인
+            if (originalQuestion.getUserUid() != user.getUserId()) {
+                sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN, 
+                    Map.of("status", "error", "message", "이 질문을 수정할 권한이 없습니다."));
+                return;
+            }
+            
+            // 질문 정보 업데이트
+            originalQuestion.setTitle(title);
+            originalQuestion.setContent(content);
+            
+            // IP 주소 갱신
+            String ipAddress = IpUtil.getClientIpAddr(request);
+            originalQuestion.setAuthorIp(ipAddress);            // 질문 업데이트 (사용자 ID와 권한 전달)
+            boolean success = questionService.updateQuestion(originalQuestion, user.getUserId(), user.getUserAuthority());
+            
+            if (success) {
+                sendJsonResponse(response, HttpServletResponse.SC_OK, 
+                    Map.of("status", "success", "message", "질문이 성공적으로 수정되었습니다."));
+            } else {
+                sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    Map.of("status", "error", "message", "질문 수정에 실패했습니다."));
+            }
+        } catch (NumberFormatException e) {
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                Map.of("status", "error", "message", "잘못된 질문 ID 형식입니다."));
+        } catch (Exception e) {
+            LoggerConfig.logError(QuestionController.class, "updateQuestion", "질문 수정 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "질문 수정 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 질문 삭제 처리
+     */
+    private void deleteQuestion(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        try {
+            // 사용자 인증 확인
+            HttpSession session = request.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
+            
+            if (user == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED, 
+                    Map.of("status", "error", "message", "로그인이 필요합니다."));
+                return;
+            }
+            
+            // 요청 데이터 가져오기
+            String questionIdParam = request.getParameter("id");
+            
+            if (questionIdParam == null || questionIdParam.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "질문 ID가 제공되지 않았습니다."));
+                return;
+            }
+            
+            long questionId = Long.parseLong(questionIdParam);
+            
+            // 기존 질문 정보 가져오기
+            QuestionDTO question = questionService.getQuestionById(questionId);
+            
+            if (question == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                    Map.of("status", "error", "message", "해당 ID의 질문을 찾을 수 없습니다."));
+                return;
+            }
+            
+            // 작성자 또는 관리자인지 확인
+            boolean isAdmin = "admin".equals(user.getUserAuthority());
+            if (!isAdmin && question.getUserUid() != user.getUserId()) {
+                sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN, 
+                    Map.of("status", "error", "message", "이 질문을 삭제할 권한이 없습니다."));
+                return;
+            }
+              // 질문 삭제 (논리적 삭제)
+            String deleteReason = request.getParameter("reason");
+            if (deleteReason == null || deleteReason.isEmpty()) {
+                deleteReason = "사용자 요청";  // 기본 삭제 이유
+            }
+            
+            boolean success = questionService.deleteQuestion(questionId, user.getUserId(), deleteReason);
+            
+            if (success) {
+                sendJsonResponse(response, HttpServletResponse.SC_OK, 
+                    Map.of("status", "success", "message", "질문이 성공적으로 삭제되었습니다."));
+            } else {
+                sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    Map.of("status", "error", "message", "질문 삭제에 실패했습니다."));
+            }
+        } catch (NumberFormatException e) {
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                Map.of("status", "error", "message", "잘못된 질문 ID 형식입니다."));
+        } catch (Exception e) {
+            LoggerConfig.logError(QuestionController.class, "deleteQuestion", "질문 삭제 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "질문 삭제 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 답변 등록 처리
      */
     private void postAnswer(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"로그인이 필요합니다.\"}");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/login?redirect=question");
-            }
-            return;
-        }
-        
-        // 관리자 권한 확인 (일반 사용자는 본인의 질문에만 답변 가능)
-        boolean isAdmin = "admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority());
-        
         try {
-            long questionId = Long.parseLong(request.getParameter("questionId"));
+            // 사용자 인증 확인
+            HttpSession session = request.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
+            
+            if (user == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED, 
+                    Map.of("status", "error", "message", "로그인이 필요합니다."));
+                return;
+            }
+            
+            // 요청 데이터 가져오기
+            String questionIdParam = request.getParameter("questionId");
             String content = request.getParameter("content");
-            String clientIp = IpUtil.getClientIpAddr(request);
             
-            // 필수 입력값 검증
-            if (content == null || content.trim().isEmpty()) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"답변 내용을 입력해주세요.\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question?action=view&id=" + questionId + "&error=emptyAnswer");
-                }
+            // 유효성 검사
+            if (questionIdParam == null || content == null || 
+                questionIdParam.trim().isEmpty() || content.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "질문 ID와 답변 내용을 모두 입력해야 합니다."));
                 return;
             }
             
-            // 질문 작성자 또는 관리자만 답변 작성 가능 (권한 확인)
+            long questionId = Long.parseLong(questionIdParam);
+            
+            // 질문이 존재하는지 확인
             QuestionDTO question = questionService.getQuestionById(questionId);
+            
             if (question == null) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"질문을 찾을 수 없습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "질문을 찾을 수 없습니다.");
-                }
+                sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                    Map.of("status", "error", "message", "해당 ID의 질문을 찾을 수 없습니다."));
                 return;
             }
             
-            boolean isQuestionOwner = question.getUserUid() == user.getUserUid();
-            
-            if (!isAdmin && !isQuestionOwner) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"답변 작성 권한이 없습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "답변 작성 권한이 없습니다.");
-                }
-                return;
-            }
-            
-            // DTO 객체 생성
+            // DTO 객체 생성 및 값 설정
             AnswerDTO answer = new AnswerDTO();
             answer.setQuestionId(questionId);
             answer.setContent(content);
-            answer.setAuthorIp(clientIp);
-            answer.setUserUid(user.getUserUid());
+            answer.setUserUid(user.getUserId());
             
-            boolean result = questionService.createAnswer(answer);
+            // IP 주소 기록
+            String ipAddress = IpUtil.getClientIpAddr(request);
+            answer.setAuthorIp(ipAddress);
             
-            if (result) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write(
-                        "{\"success\": true, \"message\": \"답변이 등록되었습니다.\", \"id\": " + answer.getAnswerId() + "}"
-                    );
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question?action=view&id=" + questionId);
-                }
+            // 답변 등록
+            boolean success = questionService.createAnswer(answer);
+            
+            if (success) {
+                sendJsonResponse(response, HttpServletResponse.SC_CREATED, 
+                    Map.of("status", "success", 
+                           "message", "답변이 성공적으로 등록되었습니다.", 
+                           "answerId", answer.getAnswerId()));
             } else {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"답변 등록에 실패했습니다.\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question?action=view&id=" + questionId + "&error=answerFailed");
-                }
+                sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    Map.of("status", "error", "message", "답변 등록에 실패했습니다."));
             }
         } catch (NumberFormatException e) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"잘못된 질문 ID입니다.\"}");
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 질문 ID입니다.");
-            }
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                Map.of("status", "error", "message", "잘못된 질문 ID 형식입니다."));
         } catch (Exception e) {
-            e.printStackTrace();
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"서버 오류가 발생했습니다.\"}");
-            } else {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
-            }
+            LoggerConfig.logError(QuestionController.class, "postAnswer", "답변 등록 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "답변 등록 중 오류가 발생했습니다."));
         }
     }
     
     /**
-     * Q&A 답변 수정
+     * 답변 수정 처리
      */
     private void updateAnswer(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"로그인이 필요합니다.\"}");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/login?redirect=question");
-            }
-            return;
-        }
-        
         try {
-            long answerId = Long.parseLong(request.getParameter("answerId"));
-            long questionId = Long.parseLong(request.getParameter("questionId"));
+            // 사용자 인증 확인
+            HttpSession session = request.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
+            
+            if (user == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED, 
+                    Map.of("status", "error", "message", "로그인이 필요합니다."));
+                return;
+            }
+            
+            // 요청 데이터 가져오기
+            String answerIdParam = request.getParameter("id");
             String content = request.getParameter("content");
             
-            // 필수 입력값 검증
-            if (content == null || content.trim().isEmpty()) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"답변 내용을 입력해주세요.\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question?action=view&id=" + questionId + "&error=emptyAnswer");
-                }
+            // 유효성 검사
+            if (answerIdParam == null || content == null || 
+                answerIdParam.trim().isEmpty() || content.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "답변 ID와 내용을 모두 입력해야 합니다."));
                 return;
             }
             
-            // 답변 정보 조회
-            AnswerDTO answer = questionService.getAnswerById(answerId);
+            long answerId = Long.parseLong(answerIdParam);
             
-            if (answer == null) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"답변을 찾을 수 없습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "답변을 찾을 수 없습니다.");
-                }
+            // 기존 답변 정보 가져오기
+            AnswerDTO originalAnswer = questionService.getAnswerById(answerId);
+            
+            if (originalAnswer == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                    Map.of("status", "error", "message", "해당 ID의 답변을 찾을 수 없습니다."));
                 return;
             }
             
-            // 작성자 본인 또는 관리자만 수정 가능 (권한 확인)
-            boolean isOwner = answer.getUserUid() == user.getUserUid();
-            boolean isAdmin = "admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority());
-            
-            if (!isOwner && !isAdmin) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"답변 수정 권한이 없습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "답변 수정 권한이 없습니다.");
-                }
+            // 작성자 확인
+            if (originalAnswer.getUserUid() != user.getUserId()) {
+                sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN, 
+                    Map.of("status", "error", "message", "이 답변을 수정할 권한이 없습니다."));
                 return;
             }
             
-            // 답변 객체 업데이트
-            answer.setContent(content);
+            // 답변 정보 업데이트
+            originalAnswer.setContent(content);
             
-            boolean result = questionService.updateAnswer(answer, user.getUserUid(), user.getUserAuthority());
+            // IP 주소 갱신
+            String ipAddress = IpUtil.getClientIpAddr(request);
+            originalAnswer.setAuthorIp(ipAddress);
+              // 답변 업데이트
+            boolean success = questionService.updateAnswer(originalAnswer, user.getUserId(), user.getUserAuthority());
             
-            if (result) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": true, \"message\": \"답변이 수정되었습니다.\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question?action=view&id=" + questionId);
-                }
+            if (success) {
+                sendJsonResponse(response, HttpServletResponse.SC_OK, 
+                    Map.of("status", "success", "message", "답변이 성공적으로 수정되었습니다."));
             } else {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"답변 수정에 실패했습니다.\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question?action=view&id=" + questionId + "&error=updateAnswerFailed");
-                }
+                sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    Map.of("status", "error", "message", "답변 수정에 실패했습니다."));
             }
         } catch (NumberFormatException e) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"잘못된 답변 ID입니다.\"}");
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 답변 ID입니다.");
-            }
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                Map.of("status", "error", "message", "잘못된 답변 ID 형식입니다."));
         } catch (Exception e) {
-            e.printStackTrace();
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"서버 오류가 발생했습니다.\"}");
-            } else {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
-            }
+            LoggerConfig.logError(QuestionController.class, "updateAnswer", "답변 수정 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "답변 수정 중 오류가 발생했습니다."));
         }
     }
     
     /**
-     * Q&A 답변 삭제
+     * 답변 삭제 처리
      */
     private void deleteAnswer(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"로그인이 필요합니다.\"}");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/login?redirect=question");
-            }
-            return;
-        }
-        
         try {
-            long answerId = Long.parseLong(request.getParameter("answerId"));
-            long questionId = Long.parseLong(request.getParameter("questionId"));
+            // 사용자 인증 확인
+            HttpSession session = request.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
             
-            // 답변 정보 조회
+            if (user == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED, 
+                    Map.of("status", "error", "message", "로그인이 필요합니다."));
+                return;
+            }
+            
+            // 요청 데이터 가져오기
+            String answerIdParam = request.getParameter("id");
+            
+            if (answerIdParam == null || answerIdParam.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "답변 ID가 제공되지 않았습니다."));
+                return;
+            }
+            
+            long answerId = Long.parseLong(answerIdParam);
+            
+            // 기존 답변 정보 가져오기
             AnswerDTO answer = questionService.getAnswerById(answerId);
             
             if (answer == null) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"답변을 찾을 수 없습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "답변을 찾을 수 없습니다.");
-                }
+                sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                    Map.of("status", "error", "message", "해당 ID의 답변을 찾을 수 없습니다."));
                 return;
             }
             
-            // 작성자 본인 또는 관리자만 삭제 가능 (권한 확인)
-            boolean isOwner = answer.getUserUid() == user.getUserUid();
-            boolean isAdmin = "admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority());
-            
-            if (!isOwner && !isAdmin) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"답변 삭제 권한이 없습니다.\"}");
-                } else {
-                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "답변 삭제 권한이 없습니다.");
-                }
+            // 작성자 또는 관리자인지 확인
+            boolean isAdmin = "admin".equals(user.getUserAuthority());
+            if (!isAdmin && answer.getUserUid() != user.getUserId()) {
+                sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN, 
+                    Map.of("status", "error", "message", "이 답변을 삭제할 권한이 없습니다."));
                 return;
             }
-            
-            String reason = request.getParameter("reason");
-            if (reason == null || reason.trim().isEmpty()) {
-                reason = "사용자에 의한 삭제";
+              // 답변 삭제 (논리적 삭제)
+            String deleteReason = request.getParameter("reason");
+            if (deleteReason == null || deleteReason.isEmpty()) {
+                deleteReason = "사용자 요청";  // 기본 삭제 이유
             }
             
-            boolean result = questionService.deleteAnswer(answerId, user.getUserUid(), reason);
+            boolean success = questionService.deleteAnswer(answerId, user.getUserId(), deleteReason);
             
-            if (result) {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": true, \"message\": \"답변이 삭제되었습니다.\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question?action=view&id=" + questionId);
-                }
+            if (success) {
+                sendJsonResponse(response, HttpServletResponse.SC_OK, 
+                    Map.of("status", "success", "message", "답변이 성공적으로 삭제되었습니다."));
             } else {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"답변 삭제에 실패했습니다.\"}");
-                } else {
-                    response.sendRedirect(request.getContextPath() + "/question?action=view&id=" + questionId + "&error=deleteAnswerFailed");
-                }
+                sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    Map.of("status", "error", "message", "답변 삭제에 실패했습니다."));
             }
         } catch (NumberFormatException e) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"잘못된 답변 ID입니다.\"}");
-            } else {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 답변 ID입니다.");
-            }
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                Map.of("status", "error", "message", "잘못된 답변 ID 형식입니다."));
         } catch (Exception e) {
-            e.printStackTrace();
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"서버 오류가 발생했습니다.\"}");
-            } else {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "서버 오류가 발생했습니다.");
-            }
+            LoggerConfig.logError(QuestionController.class, "deleteAnswer", "답변 삭제 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "답변 삭제 중 오류가 발생했습니다."));
         }
     }
     
     /**
-     * 첨부파일 업로드
+     * 첨부 파일 업로드 처리
      */
     private void uploadAttachment(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            response.setContentType("application/json");
-            response.getWriter().write("{\"success\": false, \"message\": \"로그인이 필요합니다.\"}");
-            return;
-        }
-        
         try {
-            // 파일 업로드를 위한 멀티파트 요청 처리
-            Part filePart = request.getPart("file");
-            long questionId = Long.parseLong(request.getParameter("questionId"));
+            // 사용자 인증 확인
+            HttpSession session = request.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
             
-            // 질문 정보 조회 및 권한 확인
+            if (user == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED, 
+                    Map.of("status", "error", "message", "로그인이 필요합니다."));
+                return;
+            }
+            
+            // 질문 ID 가져오기
+            String questionIdParam = request.getParameter("questionId");
+            
+            if (questionIdParam == null || questionIdParam.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "질문 ID가 제공되지 않았습니다."));
+                return;
+            }
+            
+            long questionId = Long.parseLong(questionIdParam);
+            
+            // 질문이 존재하는지 확인
             QuestionDTO question = questionService.getQuestionById(questionId);
             
             if (question == null) {
-                response.setContentType("application/json");
-                response.getWriter().write("{\"success\": false, \"message\": \"질문을 찾을 수 없습니다.\"}");
+                sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                    Map.of("status", "error", "message", "해당 ID의 질문을 찾을 수 없습니다."));
                 return;
             }
             
-            boolean isOwner = question.getUserUid() == user.getUserUid();
-            boolean isAdmin = "admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority());
-            
-            if (!isOwner && !isAdmin) {
-                response.setContentType("application/json");
-                response.getWriter().write("{\"success\": false, \"message\": \"파일 업로드 권한이 없습니다.\"}");
+            // 질문 작성자 확인
+            if (question.getUserUid() != user.getUserId()) {
+                sendJsonResponse(response, HttpServletResponse.SC_FORBIDDEN, 
+                    Map.of("status", "error", "message", "이 질문에 파일을 첨부할 권한이 없습니다."));
                 return;
             }
             
-            // 파일이 비어있는지 확인
+            // 첨부 파일 처리
+            Part filePart = request.getPart("file");
+            
             if (filePart == null || filePart.getSize() == 0) {
-                response.setContentType("application/json");
-                response.getWriter().write("{\"success\": false, \"message\": \"파일이 선택되지 않았습니다.\"}");
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "파일이 제공되지 않았습니다."));
                 return;
             }
             
-            // 파일 이름 및 크기 추출
-            String fileName = filePart.getSubmittedFileName();
-            long fileSize = filePart.getSize();
+            // 파일 저장 처리
+            String uploadPath = AppConfig.getUploadPath();
+            String fileName = FileUtil.getSubmittedFileName(filePart);
+            String savedFileName = System.currentTimeMillis() + "_" + fileName;
+            String filePath = uploadPath + File.separator + savedFileName;
             
-            // 파일 확장자 검증
-            if (!FileUtil.isAllowedFileType(fileName)) {
-                response.setContentType("application/json");
-                response.getWriter().write("{\"success\": false, \"message\": \"허용되지 않는 파일 형식입니다.\"}");
-                return;
+            // 디렉토리 생성
+            File uploadDir = new File(uploadPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
             }
             
-            // MIME 타입 검증
-            if (!FileUtil.validateMimeType(filePart.getContentType())) {
-                response.setContentType("application/json");
-                response.getWriter().write("{\"success\": false, \"message\": \"유효하지 않은 파일 타입입니다.\"}");
-                return;
-            }
-            
-            // 파일 저장 로직
-            // 1. 업로드 디렉토리 경로 얻기
-            String uploadDirPath = FileUtil.getUploadDirectoryPath();
-            
-            // 2. 안전한 고유 파일명 생성
-            String uniqueFileName = FileUtil.generateUniqueFilename(fileName);
-            
-            // 3. 전체 파일 경로 생성
-            String filePath = new File(uploadDirPath, uniqueFileName).getAbsolutePath();
-            
-            // 4. 파일 저장
+            // 파일 저장
             filePart.write(filePath);
+              // DB에 첨부 파일 정보 저장
+            AttachmentDTO attachment = new AttachmentDTO();
+            attachment.setPostId(questionId);
+            attachment.setFileName(fileName);
+            attachment.setFilePath(savedFileName);
+            attachment.setFileSize((int) filePart.getSize());
             
-            // 5. DB에 파일 정보 저장
-            boolean success = questionService.addAttachment(questionId, fileName, filePath, fileSize);
-            
-            // 결과 반환
-            response.setContentType("application/json");
-            if (success) {
-                response.getWriter().write(
-                    "{\"success\": true, \"message\": \"파일이 업로드되었습니다.\", " +
-                    "\"fileName\": \"" + fileName + "\", \"fileSize\": " + fileSize + "}"
-                );
+            boolean success = questionService.addAttachment(questionId, fileName, savedFileName, filePart.getSize());              if (success) {
+                sendJsonResponse(response, HttpServletResponse.SC_CREATED, 
+                    Map.of("status", "success", 
+                           "message", "파일이 성공적으로 업로드되었습니다."));
             } else {
-                response.getWriter().write("{\"success\": false, \"message\": \"파일 업로드 중 오류가 발생했습니다.\"}");
+                sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                    Map.of("status", "error", "message", "파일 업로드에 실패했습니다."));
             }
+        } catch (NumberFormatException e) {
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                Map.of("status", "error", "message", "잘못된 질문 ID 형식입니다."));
         } catch (Exception e) {
-            e.printStackTrace();
-            response.setContentType("application/json");
-            response.getWriter().write("{\"success\": false, \"message\": \"" + e.getMessage() + "\"}");
+            LoggerConfig.logError(QuestionController.class, "uploadAttachment", "파일 업로드 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "파일 업로드 중 오류가 발생했습니다."));
         }
     }
     
     /**
-     * 첨부파일 다운로드
+     * 첨부 파일 다운로드 처리
      */
     private void downloadAttachment(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-        // 로그인 확인
-        HttpSession session = request.getSession();
-        UserDTO user = (UserDTO) session.getAttribute("user");
-        
-        if (user == null) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "로그인이 필요합니다.");
-            return;
-        }
+        FileInputStream fileInputStream = null;
         
         try {
-            long attachId = Long.parseLong(request.getParameter("attachId"));
+            // 첨부 파일 ID 가져오기
+            String attachmentIdParam = request.getParameter("id");
             
-            // 첨부파일 정보 조회
-            AttachmentDTO attachment = questionService.getAttachmentById(attachId);
+            if (attachmentIdParam == null || attachmentIdParam.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "첨부 파일 ID가 제공되지 않았습니다."));
+                return;
+            }
+            
+            long attachmentId = Long.parseLong(attachmentIdParam);
+            
+            // 첨부 파일 정보 가져오기
+            AttachmentDTO attachment = questionService.getAttachmentById(attachmentId);
+            
             if (attachment == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "파일을 찾을 수 없습니다.");
+                sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                    Map.of("status", "error", "message", "해당 ID의 첨부 파일을 찾을 수 없습니다."));
                 return;
             }
             
-            // 권한 확인 (질문 소유자 또는 관리자만 다운로드 가능)
-            QuestionDTO question = questionService.getQuestionById(attachment.getPostId());
-            if (question == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "관련 질문을 찾을 수 없습니다.");
+            // 파일 존재 여부 확인
+            String uploadPath = AppConfig.getUploadPath();
+            String filePath = uploadPath + File.separator + attachment.getFilePath();
+            File file = new File(filePath);
+            
+            if (!file.exists()) {
+                sendJsonResponse(response, HttpServletResponse.SC_NOT_FOUND, 
+                    Map.of("status", "error", "message", "파일을 찾을 수 없습니다."));
                 return;
             }
             
-            boolean isOwner = question.getUserUid() == user.getUserUid();
-            boolean isAdmin = "admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority());
+            // 파일 다운로드 설정
+            response.setContentType("application/octet-stream");
+            response.setContentLength((int) file.length());
             
-            if (!isOwner && !isAdmin) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "다운로드 권한이 없습니다.");
-                return;
-            }
-            
-            // 파일 경로
-            String filePath = attachment.getFilePath();
-            File downloadFile = new File(filePath);
-            
-            // 파일 존재 확인
-            if (!downloadFile.exists() || !downloadFile.isFile()) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "서버에 파일이 존재하지 않습니다.");
-                return;
-            }
-            
-            // 보안 검사: 업로드 디렉토리 외부에 접근하려는 시도 방지
-            if (!downloadFile.getCanonicalPath().startsWith(new File(AppConfig.getUploadPath()).getCanonicalPath())) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "접근이 거부되었습니다.");
-                return;
-            }
-            
-            // 다운로드 설정
-            String mimeType = request.getServletContext().getMimeType(downloadFile.getName());
-            if (mimeType == null) {
-                mimeType = "application/octet-stream";
-            }
-            
-            response.setContentType(mimeType);
-            response.setHeader("Content-Disposition", "attachment; filename=\"" + 
-                    URLEncoder.encode(attachment.getFileName(), "UTF-8") + "\"");
-            response.setContentLength((int)downloadFile.length());
+            String encodedFileName = URLEncoder.encode(attachment.getFileName(), "UTF-8")
+                    .replaceAll("\\+", "%20");
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + encodedFileName);
             
             // 파일 전송
-            try (FileInputStream fileInputStream = new FileInputStream(downloadFile);
-                 OutputStream outputStream = response.getOutputStream()) {
-                
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                
-                while ((bytesRead = fileInputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-                
-                outputStream.flush();
+            fileInputStream = new FileInputStream(file);
+            OutputStream outputStream = response.getOutputStream();
+            
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            
+            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
             }
+            
+            outputStream.flush();
         } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 파일 ID입니다.");
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                Map.of("status", "error", "message", "잘못된 첨부 파일 ID 형식입니다."));
         } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "다운로드 중 오류가 발생했습니다: " + e.getMessage());
+            LoggerConfig.logError(QuestionController.class, "downloadAttachment", "파일 다운로드 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "파일 다운로드 중 오류가 발생했습니다."));
+        } finally {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException e) {
+                    // 무시
+                }
+            }
+        }
+    }
+    
+    /**
+     * 내 질문 목록 조회
+     */
+    private void getMyQuestions(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        try {
+            // 사용자 인증 확인
+            HttpSession session = request.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
+            
+            if (user == null) {
+                sendJsonResponse(response, HttpServletResponse.SC_UNAUTHORIZED, 
+                    Map.of("status", "error", "message", "로그인이 필요합니다."));
+                return;
+            }
+            
+            // 기본 페이지네이션 값 설정
+            int page = 1;
+            int pageSize = 10;
+            
+            // 요청에서 페이지네이션 파라미터 추출
+            String pageParam = request.getParameter("page");
+            String sizeParam = request.getParameter("size");
+            
+            if (pageParam != null && !pageParam.trim().isEmpty()) {
+                page = Integer.parseInt(pageParam);
+            }
+            
+            if (sizeParam != null && !sizeParam.trim().isEmpty()) {
+                pageSize = Integer.parseInt(sizeParam);
+            }
+            
+            // 사용자의 질문 목록 조회
+            List<QuestionDTO> questions = questionService.getQuestionsByUserId(user.getUserId(), page, pageSize);
+            int totalQuestions = questionService.getTotalQuestionsByUserId(user.getUserId());
+            int totalPages = (int) Math.ceil((double) totalQuestions / pageSize);
+            
+            // JSON 응답 보내기
+            Map<String, Object> result = new HashMap<>();
+            result.put("questions", questions);
+            result.put("currentPage", page);
+            result.put("totalPages", totalPages);
+            result.put("totalQuestions", totalQuestions);
+            
+            sendJsonResponse(response, HttpServletResponse.SC_OK, result);
+        } catch (Exception e) {
+            LoggerConfig.logError(QuestionController.class, "getMyQuestions", "내 질문 목록 조회 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "내 질문 목록을 불러오는 중 오류가 발생했습니다."));
+        }
+    }
+    
+    /**
+     * 특정 사용자의 질문 목록 조회
+     */
+    private void getQuestionsByUserId(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        try {
+            String userIdParam = request.getParameter("userId");
+            
+            if (userIdParam == null || userIdParam.trim().isEmpty()) {
+                sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                    Map.of("status", "error", "message", "사용자 ID가 제공되지 않았습니다."));
+                return;
+            }
+            
+            long userId = Long.parseLong(userIdParam);
+            
+            // 기본 페이지네이션 값 설정
+            int page = 1;
+            int pageSize = 10;
+            
+            // 요청에서 페이지네이션 파라미터 추출
+            String pageParam = request.getParameter("page");
+            String sizeParam = request.getParameter("size");
+            
+            if (pageParam != null && !pageParam.trim().isEmpty()) {
+                page = Integer.parseInt(pageParam);
+            }
+            
+            if (sizeParam != null && !sizeParam.trim().isEmpty()) {
+                pageSize = Integer.parseInt(sizeParam);
+            }
+            
+            // 사용자의 질문 목록 조회
+            List<QuestionDTO> questions = questionService.getQuestionsByUserId(userId, page, pageSize);
+            int totalQuestions = questionService.getTotalQuestionsByUserId(userId);
+            int totalPages = (int) Math.ceil((double) totalQuestions / pageSize);
+            
+            // JSON 응답 보내기
+            Map<String, Object> result = new HashMap<>();
+            result.put("questions", questions);
+            result.put("currentPage", page);
+            result.put("totalPages", totalPages);
+            result.put("totalQuestions", totalQuestions);
+            
+            sendJsonResponse(response, HttpServletResponse.SC_OK, result);
+        } catch (NumberFormatException e) {
+            sendJsonResponse(response, HttpServletResponse.SC_BAD_REQUEST, 
+                Map.of("status", "error", "message", "잘못된 사용자 ID 형식입니다."));
+        } catch (Exception e) {
+            LoggerConfig.logError(QuestionController.class, "getQuestionsByUserId", "사용자별 질문 목록 조회 중 오류 발생", e);
+            sendJsonResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
+                Map.of("status", "error", "message", "사용자별 질문 목록을 불러오는 중 오류가 발생했습니다."));
         }
     }
 }

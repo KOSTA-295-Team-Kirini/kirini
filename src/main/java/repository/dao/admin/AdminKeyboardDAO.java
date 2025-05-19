@@ -12,6 +12,7 @@ import dto.keyboard.KeyboardCategoryDTO;
 import dto.keyboard.KeyboardInfoDTO;
 import dto.keyboard.KeyboardTagDTO;
 import util.db.DBConnectionUtil;
+import util.db.TransactionHelper;
 
 /**
  * 관리자용 키보드 정보 관리 DAO 클래스
@@ -62,8 +63,7 @@ public class AdminKeyboardDAO {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         boolean success = false;
-        
-        try {
+          try {
             conn = DBConnectionUtil.getConnection();
             conn.setAutoCommit(false);
             
@@ -91,26 +91,13 @@ public class AdminKeyboardDAO {
                     addKeyboardTagMappings(conn, keyboardId, keyboard.getTagIds());
                 }
                 
-                conn.commit();
-                success = true;
+                success = TransactionHelper.commit(conn);
             }
         } catch (SQLException e) {
-            if (conn != null) {
-                try {
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    ex.printStackTrace();
-                }
-            }
+            TransactionHelper.rollback(conn);
             throw e;
         } finally {
-            if (conn != null) {
-                try {
-                    conn.setAutoCommit(true);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
+            TransactionHelper.setAutoCommit(conn, true);
             DBConnectionUtil.close(rs, pstmt, conn);
         }
         

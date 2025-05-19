@@ -1,35 +1,130 @@
 package presentation.controller.page.database;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.google.gson.Gson;
 import business.service.database.KeyboardInfoService;
 import dto.keyboard.KeyboardInfoDTO;
 import dto.keyboard.KeyboardScoreDTO;
 import dto.keyboard.KeyboardTagDTO;
 import dto.user.UserDTO;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import presentation.controller.page.Controller;
 import util.web.IpUtil;
+import util.web.RequestRouter;
 
 /**
  * 키보드 정보 컨트롤러
  * 관리자가 등록한 키보드 정보를 볼 수 있는 페이지
  * 관심 키보드 스크랩, 키보드 한줄평, 태그 설정, 별점 입력 가능
+ * URL 패턴: /keyboard.do 형식 지원
  */
-public class KeyboardInfoController implements Controller {
+@WebServlet({"/keyboard/*", "/keyboard.do"})
+public class KeyboardInfoController extends HttpServlet implements Controller {
+    private static final long serialVersionUID = 1L;
     private KeyboardInfoService keyboardInfoService;
+    private RequestRouter router;
+    private final Gson gson = new Gson();
 
     public KeyboardInfoController() {
         keyboardInfoService = new KeyboardInfoService();
+    }
+    
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        
+        // 라우터 설정
+        initRequestRouter();
+    }
+      /**
+     * 요청 라우터 초기화
+     */
+    private void initRequestRouter() {
+        router = new RequestRouter();
+        
+        // GET 요청 JSON 라우터 설정
+        router.getJson("/", (req, res) -> {
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("message", "키보드 정보 API");
+            return result;
+        });
+        
+        router.getJson("/list", (req, res) -> {
+            // 페이지네이션을 위한 파라미터 처리
+            int page = 1;
+            int pageSize = 12;
+            
+            String pageStr = req.getParameter("page");
+            if (pageStr != null && !pageStr.isEmpty()) {
+                try {
+                    page = Integer.parseInt(pageStr);
+                    if (page < 1) page = 1;
+                } catch (NumberFormatException e) {
+                    // 숫자가 아닌 값이 들어온 경우 기본값 사용
+                }
+            }
+            
+            // 키보드 목록 가져오기
+            List<KeyboardInfoDTO> keyboardList = keyboardInfoService.getAllKeyboardInfos(page, pageSize);
+            int totalKeyboards = keyboardInfoService.getTotalKeyboardCount();
+            int totalPages = (int) Math.ceil(totalKeyboards / (double) pageSize);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("keyboardList", keyboardList);
+            result.put("currentPage", page);
+            result.put("totalPages", totalPages);
+            result.put("totalCount", totalKeyboards);
+            
+            return result;
+        });
+    }
+    
+    /**
+     * JSON 응답 전송
+     */
+    private void sendJsonResponse(HttpServletResponse response, Object data) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        out.print(gson.toJson(data));
+        out.flush();
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // .do 요청일 경우 JSON 응답으로 처리
+        String requestURI = request.getRequestURI();
+        if (requestURI != null && requestURI.endsWith(".do")) {
+            // 라우터로 처리 시도
+            if (router.handle(request, response)) {
+                return;  // 라우터가 요청을 처리함
+            }
+            
+            // 기본 JSON 응답
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("message", "키보드 정보 API");
+            sendJsonResponse(response, result);
+            return;
+        }
+        
+        // 라우터로 처리 시도
+        if (router.handle(request, response)) {
+            return;  // 라우터가 요청을 처리함
+        }
+        
+        // 기존 로직 처리
         String action = request.getParameter("action");
         
         if (action == null) {
@@ -60,6 +155,28 @@ public class KeyboardInfoController implements Controller {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        // .do 요청일 경우 JSON 응답으로 처리
+        String requestURI = request.getRequestURI();
+        if (requestURI != null && requestURI.endsWith(".do")) {
+            // 라우터로 처리 시도
+            if (router.handle(request, response)) {
+                return;  // 라우터가 요청을 처리함
+            }
+            
+            // 기본 JSON 응답
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("message", "키보드 정보 API - POST");
+            sendJsonResponse(response, result);
+            return;
+        }
+        
+        // 라우터로 처리 시도
+        if (router.handle(request, response)) {
+            return;  // 라우터가 요청을 처리함
+        }
+        
+        // 기존 로직 처리
         String action = request.getParameter("action");
         
         if (action == null) {
