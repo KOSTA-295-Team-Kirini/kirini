@@ -2,11 +2,23 @@ package presentation.controller.page.user;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.BufferedReader;
+import java.lang.reflect.Type;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
 import business.service.user.UserService;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import dto.user.UserDTO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -23,15 +35,31 @@ import util.web.RequestRouter;
  * URL 패턴: /login.do 형식 지원
  */
 @WebServlet({"/login/*", "/login.do"})
-public class UserLoginController extends HttpServlet implements Controller {
-    private static final long serialVersionUID = 1L;
+public class UserLoginController extends HttpServlet implements Controller {      private static final long serialVersionUID = 1L;
     private UserService userService;
     private util.web.RequestRouter router; // 수정된 버전
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+            .create();
     
-    @Override
+    // LocalDateTime을 JSON으로 직렬화하기 위한 어댑터
+    private static class LocalDateTimeAdapter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
+        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        @Override
+        public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(formatter.format(src));
+        }
+
+        @Override
+        public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                throws JsonParseException {
+            return LocalDateTime.parse(json.getAsString(), formatter);
+        }
+    }
+      @Override
     public void init() throws ServletException {
-        super.init();
+        super.init();        
         userService = new UserService();
         
         // 라우터 설정
@@ -40,7 +68,8 @@ public class UserLoginController extends HttpServlet implements Controller {
     
     /**
      * 요청 라우터 초기화
-     */    private void initRequestRouter() {
+     */    
+    private void initRequestRouter() {
         router = new RequestRouter();
         
         // GET 요청 JSON 라우터 설정
@@ -72,12 +101,20 @@ public class UserLoginController extends HttpServlet implements Controller {
                 UserDTO user = userService.login(email, password);
                 
                 Map<String, Object> result = new HashMap<>();
-                
-                if (user != null) {
+                  if (user != null) {
                     // 로그인 성공 처리
                     HttpSession session = req.getSession();
                     session.setAttribute("user", user);
                     session.setAttribute("userId", user.getUserId());
+                    
+                    // userLevel에 따라 권한 설정 (클라이언트에서 사용하는 형식으로)
+                    String userAuthority = "USER";
+                    if (user.getUserLevel() == 3) {
+                        userAuthority = "ADMIN";
+                    } else if (user.getUserLevel() == 2) {
+                        userAuthority = "MANAGER";
+                    }
+                    user.setUserAuthority(userAuthority);
                     
                     result.put("success", true);
                     result.put("message", "로그인 성공");
@@ -105,7 +142,8 @@ public class UserLoginController extends HttpServlet implements Controller {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
         out.print(gson.toJson(data));
-        out.flush();    }
+        out.flush();    
+    }
     
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -127,7 +165,8 @@ public class UserLoginController extends HttpServlet implements Controller {
         }
 
         // 일반 요청은 기존 방식대로 처리
-        request.getRequestDispatcher("/view/pages/login.html").forward(request, response);    }
+        request.getRequestDispatcher("/view/pages/login.html").forward(request, response);    
+    }    
     
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -141,9 +180,41 @@ public class UserLoginController extends HttpServlet implements Controller {
             return;  // 라우터가 요청을 처리함
         }
         
-        // 필요한 파라미터 가져오기
-        String email = request.getParameter("email");
-        String password = request.getParameter("password");
+        // 변수 선언
+        String email = null;
+        String password = null;
+        
+        try {
+            // JSON 요청 본문 파싱
+            StringBuilder sb = new StringBuilder();
+            String line;
+            try (BufferedReader reader = request.getReader()) {
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
+            }            
+            // JSON이 비어있지 않은 경우 파싱
+            if (sb.length() > 0) {
+                try {
+                    Map<String, Object> jsonMap = gson.fromJson(sb.toString(), Map.class);
+                    email = (String) jsonMap.get("email");
+                    password = (String) jsonMap.get("password");
+                } catch (Exception e) {
+                    // JSON 파싱 실패 시 폼 데이터에서 파라미터 읽기 시도
+                    email = request.getParameter("email");
+                    password = request.getParameter("password");
+                }
+            } else {
+                // JSON 데이터가 없는 경우 폼 데이터에서 파라미터 읽기
+                email = request.getParameter("email");
+                password = request.getParameter("password");            
+            }
+        } catch (Exception parseEx) {
+            // JSON 파싱 오류 처리
+            LoggerConfig.logError(UserLoginController.class, "doPost", "JSON 파싱 중 오류 발생", parseEx);
+            email = request.getParameter("email");
+            password = request.getParameter("password");
+        }
 
         // 응답 설정
         response.setContentType("application/json");
@@ -167,8 +238,7 @@ public class UserLoginController extends HttpServlet implements Controller {
 
         try {
             // 이메일과 비밀번호로 로그인
-            UserDTO user = userService.login(email, password);
-
+            UserDTO user = userService.login(email, password);                
             if (user != null) {
                 // 로그인 성공 처리
                 HttpSession session = request.getSession();
@@ -182,26 +252,27 @@ public class UserLoginController extends HttpServlet implements Controller {
                 successResult.put("success", true);
                 successResult.put("message", "로그인 성공");
                 successResult.put("redirect", "index.html");
+                successResult.put("user", user);
 
                 if (isDoRequest) {
                     sendJsonResponse(response, successResult);
                 } else {
                     response.getWriter().write(gson.toJson(successResult));
                 }
-            } else {
+            } else {                
                 // 로그인 실패 처리
                 Map<String, Object> errorResult = new HashMap<>();
                 errorResult.put("success", false);
                 errorResult.put("message", "이메일 또는 비밀번호가 일치하지 않습니다.");
-
+                
                 if (isDoRequest) {
                     sendJsonResponse(response, errorResult);
-                } else {                response.getWriter().write(gson.toJson(errorResult));
+                } else {
+                    response.getWriter().write(gson.toJson(errorResult));
                 }
             }
         } catch (Exception e) {
             LoggerConfig.logError(UserLoginController.class, "doPost", "로그인 처리 중 오류 발생", e);
-            
             // 오류 응답 처리
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);

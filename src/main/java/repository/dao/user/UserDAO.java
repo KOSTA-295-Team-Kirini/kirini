@@ -197,8 +197,7 @@ public class UserDAO {
             if (conn != null) try { conn.close(); } catch (SQLException e) {}
         }
     }
-    
-    // 이메일과 비밀번호로 로그인하는 메서드
+      // 이메일과 비밀번호로 로그인하는 메서드
     public UserDTO login(String email, String password) throws SQLException {
         UserDTO user = null;
         Connection conn = null;
@@ -207,19 +206,29 @@ public class UserDAO {
         
         try {
             conn = DBConnectionUtil.getConnection();
-            String sql = "SELECT * FROM user WHERE user_email = ? AND user_password = ?";
+            
+            // 먼저 이메일로 사용자 정보 조회
+            String sql = "SELECT * FROM user WHERE user_email = ?";
             pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, email);
-            pstmt.setString(2, password);
             rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                // mapResultSetToUser() 사용으로 코드 중복 제거
+                // 사용자 정보 매핑
                 user = mapResultSetToUser(rs);
-                updateLastLoginDate(user.getUserId());
+                
+                // 입력된 비밀번호와 저장된 비밀번호가 일치하는지 확인
+                if (user.getPassword().equals(password)) {
+                    // 일치하면 마지막 로그인 시간 업데이트
+                    updateLastLoginDate(user.getUserId());
+                    return user;
+                } else {
+                    // 비밀번호 불일치
+                    return null;
+                }
             }
             
-            return user;
+            return null; // 사용자를 찾지 못함
         } finally {
             DBConnectionUtil.close(rs, pstmt, conn);
         }
