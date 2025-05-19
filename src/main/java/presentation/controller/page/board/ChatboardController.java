@@ -1,7 +1,10 @@
 package presentation.controller.page.board;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -11,22 +14,118 @@ import business.service.chatboard.ChatboardService;
 import dto.board.ChatboardDTO;
 import dto.user.UserDTO;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import presentation.controller.page.Controller;
 import util.web.IpUtil;
+import util.web.RequestRouter;
 
-public class ChatboardController implements Controller {
-    private final ChatboardService chatboardService;
+/**
+ * 채팅 게시판 관련 요청을 처리하는 컨트롤러
+ * URL 패턴: /chatboard.do 형식 지원
+ */
+@WebServlet({"/chatboard/*", "/chatboard.do"})
+public class ChatboardController extends HttpServlet implements Controller {
+    private static final long serialVersionUID = 1L;
+    private ChatboardService chatboardService;
+    private util.web.RequestRouter router;
     
-    public ChatboardController() {
+    @Override
+    public void init() throws ServletException {
+        super.init();
         this.chatboardService = new ChatboardService();
+        
+        // 라우터 설정
+        initRequestRouter();
     }
-
+    
+    /**
+     * 요청 라우터 초기화
+     */
+    private void initRequestRouter() {
+        router = new util.web.RequestRouter();
+          // GET 요청 JSON 라우터 설정
+        router.getJson("/", (req, res) -> {
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("message", "채팅게시판 API");
+            return result;
+        });
+        
+        router.getJson("/list", (req, res) -> {
+            List<ChatboardDTO> chatList = chatboardService.getAllChats();
+            Map<String, Object> result = new HashMap<>();
+            result.put("chatList", chatList);
+            return result;
+        });
+          // POST 요청 JSON 라우터 설정
+        router.postJson("/post", (req, res) -> {
+            // 로그인 확인
+            HttpSession session = req.getSession();
+            UserDTO user = (UserDTO) session.getAttribute("user");
+            
+            if (user == null) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "로그인이 필요합니다.");
+                return errorResult;
+            }
+            
+            String content = req.getParameter("content");
+            String clientIp = IpUtil.getClientIpAddr(req);
+            
+            ChatboardDTO chat = new ChatboardDTO();
+            chat.setChatboardTitle(content);
+            chat.setChatboardAuthorIp(clientIp);
+            chat.setUserUid(user.getUserUid());
+            
+            boolean result = chatboardService.postChat(chat);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", result);
+            
+            if (result) {
+                response.put("message", "채팅이 등록되었습니다.");
+                response.put("chatId", chat.getChatboardUid());
+            } else {
+                response.put("message", "채팅 등록에 실패했습니다.");
+            }
+            
+            return response;
+        });
+    }
+    
+    /**
+     * JSON 응답 전송
+     */    private void sendJsonResponse(HttpServletResponse response, Object data) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        out.print(new Gson().toJson(data));
+        out.flush();
+    }    
+    
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
+        
+        // .do 요청일 경우 JSON 응답으로 처리
+        String requestURI = request.getRequestURI();
+        if (requestURI != null && requestURI.endsWith(".do")) {
+            // JSON 응답 처리
+            Map<String, Object> result = new HashMap<>();
+            result.put("status", "success");
+            result.put("message", "채팅게시판 API");
+            sendJsonResponse(response, result);
+            return;
+        }
+        
+        // 라우터로 처리 시도
+        if (router.handle(request, response)) {
+            return;  // 라우터가 요청을 처리함
+        }
         
         if (action == null || action.equals("list")) {
             // 채팅 목록 조회
@@ -39,6 +138,11 @@ public class ChatboardController implements Controller {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
+        
+        // 라우터로 처리 시도
+        if (router.handle(request, response)) {
+            return;  // 라우터가 요청을 처리함
+        }
         
         if (action == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);

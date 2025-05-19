@@ -3,18 +3,17 @@ package presentation.controller.mapper;
 import java.util.HashMap;
 import java.util.Map;
 
+import presentation.controller.admin.AdminPageController;
 import presentation.controller.page.Controller;
-import presentation.controller.page.user.UserLoginController;
-import presentation.controller.page.user.UserRegisterController;
-import presentation.controller.page.user.UserProfileController;
-import presentation.controller.page.guide.GuideController;
-/*import presentation.controller.page.admin.AdminPageController;*/
-import presentation.controller.page.board.FreeboardController;
 import presentation.controller.page.board.ChatboardController;
+import presentation.controller.page.board.FreeboardController;
 import presentation.controller.page.board.NewsController;
-import presentation.controller.page.board.UserpageController;
-import presentation.controller.page.question.QuestionController;
 import presentation.controller.page.database.KeyboardInfoController;
+import presentation.controller.page.guide.GuideController;
+import presentation.controller.page.question.QuestionController;
+import presentation.controller.page.user.UserLoginController;
+import presentation.controller.page.user.UserProfileController;
+import presentation.controller.page.user.UserRegisterController;
 
 public class HandlerMapping {
     private static HandlerMapping instance;
@@ -51,12 +50,12 @@ public class HandlerMapping {
         controllerMap.put("guide", new GuideController());
         
         // 관리자 컨트롤러 추가
-        /*controllerMap.put("admin", new AdminPageController());
+        controllerMap.put("admin", new AdminPageController());
         controllerMap.put("admin/users", new AdminPageController());
         controllerMap.put("admin/reports", new AdminPageController());
         controllerMap.put("admin/posts", new AdminPageController());
         controllerMap.put("admin/guides", new AdminPageController());
-        controllerMap.put("admin/keyboards", new AdminPageController());*/
+        controllerMap.put("admin/keyboards", new AdminPageController());
     }
     
     public Controller getController(String command) {

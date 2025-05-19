@@ -6,19 +6,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import dto.admin.AdminDeleteLogDTO;
 import util.db.DBConnectionUtil;
+import util.logging.LoggerConfig;
 
 /**
  * 삭제된 게시물/댓글 로그를 데이터베이스에서 조회하는 DAO 클래스
  */
 public class AdminDeleteLogDAO {
-    private DBConnectionUtil dbUtil;
-    
-    public AdminDeleteLogDAO() {
-        dbUtil = new DBConnectionUtil();
-    }
+    private static final Logger logger = LoggerConfig.getLogger(AdminDeleteLogDAO.class);
     
     /**
      * 전체 게시글 삭제 내역을 조회합니다.
@@ -33,7 +31,7 @@ public class AdminDeleteLogDAO {
         List<AdminDeleteLogDTO> logList = new ArrayList<>();
         
         try {
-            conn = dbUtil.getConnection();
+            conn = DBConnectionUtil.getConnection();
             String sql = "SELECT l.*, u.user_name as deleted_by_username " +
                     "FROM log_delete_post l " +
                     "JOIN user u ON l.user_uid = u.user_uid " +
@@ -44,20 +42,23 @@ public class AdminDeleteLogDAO {
             
             while (rs.next()) {
                 AdminDeleteLogDTO log = new AdminDeleteLogDTO();
-                log.setLogDeleteUid(rs.getLong("log_delete_uid"));
-                log.setLogDeleteBoardtype(rs.getString("log_delete_boardtype"));
-                log.setLogDeleteDate(rs.getTimestamp("log_delete_date"));
-                log.setDeletedItemUid(rs.getLong("log_deleted_post_uid"));
+                log.setLogId(rs.getLong("log_delete_uid"));
+                log.setBoardType(rs.getString("log_delete_boardtype"));
+                log.setDeleteDate(rs.getDate("log_delete_date"));
+                log.setContentId(rs.getLong("log_deleted_post_uid"));
                 log.setUserUid(rs.getLong("user_uid"));
-                log.setDeletedByUsername(rs.getString("deleted_by_username"));
-                log.setItemType("post");
+                log.setUserName(rs.getString("deleted_by_username"));
                 
                 logList.add(log);
             }
             
+            logger.info("게시글 삭제 로그 " + logList.size() + "건 조회됨");
             return logList;
+        } catch (SQLException e) {
+            logger.severe("게시글 삭제 로그 조회 중 오류 발생: " + e.getMessage());
+            throw e;
         } finally {
-            dbUtil.close(rs, pstmt, conn);
+            DBConnectionUtil.close(rs, pstmt, conn);
         }
     }
     
@@ -74,7 +75,7 @@ public class AdminDeleteLogDAO {
         List<AdminDeleteLogDTO> logList = new ArrayList<>();
         
         try {
-            conn = dbUtil.getConnection();
+            conn = DBConnectionUtil.getConnection();
             String sql = "SELECT l.*, u.user_name as deleted_by_username " +
                     "FROM log_delete_comment l " +
                     "JOIN user u ON l.user_uid = u.user_uid " +
@@ -85,20 +86,23 @@ public class AdminDeleteLogDAO {
             
             while (rs.next()) {
                 AdminDeleteLogDTO log = new AdminDeleteLogDTO();
-                log.setLogDeleteUid(rs.getLong("log_delete_uid"));
-                log.setLogDeleteBoardtype(rs.getString("log_delete_boardtype"));
-                log.setLogDeleteDate(rs.getTimestamp("log_delete_date"));
-                log.setDeletedItemUid(rs.getLong("log_deleted_comment_uid"));
+                log.setLogId(rs.getLong("log_delete_uid"));
+                log.setBoardType(rs.getString("log_delete_boardtype"));
+                log.setDeleteDate(rs.getDate("log_delete_date"));
+                log.setContentId(rs.getLong("log_deleted_comment_uid"));
                 log.setUserUid(rs.getLong("user_uid"));
-                log.setDeletedByUsername(rs.getString("deleted_by_username"));
-                log.setItemType("comment");
+                log.setUserName(rs.getString("deleted_by_username"));
                 
                 logList.add(log);
             }
             
+            logger.info("댓글 삭제 로그 " + logList.size() + "건 조회됨");
             return logList;
+        } catch (SQLException e) {
+            logger.severe("댓글 삭제 로그 조회 중 오류 발생: " + e.getMessage());
+            throw e;
         } finally {
-            dbUtil.close(rs, pstmt, conn);
+            DBConnectionUtil.close(rs, pstmt, conn);
         }
     }
     
@@ -117,7 +121,7 @@ public class AdminDeleteLogDAO {
         List<AdminDeleteLogDTO> logList = new ArrayList<>();
         
         try {
-            conn = dbUtil.getConnection();
+            conn = DBConnectionUtil.getConnection();
             StringBuilder sql = new StringBuilder(
                     "SELECT l.*, u.user_name as deleted_by_username " +
                     "FROM log_delete_post l " +
@@ -152,20 +156,23 @@ public class AdminDeleteLogDAO {
             
             while (rs.next()) {
                 AdminDeleteLogDTO log = new AdminDeleteLogDTO();
-                log.setLogDeleteUid(rs.getLong("log_delete_uid"));
-                log.setLogDeleteBoardtype(rs.getString("log_delete_boardtype"));
-                log.setLogDeleteDate(rs.getTimestamp("log_delete_date"));
-                log.setDeletedItemUid(rs.getLong("log_deleted_post_uid"));
+                log.setLogId(rs.getLong("log_delete_uid"));
+                log.setBoardType(rs.getString("log_delete_boardtype"));
+                log.setDeleteDate(rs.getDate("log_delete_date"));
+                log.setContentId(rs.getLong("log_deleted_post_uid"));
                 log.setUserUid(rs.getLong("user_uid"));
-                log.setDeletedByUsername(rs.getString("deleted_by_username"));
-                log.setItemType("post");
+                log.setUserName(rs.getString("deleted_by_username"));
                 
                 logList.add(log);
             }
             
+            logger.info("조건별 게시글 삭제 로그 " + logList.size() + "건 조회됨 (게시판: " + boardType + ", 키워드: " + keyword + ")");
             return logList;
+        } catch (SQLException e) {
+            logger.severe("조건별 게시글 삭제 로그 조회 중 오류 발생: " + e.getMessage());
+            throw e;
         } finally {
-            dbUtil.close(rs, pstmt, conn);
+            DBConnectionUtil.close(rs, pstmt, conn);
         }
     }
     
@@ -184,7 +191,7 @@ public class AdminDeleteLogDAO {
         List<AdminDeleteLogDTO> logList = new ArrayList<>();
         
         try {
-            conn = dbUtil.getConnection();
+            conn = DBConnectionUtil.getConnection();
             StringBuilder sql = new StringBuilder(
                     "SELECT l.*, u.user_name as deleted_by_username " +
                     "FROM log_delete_comment l " +
@@ -219,20 +226,23 @@ public class AdminDeleteLogDAO {
             
             while (rs.next()) {
                 AdminDeleteLogDTO log = new AdminDeleteLogDTO();
-                log.setLogDeleteUid(rs.getLong("log_delete_uid"));
-                log.setLogDeleteBoardtype(rs.getString("log_delete_boardtype"));
-                log.setLogDeleteDate(rs.getTimestamp("log_delete_date"));
-                log.setDeletedItemUid(rs.getLong("log_deleted_comment_uid"));
+                log.setLogId(rs.getLong("log_delete_uid"));
+                log.setBoardType(rs.getString("log_delete_boardtype"));
+                log.setDeleteDate(rs.getDate("log_delete_date"));
+                log.setContentId(rs.getLong("log_deleted_comment_uid"));
                 log.setUserUid(rs.getLong("user_uid"));
-                log.setDeletedByUsername(rs.getString("deleted_by_username"));
-                log.setItemType("comment");
+                log.setUserName(rs.getString("deleted_by_username"));
                 
                 logList.add(log);
             }
             
+            logger.info("조건별 댓글 삭제 로그 " + logList.size() + "건 조회됨 (게시판: " + boardType + ", 키워드: " + keyword + ")");
             return logList;
+        } catch (SQLException e) {
+            logger.severe("조건별 댓글 삭제 로그 조회 중 오류 발생: " + e.getMessage());
+            throw e;
         } finally {
-            dbUtil.close(rs, pstmt, conn);
+            DBConnectionUtil.close(rs, pstmt, conn);
         }
     }
 }

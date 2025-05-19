@@ -160,4 +160,36 @@ public class FileUtil {
         String contentType = filePart.getContentType();
         return validateMimeType(contentType);
     }
+    
+    /**
+     * Part 객체에서 제출된 파일의 원본 이름을 추출
+     * @param part 파일이 포함된 Part 객체
+     * @return 원본 파일명
+     */
+    public static String getSubmittedFileName(Part part) {
+        if (part == null) return null;
+        
+        // Content-Disposition 헤더에서 filename 추출
+        String contentDisp = part.getHeader("content-disposition");
+        if (contentDisp == null) return null;
+        
+        // filename="example.jpg" 형태에서 파일명 추출
+        String[] items = contentDisp.split(";");
+        for (String item : items) {
+            item = item.trim();
+            if (item.startsWith("filename=")) {
+                // "filename=" 부분 제거하고 따옴표 처리
+                String fileName = item.substring(9).trim();
+                
+                // 따옴표 제거
+                if (fileName.startsWith("\"") && fileName.endsWith("\"")) {
+                    fileName = fileName.substring(1, fileName.length() - 1);
+                }
+                
+                return fileName;
+            }
+        }
+        
+        return null;
+    }
 }

@@ -286,8 +286,7 @@ public class FreeboardDAO {
             closeResources();
         }
     }
-    
-    // 게시글 삭제 (소프트 삭제)
+      // 게시글 삭제 (소프트 삭제)
     public boolean deleteFreeboardById(long postId) throws SQLException {
         String sql = "UPDATE freeboard SET freeboard_deleted = 'deleted' WHERE freeboard_uid = ?";
         
@@ -297,7 +296,18 @@ public class FreeboardDAO {
             pstmt.setLong(1, postId);
             
             int result = pstmt.executeUpdate();
-            return result > 0;
+            boolean success = result > 0;
+            
+            if (success) {
+                logger.info("게시글 삭제 성공: ID=" + postId);
+            } else {
+                logger.warning("게시글 삭제 실패: ID=" + postId + ", 영향받은 행 없음");
+            }
+            
+            return success;
+        } catch (SQLException e) {
+            logger.severe("게시글 삭제 중 오류 발생: ID=" + postId + ", 오류=" + e.getMessage());
+            throw e;
         } finally {
             closeResources();
         }
@@ -792,6 +802,39 @@ public class FreeboardDAO {
         }
     }
     
+    /**
+     * 파일명으로 첨부파일 조회
+     */
+    public AttachmentDTO getAttachmentByFilename(String filename) throws SQLException {
+        String sql = "SELECT * FROM freeboard_attach WHERE file_path = ?";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, filename);
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                AttachmentDTO attachment = new AttachmentDTO();
+                attachment.setAttachId(rs.getLong("attach_uid"));
+                attachment.setPostId(rs.getLong("freeboard_uid"));
+                attachment.setFileName(rs.getString("file_name"));
+                attachment.setFilePath(rs.getString("file_path"));
+                attachment.setFileSize(rs.getLong("file_size"));
+                
+                if (rs.getTimestamp("upload_date") != null) {
+                    attachment.setUploadDate(rs.getTimestamp("upload_date").toLocalDateTime());
+                }
+                
+                return attachment;
+            }
+            
+            return null;
+        } finally {
+            closeResources();
+        }
+    }
+    
     // 자유게시판 댓글 관련 메서드
     
     /**
@@ -989,7 +1032,24 @@ public class FreeboardDAO {
             pstmt.setLong(2, commentId);
             pstmt.setLong(3, userId);
             
-            pstmt.executeUpdate();
+            pstmt.executeUpdate();        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * 첨부파일 다운로드 수 증가
+     */
+    public boolean increaseDownloadCount(long attachId) throws SQLException {
+        String sql = "UPDATE freeboard_attach SET download_count = download_count + 1 WHERE attach_uid = ?";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, attachId);
+            
+            int result = pstmt.executeUpdate();
+            return result > 0;
         } finally {
             closeResources();
         }

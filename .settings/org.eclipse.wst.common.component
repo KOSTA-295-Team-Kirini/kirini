@@ -10,7 +10,7 @@
         
         
         
-        <property name="java-output-path" value="/kirini/build/classes"/>
+        <property name="java-output-path" value="kirini/WEB-INF/classes"/>
         <property name="context-root" value="/"/>
                                     
     

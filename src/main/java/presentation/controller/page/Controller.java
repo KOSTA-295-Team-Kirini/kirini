@@ -20,18 +20,17 @@ public interface Controller {
      * @throws ServletException 서블릿 처리 중 발생한 예외
      * @throws IOException 입출력 처리 중 발생한 예외
      */
-    void doGet(HttpServletRequest request, HttpServletResponse response) 
+    public void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException;
     
     /**
      * HTTP POST 요청 처리
      * 
      * @param request HTTP 요청 객체
-     * @param response HTTP 응답 객체
-     * @throws ServletException 서블릿 처리 중 발생한 예외
+     * @param response HTTP 응답 객체     * @throws ServletException 서블릿 처리 중 발생한 예외
      * @throws IOException 입출력 처리 중 발생한 예외
      */
-    void doPost(HttpServletRequest request, HttpServletResponse response) 
+    public void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException;
     
     // 향후 확장을 위한 메서드 (지금은 구현하지 않아도 됨)

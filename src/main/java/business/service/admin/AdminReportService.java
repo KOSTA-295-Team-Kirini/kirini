@@ -7,6 +7,7 @@ import dto.admin.AdminReportDTO;
 import dto.admin.AdminUserPenaltyDTO;
 import repository.dao.admin.AdminReportDAO;
 import repository.dao.admin.AdminUserPenaltyDAO;
+import util.logging.LoggerConfig;
 
 /**
  * 관리자용 신고 처리 서비스 클래스
@@ -30,7 +31,7 @@ public class AdminReportService {
         try {
             return reportDAO.getAllReports();
         } catch (SQLException e) {
-            e.printStackTrace();
+            LoggerConfig.logError(AdminReportService.class, "getAllReport", "신고 내역 조회 실패", e);
             return null;
         }
     }
@@ -46,7 +47,8 @@ public class AdminReportService {
         try {
             return reportDAO.getReportsByCondition(status, targetType);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LoggerConfig.logError(AdminReportService.class, "getReportsByCondition", 
+                              "조건별 신고 조회 실패 - 상태: " + status + ", 대상타입: " + targetType, e);
             return null;
         }
     }
@@ -60,9 +62,15 @@ public class AdminReportService {
      */
     public boolean updateUserPenaltyStatusByUserId(long penaltyUid, String newStatus) {
         try {
-            return penaltyDAO.updateUserPenaltyStatusByPenaltyId(penaltyUid, newStatus);
+            boolean result = penaltyDAO.updateUserPenaltyStatusByPenaltyId(penaltyUid, newStatus);
+            if (result) {
+                LoggerConfig.logBusinessAction(AdminReportService.class, "updateUserPenaltyStatusByUserId", 
+                                        "패널티 상태 변경", "패널티ID: " + penaltyUid + ", 신규상태: " + newStatus, null);
+            }
+            return result;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LoggerConfig.logError(AdminReportService.class, "updateUserPenaltyStatusByUserId", 
+                              "패널티 상태 변경 실패 - 패널티ID: " + penaltyUid + ", 신규상태: " + newStatus, e);
             return false;
         }
     }
@@ -76,9 +84,15 @@ public class AdminReportService {
      */
     public boolean updateReportStatus(long reportUid, String status) {
         try {
-            return reportDAO.updateReportStatus(reportUid, status);
+            boolean result = reportDAO.updateReportStatus(reportUid, status);
+            if (result) {
+                LoggerConfig.logBusinessAction(AdminReportService.class, "updateReportStatus", 
+                                        "신고 상태 변경", "신고ID: " + reportUid + ", 신규상태: " + status, null);
+            }
+            return result;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LoggerConfig.logError(AdminReportService.class, "updateReportStatus", 
+                              "신고 상태 변경 실패 - 신고ID: " + reportUid + ", 신규상태: " + status, e);
             return false;
         }
     }
@@ -95,11 +109,16 @@ public class AdminReportService {
             boolean result = penaltyDAO.addUserPenalty(penalty);
             if (result) {
                 // 신고 상태를 '처리완료'로 변경
-                reportDAO.updateReportStatus(reportUid, "처리완료");
+                reportDAO.updateReportStatus(reportUid, "처리완료");                LoggerConfig.logBusinessAction(AdminReportService.class, "applyPenaltyToUser", 
+                                        "사용자 패널티 부여", "신고ID: " + reportUid + 
+                                        ", 사용자ID: " + penalty.getUserUid() + 
+                                        ", 패널티: " + penalty.getPenaltyDuration(), null);
             }
             return result;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LoggerConfig.logError(AdminReportService.class, "applyPenaltyToUser", 
+                              "사용자 패널티 부여 실패 - 신고ID: " + reportUid + 
+                              ", 사용자ID: " + penalty.getUserUid(), e);
             return false;
         }
     }
