@@ -454,4 +454,173 @@ document.addEventListener('DOMContentLoaded', function() {
       
     });
   });
+  
+  // 페이지 로드 시 QnA 목록 불러오기
+  loadQnaList();
+
+  /**
+   * QnA 목록 불러오기
+   * @param {Object} params - 페이징 및 필터링 파라미터
+   */
+  async function loadQnaList(params = {}) {
+    try {
+      // 로딩 표시
+      const qnaListContainer = document.querySelector('.qna-list');
+      if (qnaListContainer) {
+        qnaListContainer.innerHTML = '<div class="loading">질문 목록을 불러오는 중...</div>';
+      }
+
+      // API 호출하여 QnA 목록 가져오기
+      const response = await BoardService.getPosts('qna', params);
+      
+      if (response && response.data && response.data.length > 0) {
+        // 컨테이너 초기화
+        qnaListContainer.innerHTML = '';
+        
+        // QnA 목록 렌더링
+        response.data.forEach(qna => {
+          const qnaElement = document.createElement('div');
+          qnaElement.className = 'qna-item';
+          qnaElement.setAttribute('id', `qna-${qna.id}`);
+          
+          // 답변 수 계산
+          const answerCount = qna.answerCount || 0;
+          const statusClass = answerCount > 0 ? 'status-answered' : 'status-pending';
+          const statusText = answerCount > 0 ? '답변완료' : '미답변';
+          
+          qnaElement.innerHTML = `
+            <div class="qna-header">
+              <div class="qna-status ${statusClass}">${statusText}</div>
+              <h3 class="qna-title">
+                <a href="#" data-qna-id="${qna.id}">${qna.title}</a>
+              </h3>
+            </div>
+            <div class="qna-meta">
+              <span>작성자: ${qna.author || '익명'}</span>
+              <span>작성일: ${qna.createdAt || '-'}</span>
+              <span>조회수: ${qna.views || 0}</span>
+            </div>
+            <div class="qna-detail" style="display: none;">
+              <div class="qna-detail-content">${qna.content || ''}</div>
+              <div class="qna-detail-answers">
+                <!-- 답변은 클릭 시 동적으로 로드됨 -->
+              </div>
+              <div class="answer-form" data-question-id="${qna.id}">
+                <textarea placeholder="답변을 입력하세요..."></textarea>
+                <button class="answer-submit-btn">답변 등록</button>
+              </div>
+            </div>
+          `;
+          
+          qnaListContainer.appendChild(qnaElement);
+          
+          // 제목 클릭 시 상세 내용 토글 및 답변 로드
+          const titleLink = qnaElement.querySelector('.qna-title a');
+          if (titleLink) {
+            titleLink.addEventListener('click', function(e) {
+              e.preventDefault();
+              const qnaId = this.getAttribute('data-qna-id');
+              toggleQnaDetail(qnaId);
+              loadAnswers(qnaId);
+            });
+          }
+        });
+      } else {
+        qnaListContainer.innerHTML = '<div class="no-data">등록된 질문이 없습니다.</div>';
+      }
+    } catch (error) {
+      console.error('QnA 목록 로드 오류:', error);
+      const qnaListContainer = document.querySelector('.qna-list');
+      if (qnaListContainer) {
+        qnaListContainer.innerHTML = '<div class="error">질문 목록을 불러오는 중 오류가 발생했습니다.</div>';
+      }
+    }
+  }
+
+  /**
+   * QnA 상세 내용 토글
+   * @param {string} qnaId - QnA ID
+   */
+  function toggleQnaDetail(qnaId) {
+    const qnaItem = document.getElementById(`qna-${qnaId}`);
+    if (qnaItem) {
+      const detailSection = qnaItem.querySelector('.qna-detail');
+      if (detailSection) {
+        const isVisible = detailSection.style.display === 'block';
+        detailSection.style.display = isVisible ? 'none' : 'block';
+        
+        // 처음 열릴 때만 조회수 증가 API 호출 (중복 증가 방지)
+        if (!isVisible && !detailSection.classList.contains('viewed')) {
+          detailSection.classList.add('viewed');
+          incrementViewCount(qnaId);
+        }
+      }
+    }
+  }
+  
+  /**
+   * QnA 조회수 증가
+   * @param {string} qnaId - QnA ID
+   */
+  async function incrementViewCount(qnaId) {
+    try {
+      await BoardService.post(`/qna/view.do`, { id: qnaId });
+    } catch (error) {
+      console.error('조회수 증가 오류:', error);
+      // 조회수 증가 실패해도 사용자 경험에 큰 영향이 없으므로 오류 표시하지 않음
+    }
+  }
+
+  /**
+   * QnA 답변 목록 불러오기
+   * @param {string} qnaId - QnA ID
+   */
+  async function loadAnswers(qnaId) {
+    try {
+      const answersContainer = document.querySelector(`#qna-${qnaId} .qna-detail-answers`);
+      if (!answersContainer) return;
+      
+      // 이미 로드된 경우 스킵
+      if (answersContainer.getAttribute('data-loaded') === 'true') return;
+      
+      // 로딩 표시
+      answersContainer.innerHTML = '<div class="loading">답변을 불러오는 중...</div>';
+      
+      // API 호출하여 답변 목록 가져오기
+      const response = await BoardService.get(`/answer/list.do`, { questionId: qnaId });
+      
+      if (response && response.data && response.data.length > 0) {
+        // 컨테이너 초기화
+        answersContainer.innerHTML = '';
+        
+        // 답변 목록 렌더링
+        response.data.forEach(answer => {
+          const answerElement = document.createElement('div');
+          answerElement.className = 'answer';
+          answerElement.innerHTML = `
+            <div class="answer-meta">
+              <span>작성자: ${answer.author || '익명'}</span>
+              <span>작성일: ${answer.createdAt || '-'}</span>
+            </div>
+            <div class="answer-content">
+              <p>${answer.content || ''}</p>
+            </div>
+          `;
+          
+          answersContainer.appendChild(answerElement);
+        });
+        
+        // 로드 완료 표시
+        answersContainer.setAttribute('data-loaded', 'true');
+      } else {
+        answersContainer.innerHTML = '<div class="no-answers">등록된 답변이 없습니다.</div>';
+      }
+    } catch (error) {
+      console.error('답변 목록 로드 오류:', error);
+      const answersContainer = document.querySelector(`#qna-${qnaId} .qna-detail-answers`);
+      if (answersContainer) {
+        answersContainer.innerHTML = '<div class="error">답변을 불러오는 중 오류가 발생했습니다.</div>';
+      }
+    }
+  }
 });

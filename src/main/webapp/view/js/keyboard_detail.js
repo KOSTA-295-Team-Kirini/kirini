@@ -2,6 +2,17 @@
 const urlParams = new URLSearchParams(window.location.search);
 const keyboardId = urlParams.get('id');
 
+// 페이지 로드시 키보드 정보 가져오기
+document.addEventListener('DOMContentLoaded', function() {
+  if (keyboardId) {
+    loadKeyboardData();
+    loadKeyboardReviews();
+  } else {
+    alert('키보드 정보를 찾을 수 없습니다.');
+    window.location.href = 'keyboard_info.html';
+  }
+});
+
 // 키보드 상세 정보 로드 (API 사용)
 async function loadKeyboardData() {
   try {
@@ -276,6 +287,119 @@ async function loadReviews(keyboardId) {
       reviewsContainer.innerHTML = '<div class="error-message"><p>리뷰를 불러오는데 실패했습니다.</p></div>';
     }
   }
+}
+
+// 키보드 리뷰 로드
+async function loadKeyboardReviews() {
+  try {
+    const reviewsContainer = document.getElementById('reviews-container');
+    if (!reviewsContainer) return;
+    
+    // 로딩 표시
+    reviewsContainer.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>리뷰를 불러오는 중입니다...</p></div>';
+    
+    // 리뷰 가져오기
+    const reviews = await ReviewService.getReviews(keyboardId);
+    
+    if (!reviews || !reviews.data || reviews.data.length === 0) {
+      reviewsContainer.innerHTML = '<div class="no-reviews">아직 리뷰가 없습니다. 첫 리뷰를 작성해보세요!</div>';
+      return;
+    }
+    
+    // 리뷰 목록 표시
+    reviewsContainer.innerHTML = '';
+    reviews.data.forEach(review => {
+      const reviewElement = document.createElement('div');
+      reviewElement.className = 'review-item';
+      
+      // 별점 텍스트 생성
+      const score = review.score || 0;
+      const fullStars = Math.floor(score);
+      const halfStar = score - fullStars >= 0.5;
+      
+      let starsText = '';
+      for (let i = 0; i < fullStars; i++) {
+        starsText += '★';
+      }
+      if (halfStar) {
+        starsText += '☆';
+      }
+      for (let i = 0; i < 5 - fullStars - (halfStar ? 1 : 0); i++) {
+        starsText += '☆';
+      }
+      
+      reviewElement.innerHTML = `
+        <div class="review-header">
+          <div class="reviewer-info">
+            <span class="reviewer-name">${review.authorName || '익명'}</span>
+            <span class="review-date">${review.createdAt || '-'}</span>
+          </div>
+          <div class="review-rating">
+            <span class="stars">${starsText}</span>
+            <span class="score">${score.toFixed(1)}/5</span>
+          </div>
+        </div>
+        <div class="review-content">
+          <p>${review.content || ''}</p>
+        </div>
+        <div class="review-footer">
+          <div class="helpful-section">
+            <span>이 리뷰가 도움이 되었나요?</span>
+            <button class="helpful-btn" data-review-id="${review.id}" data-helpful="true">
+              <i class="icon-thumbs-up"></i> 예 (${review.helpfulCount || 0})
+            </button>
+            <button class="helpful-btn" data-review-id="${review.id}" data-helpful="false">
+              <i class="icon-thumbs-down"></i> 아니오 (${review.unhelpfulCount || 0})
+            </button>
+          </div>
+        </div>
+      `;
+      
+      reviewsContainer.appendChild(reviewElement);
+    });
+    
+    // 도움됨/안됨 버튼 이벤트 추가
+    setupHelpfulButtons();
+  } catch (error) {
+    console.error('리뷰 로드 오류:', error);
+    const reviewsContainer = document.getElementById('reviews-container');
+    if (reviewsContainer) {
+      reviewsContainer.innerHTML = '<div class="error">리뷰를 불러오는 중 오류가 발생했습니다.</div>';
+    }
+  }
+}
+
+// 도움됨/안됨 버튼 이벤트 설정
+function setupHelpfulButtons() {
+  document.querySelectorAll('.helpful-btn').forEach(button => {
+    button.addEventListener('click', async function() {
+      const reviewId = this.getAttribute('data-review-id');
+      const isHelpful = this.getAttribute('data-helpful') === 'true';
+      
+      if (!reviewId) return;
+      
+      try {
+        await ReviewService.rateReviewHelpfulness(reviewId, isHelpful);
+        
+        // 버튼의 카운트 업데이트 (간소화 버전)
+        const currentCount = parseInt(this.textContent.match(/\d+/) || '0');
+        const newCount = currentCount + 1;
+        
+        if (isHelpful) {
+          this.innerHTML = `<i class="icon-thumbs-up"></i> 예 (${newCount})`;
+        } else {
+          this.innerHTML = `<i class="icon-thumbs-down"></i> 아니오 (${newCount})`;
+        }
+        
+        // 클릭 후 버튼 비활성화
+        this.disabled = true;
+        this.classList.add('voted');
+      } catch (error) {
+        console.error('리뷰 평가 오류:', error);
+        alert('리뷰 평가 중 오류가 발생했습니다.');
+      }
+    });
+  });
 }
 
 // 관련 키보드 불러오기

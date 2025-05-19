@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
         emailCheckBtn.classList.add('completed');
         isEmailCheckedAndValid = true;
       } else {
-        emailError.textContent = result.message || '이미 사용 중인 이메일입니다.';
+        emailError.textContent = response.message || '이미 사용 중인 이메일입니다.';
         emailError.style.display = 'block';
         isEmailCheckedAndValid = false;
       }
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
         nicknameCheckBtn.classList.add('completed');
         isNicknameCheckedAndValid = true;
       } else {
-        nicknameError.textContent = result.message || '이미 사용 중인 닉네임입니다.';
+        nicknameError.textContent = response.message || '이미 사용 중인 닉네임입니다.';
         nicknameError.style.display = 'block';
         isNicknameCheckedAndValid = false;
       }
@@ -178,9 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
         body: JSON.stringify({ email, nickname, password }),
       });
 
-      const result = await response.json();
-
-      if (response.ok && result.status === 'success') {
+      if (result.status === 'success') {
         alert('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
         window.location.href = 'login.html'; // 회원가입 성공 시 로그인 페이지로 이동
       } else {
