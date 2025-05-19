@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
         emailCheckBtn.classList.add('completed');
         isEmailCheckedAndValid = true;
       } else {
-        emailError.textContent = response.message || '이미 사용 중인 이메일입니다.';
+        emailError.textContent = result.message || '이미 사용 중인 이메일입니다.';
         emailError.style.display = 'block';
         isEmailCheckedAndValid = false;
       }
