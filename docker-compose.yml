@@ -45,7 +45,8 @@ services:
       - ./src/main/webapp/view:/usr/share/nginx/html:ro            # nginx용
       # tomcat, nginx가 공유할 리소스 업로드 경로 바인드 마운트
       - /home/ubuntu/kirini/uploads:/usr/local/tomcat/webapps/uploads    # tomcat용
-      - ./src/main/webapp/uploads:/usr/share/nginx/html/uploads:ro     # nginx용
+      #- ./src/main/webapp/uploads:/usr/share/nginx/html/uploads:ro     # nginx/html이 읽기전용이라 이거 안 됨
+      - ./src/main/webapp/uploads:/usr/share/nginx/uploads:ro     
 
       - ./service1-tomcat/logs:/usr/local/tomcat/logs # 로그 저장소를 bind로
     depends_on:
@@ -78,7 +79,7 @@ services:
       - ./src/main/webapp/view:/usr/share/nginx/html:ro            # nginx용
       # tomcat, nginx가 공유할 리소스 업로드 경로 바인드 마운트
       - /home/ubuntu/kirini/uploads:/usr/local/tomcat/webapps/uploads    # tomcat용
-      - ./src/main/webapp/uploads:/usr/share/nginx/html/uploads:ro     # nginx용
+      - ./src/main/webapp/uploads:/usr/share/nginx/uploads:ro     
 
     depends_on:
       - service1-tomcat 

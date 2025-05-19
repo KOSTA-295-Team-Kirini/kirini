@@ -29,9 +29,7 @@ public class HandlerMapping {
             instance = new HandlerMapping();
         }
         return instance;
-    }
-    
-    private void initializeControllers() {
+    }    private void initializeControllers() {
         // 사용자 관련 컨트롤러
         controllerMap.put("login", new UserLoginController());
         controllerMap.put("signup", new UserRegisterController());
