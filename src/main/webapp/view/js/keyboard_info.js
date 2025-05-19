@@ -282,7 +282,7 @@ function setupSearch() {
     
     try {
       // API를 통한 검색
-      const response = await API.keyboard.search({ keyword });
+      const response = await KeyboardService.searchKeyboards(keyword);
       
       if (!response || !response.keyboardList) {
         alert('검색 중 오류가 발생했습니다.');

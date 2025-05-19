@@ -34,17 +34,10 @@ document.addEventListener('DOMContentLoaded', function() {
       const formData = new FormData();
       formData.append('content', answerContent);
       formData.append('questionId', questionId || '0'); // 질문 ID가 없으면 기본값 0 사용
-      
-      // 서버로 데이터 전송 (실제 구현 시 경로 수정 필요)
-      fetch('/qna/answer/create', {
-        method: 'POST',
-        body: formData
-      })
+        // 서버로 데이터 전송 - QnaService 사용
+      QnaService.createAnswer(formData)
       .then(response => {
-        if (!response.ok) {
-          throw new Error('서버 응답 오류');
-        }
-        return response.json();
+        // QnaService는 이미 응답 처리를 수행했으므로 바로 데이터에 접근 가능
       })
       .then(data => {
         // 성공 처리
@@ -160,17 +153,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (fileInput.files.length > 0) {
         formData.append('file', fileInput.files[0]);
       }
-      
-      // 서버로 데이터 전송
-      fetch('/qna/create', {
-        method: 'POST',
-        body: formData
-      })
+        // 서버로 데이터 전송 - QnaService 사용
+      QnaService.createQuestion(formData)
       .then(response => {
-        if (!response.ok) {
-          throw new Error('서버 응답 오류');
-        }
-        return response.json();
+        // QnaService는 이미 응답 처리를 수행했으므로 바로 데이터에 접근 가능
       })
       .then(data => {
         // 성공 처리
@@ -466,13 +452,6 @@ document.addEventListener('DOMContentLoaded', function() {
         this.disabled = true;
       }, 300);
       
-      // 실제 구현에서는 여기서 서버로 추천 데이터 전송
-      // const questionId = this.closest('.qna-detail').id.replace('qna-', '');
-      // fetch('/qna/like', {
-      //   method: 'POST',
-      //   body: JSON.stringify({ questionId }),
-      //   headers: { 'Content-Type': 'application/json' }
-      // });
     });
   });
 });

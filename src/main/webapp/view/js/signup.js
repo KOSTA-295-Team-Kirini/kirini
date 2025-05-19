@@ -57,13 +57,10 @@ document.addEventListener('DOMContentLoaded', function() {
       emailError.style.display = 'block';
       return;
     }
-    emailError.style.display = 'none';
+    emailError.style.display = 'none';    try {
+      const result = await UserService.checkEmailDuplicate(email);
 
-    try {
-      const response = await fetch(`/user/check-email?email=${encodeURIComponent(email)}`);
-      const result = await response.json();
-
-      if (response.ok && result.isAvailable) {
+      if (result.isAvailable) {
         emailError.style.display = 'none';
         emailCheckBtn.textContent = '확인완료';
         emailCheckBtn.disabled = true;
@@ -107,14 +104,10 @@ document.addEventListener('DOMContentLoaded', function() {
       nicknameError.style.display = 'block';
       return;
     }
-    nicknameError.style.display = 'none';
-
-    try {
-      // 실제 백엔드 API 경로로 수정해야 한다냥! 예: /check-nickname 또는 /api/users/check-nickname
-      const response = await fetch(`/user/check-nickname?nickname=${encodeURIComponent(nickname)}`);
-      const result = await response.json();
-
-      if (response.ok && result.isAvailable) {
+    nicknameError.style.display = 'none';    try {
+      const result = await UserService.checkNicknameDuplicate(nickname);
+      
+      if (result.isAvailable) {
         nicknameError.style.display = 'none';
         nicknameCheckBtn.textContent = '확인완료';
         nicknameCheckBtn.disabled = true;
@@ -176,10 +169,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const email = emailInput.value;
     const nickname = nicknameInput.value;
-    const password = passwordInput.value;
-
-    try {
-      const response = await fetch('/user/register', {
+    const password = passwordInput.value;    try {
+      const response = await fetch('/register.do', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
