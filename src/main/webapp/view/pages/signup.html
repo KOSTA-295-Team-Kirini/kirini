@@ -1,20 +1,17 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>회원가입 - KIRINI</title>
-    <link rel="stylesheet" href="../css/style.css" />
-    <link rel="stylesheet" href="../css/signup.css" />
-    <script src="../js/main.js" defer></script>
-    <script src="../js/auth.js"></script>
-    <script src="../js/api-client.js"></script>
-    <script src="../js/components.js"></script>
-    <script src="../js/signup.js" defer></script>
-  </head>
-  <body>
-    <!-- 헤더 플레이스홀더 -->
-    <div id="header-placeholder"></div>
+<head>  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>회원가입 - KIRINI</title>  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/signup.css">  <script src="../js/main.js" defer></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/components.js"></script>
+  <script src="../js/api-client.js"></script> 
+  <script src="../js/signup.js" defer></script>
+</head>
+<body>
+  <!-- 헤더 플레이스홀더 -->
+  <div id="header-placeholder"></div>
 
     <div class="signup-container">
       <h2 class="signup-title">회원가입</h2>
@@ -165,26 +162,34 @@
       </div>
     </div>
 
-    <!-- 푸터 플레이스홀더 -->
-    <div id="footer-placeholder"></div>
-
-    <script>
-      // 컴포넌트 로드
-      document.addEventListener("DOMContentLoaded", function () {
-        // 헤더 로드
-        fetch("../components/header.html")
-          .then((response) => response.text())
-          .then((data) => {
-            document.getElementById("header-placeholder").innerHTML = data;
-          });
-
-        // 푸터 로드
-        fetch("../components/footer.html")
-          .then((response) => response.text())
-          .then((data) => {
-            document.getElementById("footer-placeholder").innerHTML = data;
-          });
-      });
-    </script>
-  </body>
+  <script>
+    // 컴포넌트 로드
+    document.addEventListener('DOMContentLoaded', function() {
+      // 헤더 로드
+      fetch('../components/header.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('header-placeholder').innerHTML = data;
+          // 헤더가 로드된 후 Header 객체가 존재하고, initialize 함수가 있다면 호출
+          if (window.Header && typeof window.Header.initialize === 'function') {
+            window.Header.initialize();
+          } else {
+            // Header 객체나 initialize 함수가 없다면 Auth.applyRoleVisibility를 직접 호출 (대안)
+            // 단, 이 경우 signup.js에서 GUEST 상태를 먼저 설정하는 것이 중요
+            if (window.Auth && typeof window.Auth.applyRoleVisibility === 'function') {
+              // signup.js에서 GUEST로 설정된 상태를 기반으로 UI를 적용해야 함
+              // Auth.applyRoleVisibility(); // signup.js에서 처리하도록 유도하거나, 여기서 GUEST 강제 후 호출
+            }
+          }
+        });
+        
+      // 푸터 로드
+      fetch('../components/footer.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('footer-placeholder').innerHTML = data;
+        });
+    });
+  </script>
+</body>
 </html>

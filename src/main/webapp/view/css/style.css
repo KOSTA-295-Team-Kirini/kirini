@@ -56,3 +56,8 @@ a:hover {
     background: #ffb74d;
     transform: scale(1.05);
 }
+
+/* Utility Classes */
+.element-hidden {
+  display: none !important;
+}
