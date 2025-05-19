@@ -12,9 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const detailDate = document.getElementById('detail-date');
   const detailContent = document.getElementById('detail-content');
   const detailCommentCount = document.getElementById('detail-comment-count');
-  const detailCommentList = document.getElementById('detail-comment-list');
-  const detailCommentInput = document.getElementById('detail-comment-input');
-  // const detailCommentSubmitBtn = document.getElementById('detail-comment-submit'); // 필요시 주석 해제
+  const detailCommentList = document.getElementById('detail-comment-list');  const detailCommentInput = document.getElementById('detail-comment-input');
+  const detailCommentSubmitBtn = document.getElementById('detail-comment-submit');
 
   let previouslyActiveBoardId = 'news-board'; // 기본값 설정 또는 첫번째 활성 탭으로 초기화
 
@@ -99,66 +98,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (activeNav && activeNav.dataset.board) {
             boardType = activeNav.dataset.board + '-board';
         }
-      }
-
-      // 상세 보기 표시
-      postDetailView.style.display = 'block';
-
+      }      // 상세 보기 표시 및 데이터 가져오기
+      loadPostDetails(postId, boardType);
+      
       // 현재 활성화된 게시판 목록과 페이지네이션은 그대로 유지 (숨기지 않음)
       // HTML 구조상 post-detail-view가 목록 위에 오도록 배치했으므로,
       // 목록을 숨길 필요 없이 post-detail-view만 block으로 만들면 됨.
-
-    // 임시 데이터로 상세 보기 채우기
-      detailTitle.textContent = `게시글 제목 (ID: ${postId} - ${boardType === 'news-board' ? '키보드 소식' : '자유게시판'})`;
       
-      const tempAuthor = "임시사용자";
-      const tempDate = "2025-05-15";
-      const tempViews = Math.floor(Math.random() * 100) + 1;  // 1-100 랜덤 조회수
-      const tempLikes = Math.floor(Math.random() * 20);       // 0-19 랜덤 추천수
-
-      // 작성자 정보 채우기
-      detailAuthor.textContent = tempAuthor;
-      
-      // 작성일 정보 채우기
-      detailDate.textContent = tempDate;
-      
-      // 조회수 정보 채우기
-      document.getElementById('detail-views').textContent = tempViews;
-      
-      // 추천수 정보 채우기
-      document.getElementById('detail-likes').textContent = tempLikes;
-      document.getElementById('post-like-count-display').textContent = tempLikes;
-      
-      let tempContentHTML = '';
-      if (boardType === 'news-board') {
-        tempContentHTML = `
-          <p>✨ 키보드 소식 게시판(ID: ${postId})의 상세 내용이다냥! ✨</p>
-          <p>이곳은 주로 새로운 키보드 출시 정보, 이벤트, 관련 뉴스 등을 다루는 곳이다냥. 냐옹~ ⌨️💨</p>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-        `;
-      } else if (boardType === 'free-board') {
-        tempContentHTML = `
-          <p>🎈 자유게시판(ID: ${postId})의 상세 내용이다냥! 🎈</p>
-          <p>여기는 자유롭게 이야기를 나누는 공간이다냥! 어떤 주제든 환영이다냥~ 😻</p>
-          <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
-        `;
-      } else {
-        tempContentHTML = `<p>알 수 없는 게시판의 내용이다냥 (ID: ${postId})</p>`;
-      }
-      detailContent.innerHTML = tempContentHTML;
-
-      detailCommentCount.textContent = "2"; // 임시 댓글 수
-      detailCommentList.innerHTML = `
-        <div class="comment">
-          <div class="comment-meta"><span>댓글 작성자 1</span><span>2025-05-15</span></div>
-          <div class="comment-content"><p>첫 번째 댓글입니다냥!</p></div>
-        </div>
-        <div class="comment">
-          <div class="comment-meta"><span>댓글 작성자 2</span><span>2025-05-16</span></div>
-          <div class="comment-content"><p>두 번째 댓글이다옹~</p></div>
-        </div>
-      `;
-      detailCommentInput.value = '';
+      postDetailView.style.display = 'block';
     });
   });
 
@@ -529,5 +476,192 @@ document.addEventListener('DOMContentLoaded', function() {
   // 페이지 초기화 시 데이터 로드
   initBoardData();
   
-  // ...existing code...
+  // 화면 초기화 시 게시판 목록 로드
+  loadBoardPosts('news');
+  
+  /**
+   * 게시글 상세 정보 로드
+   * @param {string} postId 게시글 ID
+   * @param {string} boardType 게시판 타입 (news-board, free-board 등)
+   */
+  async function loadPostDetails(postId, boardType) {
+    try {
+      // boardType에서 board- 접미사 제거하고 API 경로 생성 
+      const apiType = boardType.replace('-board', '');
+      const post = await BoardService.getPost(apiType, postId);
+        if (post) {
+        // 게시글 정보 표시
+        detailTitle.textContent = post.title;
+        // 게시글 ID와 게시판 타입 저장 (댓글 작성에 필요)
+        detailTitle.dataset.postId = postId;
+        detailTitle.dataset.boardType = boardType;
+        
+        detailAuthor.textContent = post.author || '익명';
+        detailDate.textContent = post.createdAt || new Date().toLocaleDateString();
+        detailContent.innerHTML = post.content || '';
+        
+        // 조회수 표시
+        if (document.getElementById('detail-views')) {
+          document.getElementById('detail-views').textContent = post.views || 0;
+        }
+        
+        // 추천수 표시
+        if (document.getElementById('detail-likes')) {
+          document.getElementById('detail-likes').textContent = post.likes || 0;
+        }
+        if (document.getElementById('post-like-count-display')) {
+          document.getElementById('post-like-count-display').textContent = post.likes || 0;
+        }
+        
+        // 댓글 로드
+        loadComments(apiType, postId);
+      } else {
+        alert('게시글을 불러올 수 없습니다.');
+        postDetailView.style.display = 'none';
+      }
+    } catch (error) {
+      console.error('게시글 상세 정보 로드 오류:', error);
+      alert('게시글을 불러오는 중 오류가 발생했습니다.');
+    }
+  }
+  
+  /**
+   * 댓글 목록 로드
+   * @param {string} boardType 게시판 타입 (news, free 등)
+   * @param {string} postId 게시글 ID
+   */
+  async function loadComments(boardType, postId) {
+    try {
+      const comments = await BoardService.getComments(boardType, postId);
+      
+      if (comments && comments.length > 0) {
+        detailCommentCount.textContent = comments.length.toString();
+        
+        // 댓글 목록 생성
+        detailCommentList.innerHTML = '';
+        comments.forEach(comment => {
+          const commentElement = document.createElement('div');
+          commentElement.className = 'comment';
+          commentElement.innerHTML = `
+            <div class="comment-meta">
+              <span>${comment.author || '익명'}</span>
+              <span>${comment.createdAt || new Date().toLocaleDateString()}</span>
+            </div>
+            <div class="comment-content">
+              <p>${comment.content}</p>
+            </div>
+          `;
+          detailCommentList.appendChild(commentElement);
+        });
+      } else {
+        detailCommentCount.textContent = '0';
+        detailCommentList.innerHTML = '<div class="no-comments">댓글이 없습니다.</div>';
+      }
+    } catch (error) {
+      console.error('댓글 로드 오류:', error);
+      detailCommentList.innerHTML = '<div class="error">댓글을 불러오는 중 오류가 발생했습니다.</div>';
+    }
+  }
+  
+  /**
+   * 게시판 목록 로드
+   * @param {string} boardType 게시판 타입 (news, free 등)
+   * @param {Object} params 페이징 및 정렬 옵션
+   */
+  async function loadBoardPosts(boardType, params = {}) {
+    try {
+      const boardContainer = document.getElementById(`${boardType}-board`);
+      if (!boardContainer) return;
+      
+      const postsTable = boardContainer.querySelector('.board-table tbody');
+      if (!postsTable) return;
+      
+      // 로딩 표시 추가
+      postsTable.innerHTML = '<tr><td colspan="5" class="loading">게시글을 불러오는 중...</td></tr>';
+      
+      // 게시글 목록 로드
+      const posts = await BoardService.getPosts(boardType, params);
+      
+      if (posts && posts.length > 0) {
+        postsTable.innerHTML = '';
+        posts.forEach(post => {
+          const row = document.createElement('tr');
+          row.className = 'clickable-row';
+          row.dataset.postId = post.id;
+          
+          row.innerHTML = `
+            <td>${post.id}</td>
+            <td class="post-title">${post.title}</td>
+            <td>${post.author || '익명'}</td>
+            <td>${post.createdAt || '-'}</td>
+            <td>${post.views || 0}</td>
+          `;
+          
+          // 클릭 이벤트 추가
+          row.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            loadPostDetails(postId, `${boardType}-board`);
+            postDetailView.style.display = 'block';
+          });
+          
+          postsTable.appendChild(row);
+        });
+      } else {
+        postsTable.innerHTML = '<tr><td colspan="5">게시글이 없습니다.</td></tr>';
+      }
+    } catch (error) {
+      console.error(`${boardType} 게시글 목록 로드 오류:`, error);
+      const boardContainer = document.getElementById(`${boardType}-board`);
+      if (boardContainer) {
+        const postsTable = boardContainer.querySelector('.board-table tbody');
+        if (postsTable) {
+          postsTable.innerHTML = '<tr><td colspan="5" class="error">게시글을 불러오는 중 오류가 발생했습니다.</td></tr>';
+        }
+      }
+    }
+  }
+  
+  // 댓글 제출 버튼 클릭 이벤트
+  if (detailCommentSubmitBtn) {
+    detailCommentSubmitBtn.addEventListener('click', submitComment);
+  }
+  
+  /**
+   * 댓글 제출 처리
+   */
+  async function submitComment() {
+    const commentContent = detailCommentInput.value.trim();
+    if (!commentContent) {
+      alert('댓글 내용을 입력해주세요.');
+      return;
+    }
+    
+    // 현재 보고 있는 게시글의 ID와 게시판 타입 가져오기
+    const postId = detailTitle.dataset.postId;
+    const boardType = detailTitle.dataset.boardType;
+    
+    if (!postId || !boardType) {
+      alert('게시글 정보를 가져올 수 없습니다.');
+      return;
+    }
+    
+    try {
+      // 게시판 타입에서 '-board' 접미사 제거
+      const apiType = boardType.replace('-board', '');
+      
+      // 댓글 작성 API 호출
+      await BoardService.createComment(apiType, postId, commentContent);
+      
+      // 댓글 입력창 초기화
+      detailCommentInput.value = '';
+      
+      // 댓글 목록 새로고침
+      loadComments(apiType, postId);
+      
+      alert('댓글이 등록되었습니다.');
+    } catch (error) {
+      console.error('댓글 작성 오류:', error);
+      alert('댓글 작성 중 오류가 발생했습니다.');
+    }
+  }
 });

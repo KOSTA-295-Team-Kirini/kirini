@@ -57,11 +57,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// 페이지 로드시 키보드 데이터 불러오기
+document.addEventListener('DOMContentLoaded', function() {
+  loadKeyboardList();
+});
+
 // 키보드 데이터 로드 함수
 async function loadKeyboardList() {
   try {
     // 로딩 상태 표시
     const keyboardGrid = document.querySelector('.keyboard-grid');
+    if (!keyboardGrid) return;
+    
     keyboardGrid.innerHTML = '<div class="loading-indicator"><div class="spinner"></div><p>키보드 정보를 불러오는 중입니다...</p></div>';
     
     // API에서 키보드 목록 가져오기 (.do 접미사 사용)

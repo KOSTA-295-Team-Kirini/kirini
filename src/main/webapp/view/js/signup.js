@@ -60,17 +60,16 @@ document.addEventListener('DOMContentLoaded', function() {
     emailError.style.display = 'none';
 
     try {
-      const response = await fetch(`/user/check-email?email=${encodeURIComponent(email)}`);
-      const result = await response.json();
+      const response = await UserService.checkEmailDuplicate(email);
 
-      if (response.ok && result.isAvailable) {
+      if (response.isAvailable) {
         emailError.style.display = 'none';
         emailCheckBtn.textContent = '확인완료';
         emailCheckBtn.disabled = true;
         emailCheckBtn.classList.add('completed');
         isEmailCheckedAndValid = true;
       } else {
-        emailError.textContent = result.message || '이미 사용 중인 이메일입니다.';
+        emailError.textContent = response.message || '이미 사용 중인 이메일입니다.';
         emailError.style.display = 'block';
         isEmailCheckedAndValid = false;
       }
@@ -110,18 +109,16 @@ document.addEventListener('DOMContentLoaded', function() {
     nicknameError.style.display = 'none';
 
     try {
-      // 실제 백엔드 API 경로로 수정해야 한다냥! 예: /check-nickname 또는 /api/users/check-nickname
-      const response = await fetch(`/user/check-nickname?nickname=${encodeURIComponent(nickname)}`);
-      const result = await response.json();
+      const response = await UserService.checkNicknameDuplicate(nickname);
 
-      if (response.ok && result.isAvailable) {
+      if (response.isAvailable) {
         nicknameError.style.display = 'none';
         nicknameCheckBtn.textContent = '확인완료';
         nicknameCheckBtn.disabled = true;
         nicknameCheckBtn.classList.add('completed');
         isNicknameCheckedAndValid = true;
       } else {
-        nicknameError.textContent = result.message || '이미 사용 중인 닉네임입니다.';
+        nicknameError.textContent = response.message || '이미 사용 중인 닉네임입니다.';
         nicknameError.style.display = 'block';
         isNicknameCheckedAndValid = false;
       }
@@ -179,17 +176,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const password = passwordInput.value;
 
     try {
-      const response = await fetch('/user/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, nickname, password }),
-      });
+      const userData = { email, nickname, password };
+      const result = await UserService.register(userData);
 
-      const result = await response.json();
-
-      if (response.ok && result.status === 'success') {
+      if (result.status === 'success') {
         alert('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
         window.location.href = 'login.html'; // 회원가입 성공 시 로그인 페이지로 이동
       } else {

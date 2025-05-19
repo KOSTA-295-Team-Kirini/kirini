@@ -47,167 +47,121 @@ class ApiClient {
   static removeAuthToken() {
     localStorage.removeItem(TOKEN_STORAGE_KEY);
   }
-
+  
   /**
-   * 헤더에 인증 토큰 추가
-   * @param {Object} headers 기존 헤더
-   * @returns {Object} 인증 토큰이 추가된 헤더
+   * API 요청 처리를 위한 기본 fetch 래퍼 함수
+   * @param {string} endpoint - API 엔드포인트 경로
+   * @param {Object} options - fetch 옵션
+   * @returns {Promise} - API 응답 Promise
    */
-  static getAuthHeaders(headers = {}) {
-    const token = ApiClient.getAuthToken();
-    return token ? { ...headers, 'Authorization': `Bearer ${token}` } : headers;
-  }
-
-  /**
-   * API 요청 생성
-   * @param {string} endpoint API 엔드포인트 (예: '/user/login.do')
-   * @param {Object} options fetch 옵션
-   * @returns {Promise} API 응답
-   */
-  static async request(endpoint, options = {}) {
-    const url = `${API_CONFIG.baseUrl}${endpoint}`;
+  static async fetch(endpoint, options = {}) {
+    // .do 접미사 추가 (이미 있는 경우 제외)
+    let url = endpoint;
+    if (!url.endsWith('.do')) {
+      url = `${url}.do`;
+    }
+    
+    // 기본 헤더와 사용자 제공 헤더 병합
     const headers = {
       ...API_CONFIG.defaultHeaders,
-      ...options.headers
+      ...(options.headers || {})
     };
-
-    const config = {
+    
+    // 인증 토큰이 있는 경우 Authorization 헤더 추가
+    const token = this.getAuthToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // fetch 옵션 구성
+    const fetchOptions = {
       ...options,
       headers
     };
-
+    
     try {
-      const response = await fetch(url, config);
+      // API 요청 실행
+      const response = await fetch(url, fetchOptions);
       
-      // 토큰 리프레시 로직 (401 응답 처리)
-      if (response.status === 401 && endpoint !== '/auth/refresh.do' && endpoint !== '/user/login.do') {
-        return ApiClient.handleUnauthorized(endpoint, options);
+      // HTTP 에러 처리
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw {
+          status: response.status,
+          statusText: response.statusText,
+          data: errorData,
+          message: errorData.message || `HTTP error ${response.status}: ${response.statusText}`
+        };
       }
       
-      // JSON 응답 반환 또는 에러 처리
-      if (response.ok) {
-        if (response.headers.get('content-type')?.includes('application/json')) {
-          return await response.json();
-        }
-        return await response.text();
+      // 응답 데이터가 없는 경우 (204 No Content)
+      if (response.status === 204) {
+        return { status: 'success' };
       }
       
-      throw new Error(`API 요청 실패: ${response.status}`);
+      // JSON 응답 파싱 및 반환
+      const data = await response.json();
+      return data;
     } catch (error) {
+      // 네트워크 오류나 JSON 파싱 오류 처리
       console.error('API 요청 오류:', error);
       throw error;
     }
   }
-
+  
   /**
-   * 인증 만료 처리 (토큰 리프레시)
-   * @param {string} originalEndpoint 실패한 요청의 엔드포인트
-   * @param {Object} originalOptions 실패한 요청의 옵션
-   * @returns {Promise} 새 토큰으로 재시도한 API 응답
+   * GET 요청 헬퍼 함수
+   * @param {string} endpoint - API 엔드포인트
+   * @param {Object} options - 추가 fetch 옵션
+   * @returns {Promise} - API 응답
    */
-  static async handleUnauthorized(originalEndpoint, originalOptions) {
-    try {
-      // 토큰 갱신 요청
-      const refreshToken = localStorage.getItem('kirini_refresh_token');
-      if (!refreshToken) {
-        throw new Error('리프레시 토큰 없음');
-      }
-
-      const refreshResponse = await fetch(`${API_CONFIG.baseUrl}/auth/refresh.do`, {
-        method: 'POST',
-        headers: API_CONFIG.defaultHeaders,
-        body: JSON.stringify({ refreshToken })
-      });
-
-      if (!refreshResponse.ok) {
-        throw new Error('토큰 갱신 실패');
-      }
-
-      const tokenData = await refreshResponse.json();
-      ApiClient.setAuthToken(tokenData.token);
-      localStorage.setItem('kirini_refresh_token', tokenData.refreshToken);
-      
-      // 기존 요청 재시도
-      const newOptions = {
-        ...originalOptions,
-        headers: ApiClient.getAuthHeaders(originalOptions.headers)
-      };
-      
-      return ApiClient.request(originalEndpoint, newOptions);
-    } catch (error) {
-      // 갱신 실패 시 로그아웃 처리
-      ApiClient.removeAuthToken();
-      localStorage.removeItem('kirini_refresh_token');
-      window.dispatchEvent(new CustomEvent('auth:logout'));
-      throw new Error('인증 만료: 다시 로그인 필요');
-    }
-  }
-
-  /**
-   * GET 요청
-   * @param {string} endpoint API 엔드포인트
-   * @param {Object} params URL 파라미터
-   * @param {boolean} withAuth 인증 필요 여부
-   * @returns {Promise} API 응답
-   */
-  static async get(endpoint, params = {}, withAuth = false) {
-    const url = new URL(`${window.location.origin}${endpoint}`);
-    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-    
-    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
-    
-    return ApiClient.request(url.pathname + url.search, {
-      method: 'GET',
-      headers
+  static async get(endpoint, options = {}) {
+    return this.fetch(endpoint, { 
+      ...options, 
+      method: 'GET' 
     });
   }
-
+  
   /**
-   * POST 요청
-   * @param {string} endpoint API 엔드포인트
-   * @param {Object} data 요청 데이터
-   * @param {boolean} withAuth 인증 필요 여부
-   * @returns {Promise} API 응답
+   * POST 요청 헬퍼 함수
+   * @param {string} endpoint - API 엔드포인트
+   * @param {Object} data - 요청 본문 데이터
+   * @param {Object} options - 추가 fetch 옵션
+   * @returns {Promise} - API 응답
    */
-  static async post(endpoint, data = {}, withAuth = false) {
-    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
-    
-    return ApiClient.request(endpoint, {
+  static async post(endpoint, data, options = {}) {
+    return this.fetch(endpoint, {
+      ...options,
       method: 'POST',
-      headers,
       body: JSON.stringify(data)
     });
   }
-
+  
   /**
-   * PUT 요청
-   * @param {string} endpoint API 엔드포인트
-   * @param {Object} data 요청 데이터
-   * @param {boolean} withAuth 인증 필요 여부
-   * @returns {Promise} API 응답
+   * PUT 요청 헬퍼 함수
+   * @param {string} endpoint - API 엔드포인트
+   * @param {Object} data - 요청 본문 데이터
+   * @param {Object} options - 추가 fetch 옵션
+   * @returns {Promise} - API 응답
    */
-  static async put(endpoint, data = {}, withAuth = false) {
-    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
-    
-    return ApiClient.request(endpoint, {
+  static async put(endpoint, data, options = {}) {
+    return this.fetch(endpoint, {
+      ...options,
       method: 'PUT',
-      headers,
       body: JSON.stringify(data)
     });
   }
-
+  
   /**
-   * DELETE 요청
-   * @param {string} endpoint API 엔드포인트
-   * @param {boolean} withAuth 인증 필요 여부
-   * @returns {Promise} API 응답
+   * DELETE 요청 헬퍼 함수
+   * @param {string} endpoint - API 엔드포인트
+   * @param {Object} options - 추가 fetch 옵션
+   * @returns {Promise} - API 응답
    */
-  static async delete(endpoint, withAuth = false) {
-    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
-    
-    return ApiClient.request(endpoint, {
-      method: 'DELETE',
-      headers
+  static async delete(endpoint, options = {}) {
+    return this.fetch(endpoint, {
+      ...options,
+      method: 'DELETE'
     });
   }
 }
@@ -218,12 +172,24 @@ class ApiClient {
 class UserService {
   /**
    * 로그인 요청
-   * @param {string} username 사용자명
+   * @param {string} email 사용자 이메일
    * @param {string} password 비밀번호
+   * @param {boolean} rememberMe 로그인 유지 여부
    * @returns {Promise} 로그인 결과
    */
-  static async login(username, password) {
-    return ApiClient.post('/user/login.do', { username, password });
+  static async login(email, password, rememberMe = false) {
+    return ApiClient.post('/login', { email, password, rememberMe });
+  }
+
+  /**
+   * 로그아웃 요청
+   * @returns {Promise} 로그아웃 결과
+   */
+  static async logout() {
+    // 토큰 제거
+    ApiClient.removeAuthToken();
+    // 서버에 로그아웃 요청
+    return ApiClient.post('/logout', {});
   }
 
   /**
@@ -232,7 +198,7 @@ class UserService {
    * @returns {Promise} 회원가입 결과
    */
   static async register(userData) {
-    return ApiClient.post('/user/register.do', userData);
+    return ApiClient.post('/signup', userData);
   }
 
   /**
@@ -241,67 +207,61 @@ class UserService {
    * @returns {Promise} 중복 확인 결과
    */
   static async checkEmailDuplicate(email) {
-    return ApiClient.get('/user/checkEmail.do', { email });
+    return ApiClient.get(`/signup?action=checkEmail&email=${encodeURIComponent(email)}`);
   }
-
+  
   /**
    * 닉네임 중복 확인
    * @param {string} nickname 확인할 닉네임
    * @returns {Promise} 중복 확인 결과
    */
   static async checkNicknameDuplicate(nickname) {
-    return ApiClient.get('/user/checkNickname.do', { nickname });
+    return ApiClient.get(`/signup?action=checkNickname&nickname=${encodeURIComponent(nickname)}`);
   }
-
+  
   /**
    * 사용자 프로필 조회
-   * @param {string} userId 사용자 ID (생략시 본인 프로필)
+   * @param {number} userId 선택적 사용자 ID (생략 시 현재 사용자)
    * @returns {Promise} 사용자 프로필 정보
    */
-  static async getProfile(userId) {
-    const endpoint = userId ? `/user/profile.do?userId=${userId}` : '/user/profile.do';
-    return ApiClient.get(endpoint, {}, true);
+  static async getProfile(userId = null) {
+    const endpoint = userId ? `/profile?id=${userId}` : '/profile';
+    return ApiClient.get(endpoint);
   }
-
+  
   /**
    * 사용자 프로필 업데이트
    * @param {Object} profileData 업데이트할 프로필 데이터
    * @returns {Promise} 업데이트 결과
    */
   static async updateProfile(profileData) {
-    return ApiClient.put('/user/profile.do', profileData, true);
+    return ApiClient.post('/profile', profileData);
   }
-
+  
   /**
    * 비밀번호 변경
    * @param {string} currentPassword 현재 비밀번호
    * @param {string} newPassword 새 비밀번호
-   * @returns {Promise} 변경 결과
+   * @returns {Promise} 비밀번호 변경 결과
    */
   static async changePassword(currentPassword, newPassword) {
-    return ApiClient.post('/user/password.do', {
+    return ApiClient.post('/profile', { 
+      action: 'changePassword',
       currentPassword,
       newPassword
-    }, true);
+    });
   }
-
+  
   /**
-   * 비밀번호 찾기 (이메일 발송)
+   * 비밀번호 찾기/재설정 요청
    * @param {string} email 사용자 이메일
-   * @returns {Promise} 처리 결과
+   * @returns {Promise} 재설정 요청 결과
    */
-  static async forgotPassword(email) {
-    return ApiClient.post('/user/forgot-password.do', { email });
-  }
-
-  /**
-   * 로그아웃
-   * @returns {void}
-   */
-  static logout() {
-    ApiClient.removeAuthToken();
-    localStorage.removeItem('kirini_refresh_token');
-    window.dispatchEvent(new CustomEvent('auth:logout'));
+  static async requestPasswordReset(email) {
+    return ApiClient.post('/password', {
+      action: 'resetRequest',
+      email
+    });
   }
 }
 
