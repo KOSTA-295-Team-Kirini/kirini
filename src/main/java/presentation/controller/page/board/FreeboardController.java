@@ -47,7 +47,7 @@ import util.web.IpUtil;
 public class FreeboardController extends HttpServlet implements Controller {
     private static final Logger logger = Logger.getLogger(FreeboardController.class.getName());
     private FreeboardService freeboardService;
-    private RequestRouter router;
+    private util.web.RequestRouter router;
     private static final long serialVersionUID = 1L;
     
     @Override
@@ -63,17 +63,15 @@ public class FreeboardController extends HttpServlet implements Controller {
      * 요청 라우터 초기화
      */
     private void initRequestRouter() {
-        router = new RequestRouter();
-        
-        // GET 요청 JSON 라우터 설정
-        router.getJson("/", req -> {
+        router = new util.web.RequestRouter();
+          // GET 요청 JSON 라우터 설정
+        router.getJson("/", (req, res) -> {
             Map<String, Object> result = new HashMap<>();
             result.put("status", "success");
             result.put("message", "자유게시판 API");
             return result;
         });
-        
-        router.getJson("/list", req -> {
+          router.getJson("/list", (req, res) -> {
             int page = 1;
             int pageSize = 10;
             
@@ -102,8 +100,7 @@ public class FreeboardController extends HttpServlet implements Controller {
             
             return result;
         });
-        
-        router.getJson("/view", req -> {
+          router.getJson("/view", (req, res) -> {
             try {
                 long postId = Long.parseLong(req.getParameter("id"));
                 FreeboardDTO freeboard = freeboardService.getFreeboardById(postId);
@@ -123,8 +120,7 @@ public class FreeboardController extends HttpServlet implements Controller {
                 return errorResult;
             }
         });
-        
-        router.getJson("/comments", req -> {
+          router.getJson("/comments", (req, res) -> {
             try {
                 long postId = Long.parseLong(req.getParameter("postId"));
                 List<FreeboardCommentDTO> comments = freeboardService.getCommentsByPostId(postId);
@@ -140,9 +136,8 @@ public class FreeboardController extends HttpServlet implements Controller {
                 return errorResult;
             }
         });
-        
-        // POST 요청 JSON 라우터 설정
-        router.postJson("/write", req -> {
+          // POST 요청 JSON 라우터 설정
+        router.postJson("/write", (req, res) -> {
             // 로그인 확인
             HttpSession session = req.getSession();
             UserDTO user = (UserDTO) session.getAttribute("user");
@@ -174,8 +169,7 @@ public class FreeboardController extends HttpServlet implements Controller {
             
             return response;
         });
-        
-        router.postJson("/addComment", req -> {
+          router.postJson("/addComment", (req, res) -> {
             // 로그인 체크
             HttpSession session = req.getSession();
             UserDTO user = (UserDTO) session.getAttribute("user");
@@ -202,8 +196,7 @@ public class FreeboardController extends HttpServlet implements Controller {
             try {
                 long postId = Long.parseLong(postIdStr);
                 String clientIp = IpUtil.getClientIpAddr(req);
-                
-                // 댓글 객체 생성
+                  // 댓글 객체 생성
                 FreeboardCommentDTO comment = new FreeboardCommentDTO(
                         postId, 
                         user.getUserUid(), 
@@ -695,8 +688,7 @@ public class FreeboardController extends HttpServlet implements Controller {
             response.getWriter().write("{\"success\": false, \"message\": \"잘못된 요청입니다.\"}");
         }
     }
-    
-    /**
+      /**
      * 첨부파일 업로드 처리
      */
     public void uploadAttachment(HttpServletRequest request, HttpServletResponse response) 
@@ -712,7 +704,8 @@ public class FreeboardController extends HttpServlet implements Controller {
         try {
             // 파일 업로드를 위한 멀티파트 요청 처리
             Part filePart = request.getPart("file");
-            long postId = Long.parseLong(request.getParameter("postId"));
+            String postIdStr = request.getParameter("postId");
+            long postId = Long.parseLong(postIdStr);
             
             // 파일이 비어있는지 확인
             if (filePart == null || filePart.getSize() == 0) {
@@ -732,13 +725,125 @@ public class FreeboardController extends HttpServlet implements Controller {
             // 2. 안전한 고유 파일명 생성
             String uniqueFileName = FileUtil.generateUniqueFilename(fileName);
             
+            // 3. 파일 저장 경로 생성
+            File uploadDir = new File(uploadDirPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+            
+            File destinationFile = new File(uploadDir, uniqueFileName);
+            
+            // 4. 파일 저장
+            filePart.write(destinationFile.getAbsolutePath());
+              // 5. 첨부파일 정보 DB에 저장
+            AttachmentDTO attachment = new AttachmentDTO();
+            attachment.setPostId(postId);
+            attachment.setFileName(fileName);
+            attachment.setFilePath(uniqueFileName);
+            attachment.setFileSize(fileSize);
+            
+            boolean success = freeboardService.addAttachment(attachment);
+            
+            // 6. 응답 처리
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", success);
+            
+            if (success) {
+                result.put("message", "파일이 업로드되었습니다.");
+                result.put("filename", uniqueFileName);
+                result.put("originalName", fileName);
+                result.put("fileSize", fileSize);
+            } else {
+                result.put("message", "파일 업로드 중 오류가 발생했습니다.");
+            }
+            
+            PrintWriter out = response.getWriter();
+            out.print(new Gson().toJson(result));
+            out.flush();
             
         } catch (NumberFormatException e) {
-            logger.warning("Invalid post ID format: " + postIdStr);
+            logger.warning("Invalid post ID format: " + request.getParameter("postId"));
             sendJsonResponse(response, false, "잘못된 게시글 ID입니다.");
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "댓글 등록 실패", e);
-            sendJsonResponse(response, false, "댓글 등록 중 오류가 발생했습니다.");
+            logger.log(Level.SEVERE, "첨부파일 업로드 실패", e);
+            sendJsonResponse(response, false, "첨부파일 업로드 중 오류가 발생했습니다.");
+        }
+    }
+    
+    /**
+     * 첨부파일 다운로드 처리
+     */
+    private void downloadAttachment(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        String fileName = request.getParameter("filename");
+        if (fileName == null || fileName.trim().isEmpty()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "파일명이 없습니다.");
+            return;
+        }
+        
+        try {
+            // 첨부파일 정보 조회
+            AttachmentDTO attachment = freeboardService.getAttachmentByFilename(fileName);
+            
+            if (attachment == null) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "파일을 찾을 수 없습니다.");
+                return;
+            }
+            
+            // 파일 경로 구성
+            String uploadDirPath = FileUtil.getUploadDirectoryPath();
+            File file = new File(uploadDirPath, fileName);
+            
+            if (!file.exists() || !file.isFile()) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "서버에 파일이 존재하지 않습니다.");
+                return;
+            }
+            
+            // 파일 다운로드를 위한 HTTP 헤더 설정
+            String mimeType = request.getServletContext().getMimeType(file.getName());
+            if (mimeType == null) {
+                mimeType = "application/octet-stream";
+            }
+            
+            response.setContentType(mimeType);
+            response.setContentLength((int) file.length());
+              // 다운로드 파일명 설정 (한글 파일명 인코딩 처리)
+            String originFilename = attachment.getFileName();
+            String userAgent = request.getHeader("User-Agent");
+            
+            if (userAgent.contains("MSIE") || userAgent.contains("Trident") || userAgent.contains("Edge")) {
+                // IE, Edge 브라우저
+                originFilename = URLEncoder.encode(originFilename, "UTF-8").replaceAll("\\+", "%20");
+            } else {
+                // 기타 브라우저
+                originFilename = new String(originFilename.getBytes("UTF-8"), "ISO-8859-1");
+            }
+            
+            response.setHeader("Content-Disposition", "attachment; filename=\"" + originFilename + "\"");
+            
+            // 파일 전송
+            try (FileInputStream in = new FileInputStream(file);
+                 OutputStream out = response.getOutputStream()) {
+                
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, bytesRead);
+                }
+                  out.flush();
+            }
+            
+            // 다운로드 카운트 증가 (비동기적으로 처리)
+            freeboardService.increaseDownloadCount(attachment.getAttachId());
+            
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "파일 다운로드 처리 중 오류", e);
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "파일 다운로드 중 오류가 발생했습니다.");
         }
     }
     
@@ -867,6 +972,107 @@ public class FreeboardController extends HttpServlet implements Controller {
         } catch (Exception e) {
             logger.log(Level.SEVERE, "댓글 삭제 실패", e);
             sendJsonResponse(response, false, "댓글 삭제 중 오류가 발생했습니다.");
+        }
+    }
+    
+    /**
+     * 댓글 추가 처리
+     */
+    private void addComment(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        // 로그인 체크
+        HttpSession session = request.getSession();
+        UserDTO user = (UserDTO) session.getAttribute("user");
+        
+        if (user == null) {
+            sendJsonResponse(response, false, "로그인이 필요합니다.");
+            return;
+        }
+        
+        // 파라미터 받기
+        String postIdStr = request.getParameter("postId");
+        String content = request.getParameter("content");
+        
+        // 필수 값 체크
+        if (content == null || content.trim().isEmpty()) {
+            sendJsonResponse(response, false, "댓글 내용을 입력해주세요.");
+            return;
+        }
+        
+        try {
+            long postId = Long.parseLong(postIdStr);
+            String clientIp = IpUtil.getClientIpAddr(request);
+            
+            // 댓글 객체 생성
+            FreeboardCommentDTO comment = new FreeboardCommentDTO(
+                    postId, 
+                    user.getUserUid(), 
+                    content, 
+                    clientIp);
+            
+            // 댓글 등록
+            boolean success = freeboardService.addComment(comment);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", success);
+            
+            if (success) {
+                result.put("message", "댓글이 등록되었습니다.");
+                // 최신 댓글 목록 조회해서 함께 보내기
+                result.put("comments", freeboardService.getCommentsByPostId(postId));
+            } else {
+                result.put("message", "댓글 등록에 실패했습니다.");
+            }
+            
+            // JSON 형식으로 응답
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            
+            PrintWriter out = response.getWriter();
+            out.print(new Gson().toJson(result));
+            out.flush();
+            
+        } catch (NumberFormatException e) {
+            logger.warning("Invalid post ID format: " + postIdStr);
+            sendJsonResponse(response, false, "잘못된 게시글 ID입니다.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "댓글 등록 실패", e);
+            sendJsonResponse(response, false, "댓글 등록 중 오류가 발생했습니다.");
+        }
+    }
+    
+    /**
+     * 댓글 목록 조회 및 JSON 형태로 반환
+     */
+    private void getCommentsByPostId(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+        String postIdStr = request.getParameter("postId");
+        
+        try {
+            long postId = Long.parseLong(postIdStr);
+            List<FreeboardCommentDTO> comments = freeboardService.getCommentsByPostId(postId);
+            
+            // 댓글 목록 조회 결과를 JSON으로 응답
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("comments", comments);
+            
+            // JSON 형식으로 응답
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            
+            PrintWriter out = response.getWriter();
+            out.print(new Gson().toJson(result));
+            out.flush();
+            
+        } catch (NumberFormatException e) {
+            logger.warning("Invalid post ID format: " + postIdStr);
+            sendJsonResponse(response, false, "잘못된 게시글 ID입니다.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "댓글 목록 조회 실패", e);
+            sendJsonResponse(response, false, "댓글 목록 조회 중 오류가 발생했습니다.");
         }
     }
     

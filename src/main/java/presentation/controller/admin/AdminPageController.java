@@ -43,7 +43,7 @@ public class AdminPageController extends HttpServlet implements Controller {
     private AdminLogService logService;
     private AdminGuideService guideService;
     private AdminKeyboardService keyboardService;
-    private RequestRouter router;
+    private util.web.RequestRouter router;
     private final Gson gson = new Gson();
 
     /**
@@ -65,7 +65,7 @@ public class AdminPageController extends HttpServlet implements Controller {
      * 요청 라우터 초기화
      */
     private void initRequestRouter() {
-        router = new RequestRouter();        // GET 요청 JSON 라우터 설정
+        router = new util.web.RequestRouter();        // GET 요청 JSON 라우터 설정
         router.getJson("/", (req, res) -> {
             Map<String, String> result = new HashMap<>();
             result.put("status", "success");

@@ -30,7 +30,7 @@ import presentation.controller.page.Controller;
 public class NewsController extends HttpServlet implements Controller {
     private static final long serialVersionUID = 1L;
     private NewsService newsService;
-    private RequestRouter router;
+    private util.web.RequestRouter router;
     
     @Override
     public void init() throws ServletException {
@@ -45,17 +45,15 @@ public class NewsController extends HttpServlet implements Controller {
      * 요청 라우터 초기화
      */
     private void initRequestRouter() {
-        router = new RequestRouter();
-        
-        // GET 요청 JSON 라우터 설정
-        router.getJson("/", req -> {
+        router = new util.web.RequestRouter();
+          // GET 요청 JSON 라우터 설정
+        router.getJson("/", (req, res) -> {
             Map<String, Object> result = new HashMap<>();
             result.put("status", "success");
             result.put("message", "뉴스 게시판 API");
             return result;
         });
-        
-        router.getJson("/list", req -> {
+          router.getJson("/list", (req, res) -> {
             int page = 1;
             int pageSize = 10;
             
@@ -83,8 +81,7 @@ public class NewsController extends HttpServlet implements Controller {
             
             return result;
         });
-        
-        router.getJson("/view", req -> {
+          router.getJson("/view", (req, res) -> {
             try {
                 long newsId = Long.parseLong(req.getParameter("id"));
                 NewsDTO news = newsService.getNewsById(newsId);
@@ -95,12 +92,11 @@ public class NewsController extends HttpServlet implements Controller {
                     errorResult.put("message", "뉴스를 찾을 수 없습니다.");
                     return errorResult;
                 }
-                
-                Map<String, Object> result = new HashMap<>();
+                  Map<String, Object> result = new HashMap<>();
                 result.put("news", news);
                 
                 // 댓글 목록도 함께 조회
-                List<NewsCommentDTO> comments = newsService.getCommentsByNewsId(newsId);
+                List<NewsCommentDTO> comments = newsService.getNewsComments(newsId);
                 result.put("comments", comments);
                 
                 return result;

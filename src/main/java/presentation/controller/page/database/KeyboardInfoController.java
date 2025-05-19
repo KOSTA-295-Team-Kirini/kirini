@@ -32,7 +32,7 @@ import util.web.RequestRouter;
 public class KeyboardInfoController extends HttpServlet implements Controller {
     private static final long serialVersionUID = 1L;
     private KeyboardInfoService keyboardInfoService;
-    private RequestRouter router;
+    private util.web.RequestRouter router;
     private final Gson gson = new Gson();
 
     public KeyboardInfoController() {
@@ -50,7 +50,7 @@ public class KeyboardInfoController extends HttpServlet implements Controller {
      * 요청 라우터 초기화
      */
     private void initRequestRouter() {
-        router = new RequestRouter();
+        router = new util.web.RequestRouter();
         
         // GET 요청 JSON 라우터 설정
         router.getJson("/", (req, res) -> {

@@ -26,7 +26,7 @@ import util.web.RequestRouter;
 public class UserLoginController extends HttpServlet implements Controller {
     private static final long serialVersionUID = 1L;
     private UserService userService;
-    private RequestRouter router;
+    private util.web.RequestRouter router; // 수정된 버전
     private final Gson gson = new Gson();
     
     @Override

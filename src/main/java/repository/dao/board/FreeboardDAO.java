@@ -802,6 +802,39 @@ public class FreeboardDAO {
         }
     }
     
+    /**
+     * 파일명으로 첨부파일 조회
+     */
+    public AttachmentDTO getAttachmentByFilename(String filename) throws SQLException {
+        String sql = "SELECT * FROM freeboard_attach WHERE file_path = ?";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, filename);
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                AttachmentDTO attachment = new AttachmentDTO();
+                attachment.setAttachId(rs.getLong("attach_uid"));
+                attachment.setPostId(rs.getLong("freeboard_uid"));
+                attachment.setFileName(rs.getString("file_name"));
+                attachment.setFilePath(rs.getString("file_path"));
+                attachment.setFileSize(rs.getLong("file_size"));
+                
+                if (rs.getTimestamp("upload_date") != null) {
+                    attachment.setUploadDate(rs.getTimestamp("upload_date").toLocalDateTime());
+                }
+                
+                return attachment;
+            }
+            
+            return null;
+        } finally {
+            closeResources();
+        }
+    }
+    
     // 자유게시판 댓글 관련 메서드
     
     /**
@@ -999,7 +1032,24 @@ public class FreeboardDAO {
             pstmt.setLong(2, commentId);
             pstmt.setLong(3, userId);
             
-            pstmt.executeUpdate();
+            pstmt.executeUpdate();        } finally {
+            closeResources();
+        }
+    }
+    
+    /**
+     * 첨부파일 다운로드 수 증가
+     */
+    public boolean increaseDownloadCount(long attachId) throws SQLException {
+        String sql = "UPDATE freeboard_attach SET download_count = download_count + 1 WHERE attach_uid = ?";
+        
+        try {
+            conn = getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, attachId);
+            
+            int result = pstmt.executeUpdate();
+            return result > 0;
         } finally {
             closeResources();
         }

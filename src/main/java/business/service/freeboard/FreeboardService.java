@@ -265,6 +265,35 @@ public class FreeboardService {
     }
 
     /**
+     * 첨부파일 객체 추가
+     */
+    public boolean addAttachment(AttachmentDTO attachment) {
+        try {
+            return addAttachment(
+                attachment.getPostId(), 
+                attachment.getFileName(), 
+                attachment.getFilePath(), 
+                attachment.getFileSize()
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * 파일명으로 첨부파일 조회
+     */
+    public AttachmentDTO getAttachmentByFilename(String filename) {
+        try {
+            return freeboardDAO.getAttachmentByFilename(filename);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
      * 첨부파일 조회
      */
     public AttachmentDTO getAttachmentById(long attachId) {
@@ -355,8 +384,7 @@ public class FreeboardService {
             return false;
         }
     }
-    
-    /**
+      /**
      * 댓글 상세 조회
      */
     public FreeboardCommentDTO getCommentById(long commentId) {
@@ -365,6 +393,18 @@ public class FreeboardService {
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
+        }
+    }
+    
+    /**
+     * 첨부파일 다운로드 수 증가
+     */
+    public boolean increaseDownloadCount(long attachId) {
+        try {
+            return freeboardDAO.increaseDownloadCount(attachId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }
