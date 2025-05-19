@@ -19,17 +19,41 @@ public class UserService {
         userDAO = new UserDAO();
     }
     
-    
-    /**
+      /**
      * 사용자 로그인
      * @param email 이메일
      * @param password 비밀번호
      * @return 로그인 성공 시 UserDTO 객체, 실패 시 null
-     */
-    public UserDTO login(String email, String password) {
+     */    public UserDTO login(String email, String password) {
         try {
-        	System.out.println("로그인 컨트롤러 진입 도ㅒㅆ음");
-        	return userDAO.login(email, password);
+        	
+            
+            // 1. 이메일로 사용자 정보 조회
+            UserDTO user = userDAO.getUserByEmail(email);
+            if (user == null) {
+                return null; // 사용자가 존재하지 않음
+            }
+            
+            // 2. 비밀번호 암호화 후 비교
+            String hashedPassword = hashPassword(password);
+            
+            // 3. 암호화된 비밀번호끼리 비교
+            if (hashedPassword.equals(user.getPassword())) {
+                // 로그인 성공 처리 (마지막 로그인 시간 업데이트 등)
+                
+                // 프론트엔드와 일치하도록 userAuthority 값 설정
+                String userAuthority = "USER";
+                if (user.getUserLevel() == 3) {
+                    userAuthority = "ADMIN";
+                } else if (user.getUserLevel() == 2) {
+                    userAuthority = "MANAGER";
+                }
+                user.setUserAuthority(userAuthority);
+                
+                return user;
+            } else {
+                return null; // 비밀번호 불일치
+            }
             
         } catch (SQLException e) {
             e.printStackTrace();

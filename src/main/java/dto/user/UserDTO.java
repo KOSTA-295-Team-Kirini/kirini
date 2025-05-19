@@ -16,6 +16,10 @@ public class UserDTO {
     private String userStatus;
     private String userAuthority; // 사용자 권한 (admin, armband, user 등)
 
+    // JSON 직렬화를 위한 날짜 문자열 필드
+    private transient String registerDateStr;
+    private transient String lastLoginDateStr;
+    
     // 기본 생성자
     public UserDTO() {
     }
@@ -110,13 +114,26 @@ public class UserDTO {
     public void setUserLevel(int userLevel) {
         this.userLevel = userLevel;
     }
-    
-    public LocalDateTime getRegisterDate() {
+      public LocalDateTime getRegisterDate() {
         return registerDate;
     }
     
     public void setRegisterDate(LocalDateTime registerDate) {
         this.registerDate = registerDate;
+        if (registerDate != null) {
+            this.registerDateStr = registerDate.toString();
+        }
+    }
+    
+    public String getRegisterDateStr() {
+        if (registerDateStr == null && registerDate != null) {
+            registerDateStr = registerDate.toString();
+        }
+        return registerDateStr;
+    }
+    
+    public void setRegisterDateStr(String registerDateStr) {
+        this.registerDateStr = registerDateStr;
     }
     
     public LocalDateTime getLastLoginDate() {
@@ -125,6 +142,20 @@ public class UserDTO {
     
     public void setLastLoginDate(LocalDateTime lastLoginDate) {
         this.lastLoginDate = lastLoginDate;
+        if (lastLoginDate != null) {
+            this.lastLoginDateStr = lastLoginDate.toString();
+        }
+    }
+    
+    public String getLastLoginDateStr() {
+        if (lastLoginDateStr == null && lastLoginDate != null) {
+            lastLoginDateStr = lastLoginDate.toString();
+        }
+        return lastLoginDateStr;
+    }
+    
+    public void setLastLoginDateStr(String lastLoginDateStr) {
+        this.lastLoginDateStr = lastLoginDateStr;
     }
     
     public boolean isActive() {
@@ -177,8 +208,7 @@ public class UserDTO {
     // userAuthority 설정 메서드
     public void setUserAuthority(String userAuthority) {
         this.userAuthority = userAuthority;
-    }
-      @Override
+    }      @Override
     public String toString() {
         return "UserDTO{" +
                 "userId=" + userId +
@@ -186,8 +216,8 @@ public class UserDTO {
                 ", email='" + email + '\'' +
                 ", nickname='" + nickname + '\'' +
                 ", userLevel=" + userLevel +
-                ", registerDate=" + registerDate +
-                ", lastLoginDate=" + lastLoginDate +
+                ", registerDate='" + getRegisterDateStr() + '\'' +
+                ", lastLoginDate='" + getLastLoginDateStr() + '\'' +
                 ", isActive=" + isActive +
                 ", userAuthority='" + getUserAuthority() + '\'' +
                 '}';
