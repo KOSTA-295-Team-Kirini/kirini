@@ -28,9 +28,12 @@ public class UserService {
      */
     public UserDTO login(String email, String password) {
         try {
-            return userDAO.login(email, password);
+        	System.out.println("로그인 컨트롤러 진입 도ㅒㅆ음");
+        	return userDAO.login(email, password);
+            
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("SQLEXCEPTION");
             return null;
         }
     }

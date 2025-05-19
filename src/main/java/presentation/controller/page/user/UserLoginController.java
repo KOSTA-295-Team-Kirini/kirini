@@ -34,10 +34,14 @@ public class UserLoginController implements Controller {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
         
+        System.out.println("userlogincontroller 내부");
+        System.out.println(email + " "+password);
+        
         // 응답 설정
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         
+    	System.out.println(email + " " + password);
         // 유효성 검사
         if (email == null || password == null || 
             email.trim().isEmpty() || password.trim().isEmpty()) {
