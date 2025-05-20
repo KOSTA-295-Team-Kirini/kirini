@@ -7,7 +7,7 @@ JAVA_SRC="$PROJECT_DIR/src/main/java"
 WEBAPP_SRC="$PROJECT_DIR/src/main/webapp"
 BUILD_CLASSES="$PROJECT_DIR/build/classes"
 LIB_DIR="$PROJECT_DIR/src/main/webapp/WEB-INF/lib"
-WAR_OUT="$PROJECT_DIR/docker-settings/service1-tomcat/bulild/ROOT.war"
+WAR_OUT="$PROJECT_DIR/docker-settings/service1-tomcat/build/ROOT.war"
 
 # 1. 기존 클래스, WAR 삭제
 echo "[STEP] 기존 빌드 정리"
