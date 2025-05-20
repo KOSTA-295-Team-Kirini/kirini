@@ -106,10 +106,19 @@ public class ChatboardController extends HttpServlet implements Controller {
         out.print(new Gson().toJson(data));
         out.flush();
     }    
-    
-    @Override
+      @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String action = request.getParameter("action");
+        // API 요청인지 먼저 확인 (pathInfo 있는 요청은 API 요청으로 간주)
+        String pathInfo = request.getPathInfo();
+        
+        // pathInfo가 있으면 API 요청으로 간주하고 Router를 통해 처리 시도
+        if (pathInfo != null) {
+            boolean handled = router.handleGetJson(request, response);
+            if (handled) {
+                // Router가 요청을 처리했으므로 메서드 종료
+                return;
+            }
+        }
         
         // .do 요청일 경우 JSON 응답으로 처리
         String requestURI = request.getRequestURI();
@@ -122,10 +131,7 @@ public class ChatboardController extends HttpServlet implements Controller {
             return;
         }
         
-        // 라우터로 처리 시도
-        if (router.handle(request, response)) {
-            return;  // 라우터가 요청을 처리함
-        }
+        String action = request.getParameter("action");
         
         if (action == null || action.equals("list")) {
             // 채팅 목록 조회
@@ -133,16 +139,21 @@ public class ChatboardController extends HttpServlet implements Controller {
         } else {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
-    }
-
-    @Override
+    }    @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String action = request.getParameter("action");
+        // API 요청인지 먼저 확인 (pathInfo 있는 요청은 API 요청으로 간주)
+        String pathInfo = request.getPathInfo();
         
-        // 라우터로 처리 시도
-        if (router.handle(request, response)) {
-            return;  // 라우터가 요청을 처리함
+        // pathInfo가 있으면 API 요청으로 간주하고 Router를 통해 처리 시도
+        if (pathInfo != null) {
+            boolean handled = router.handlePostJson(request, response);
+            if (handled) {
+                // Router가 요청을 처리했으므로 메서드 종료
+                return;
+            }
         }
+        
+        String action = request.getParameter("action");
         
         if (action == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -172,30 +183,12 @@ public class ChatboardController extends HttpServlet implements Controller {
     private void getAllChats(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         List<ChatboardDTO> chatList = chatboardService.getAllChats();
         
-        // AJAX 요청인 경우 JSON 응답
-        if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            
-            // GSON 라이브러리 사용
-            Gson gson = new Gson();
-            JsonArray jsonArray = new JsonArray();
-            
-            for (ChatboardDTO chat : chatList) {
-                JsonObject chatJson = new JsonObject();
-                chatJson.addProperty("id", chat.getChatboardUid());
-                chatJson.addProperty("content", chat.getChatboardTitle());
-                chatJson.addProperty("writetime", chat.getChatboardWritetime().toString());
-                chatJson.addProperty("nickname", chat.getAnonymousNickname());
-                jsonArray.add(chatJson);
-            }
-            
-            response.getWriter().write(gson.toJson(jsonArray));
-        } else {
-            // 일반 요청인 경우 JSP로 포워딩
-            request.setAttribute("chatList", chatList);
-            request.getRequestDispatcher("/WEB-INF/views/board/chatboard.jsp").forward(request, response);
-        }
+        // JSON 응답으로 채팅 데이터 반환
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("chatList", chatList);
+        
+        sendJsonResponse(response, result);
     }
     
     /**

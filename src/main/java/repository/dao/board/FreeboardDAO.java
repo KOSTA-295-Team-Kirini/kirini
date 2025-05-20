@@ -15,6 +15,8 @@ import java.util.logging.Logger;
 import dto.board.AttachmentDTO;
 import dto.board.FreeboardDTO;
 import dto.board.FreeboardCommentDTO;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import util.db.DBConnectionUtil;
 import util.logging.LoggerConfig;
 
@@ -266,6 +268,56 @@ public class FreeboardDAO {
             pstmt.setLong(1, postId);
             pstmt.executeUpdate();
         }
+    }
+    
+    /**
+     * 조회수 증가 (세션 기반 중복 방지)
+     * @param postId 게시글 ID
+     * @param request HTTP 요청 객체
+     * @throws SQLException SQL 예외 발생 시
+     */
+    public void updateReadCount(long postId, jakarta.servlet.http.HttpServletRequest request) throws SQLException {
+        // 세션이 없으면 그냥 조회수 증가
+        if (request == null) {
+            System.out.println("Request 객체가 null이어서 단순 조회수 증가 처리: " + postId);
+            updateReadCount(postId);
+            return;
+        }
+        
+        // increaseReadCount 파라미터 체크 (false인 경우 증가 안 함)
+        String increaseParam = request.getParameter("increaseReadCount");
+        if (increaseParam != null && "false".equalsIgnoreCase(increaseParam)) {
+            System.out.println("increaseReadCount=false 파라미터로 조회수 증가 생략: " + postId);
+            return;
+        }
+        
+        jakarta.servlet.http.HttpSession session = request.getSession();
+        // 세션 타임아웃 설정 (30분)
+        session.setMaxInactiveInterval(1800);
+        
+        // 세션에서 방문한 게시글 목록 가져오기
+        @SuppressWarnings("unchecked")
+        java.util.Set<Long> viewedPosts = (java.util.Set<Long>) session.getAttribute("VIEWED_FREEBOARD_POSTS");
+        
+        // 세션에 방문 기록이 없으면 새로 생성
+        if (viewedPosts == null) {
+            viewedPosts = new java.util.HashSet<>();
+            session.setAttribute("VIEWED_FREEBOARD_POSTS", viewedPosts);
+            System.out.println("새 세션 생성 및 조회 기록 초기화: " + session.getId());
+        }
+        
+        // 이미 방문한 게시글이면 조회수 증가 생략
+        if (viewedPosts.contains(postId)) {
+            System.out.println("이미 조회한 게시글이므로 조회수 증가 생략: " + postId + " (세션 ID: " + session.getId() + ")");
+            return;
+        }
+        
+        // 방문 기록에 추가
+        viewedPosts.add(postId);
+        System.out.println("조회 기록에 게시글 추가 및 조회수 증가: " + postId + " (세션 ID: " + session.getId() + ")");
+        
+        // 조회수 증가 쿼리 실행
+        updateReadCount(postId);
     }
     
     // 게시글 수정

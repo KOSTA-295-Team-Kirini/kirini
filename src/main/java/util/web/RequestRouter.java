@@ -5,6 +5,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -13,17 +16,28 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import util.json.LocalDateTimeAdapter;
 
 /**
  * URL 경로에 따라 적절한 핸들러를 매핑하고 실행하는 유틸리티 클래스
  * JSON 응답을 위한 기능 제공
  */
-public class RequestRouter {
-    private Map<String, BiConsumer<HttpServletRequest, HttpServletResponse>> getHandlers = new HashMap<>();
-    private Map<String, BiConsumer<HttpServletRequest, HttpServletResponse>> postHandlers = new HashMap<>();
-    private Map<String, BiFunction<HttpServletRequest, HttpServletResponse, Object>> getJsonHandlers = new HashMap<>();
+public class RequestRouter {    private Map<String, BiConsumer<HttpServletRequest, HttpServletResponse>> getHandlers = new HashMap<>();
+    private Map<String, BiConsumer<HttpServletRequest, HttpServletResponse>> postHandlers = new HashMap<>();    private Map<String, BiFunction<HttpServletRequest, HttpServletResponse, Object>> getJsonHandlers = new HashMap<>();
     private Map<String, BiFunction<HttpServletRequest, HttpServletResponse, Object>> postJsonHandlers = new HashMap<>();
-    private static final Gson gson = new Gson();
+    
+    // GsonBuilder를 사용하여 LocalDateTime을 처리할 수 있는 Gson 인스턴스 생성
+    private static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new util.json.LocalDateTimeAdapter())
+            .create();
     
     /**
      * GET 요청 핸들러 등록

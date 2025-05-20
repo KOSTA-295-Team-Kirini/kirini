@@ -13,13 +13,14 @@ public class NewsCommentDTO {
     private String newsCommentAuthorIp;
     private long newsId;
     private long userId;
-    private String userName;  // JOIN 결과
+    private String userName;
+    private long parentId;
 
     // 기본 생성자
     public NewsCommentDTO() {
     }
 
-    // Getter와 Setter 메소드
+    // Getter 및 Setter 메서드 추가
     public long getNewsCommentId() {
         return newsCommentId;
     }
@@ -83,11 +84,20 @@ public class NewsCommentDTO {
     public void setUserName(String userName) {
         this.userName = userName;
     }
+    
+    public long getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(long parentId) {
+        this.parentId = parentId;
+    }
 
     @Override
     public String toString() {
         return "NewsCommentDTO [newsCommentId=" + newsCommentId + ", newsCommentContents=" 
                 + newsCommentContents + ", newsCommentWritetime=" + newsCommentWritetime 
-                + ", userId=" + userId + ", userName=" + userName + "]";
+                + ", userId=" + userId + ", userName=" + userName 
+                + ", parentId=" + parentId + "]";
     }
 }
