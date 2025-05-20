@@ -1,8 +1,0 @@
-FROM alpine:latest
-
-RUN apk add --no-cache bash docker-cli coreutils bc
-
-COPY log_high_cpu_container.sh /usr/local/bin/log_high_cpu_container.sh
-RUN chmod +x /usr/local/bin/log_high_cpu_container.sh
-
-CMD ["sh", "-c", "while true; do /usr/local/bin/log_high_cpu_container.sh; sleep 60; done"]
