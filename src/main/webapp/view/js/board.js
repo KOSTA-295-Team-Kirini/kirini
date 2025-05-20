@@ -323,6 +323,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 화면 초기화 시 게시판 목록 로드
     loadBoardPosts("news");
+    loadBoardPosts("free");
 
     // 날짜 포맷 함수
     function formatDate(dateInput) {
@@ -477,12 +478,10 @@ document.addEventListener("DOMContentLoaded", function () {
         );
 
         // boardType에 "-board" 접미사 추가 (loadPostDetails에서 사용하는 형식으로 변환)
-        const boardTypeWithSuffix = boardType.endsWith("-board")
-          ? boardType
-          : `${boardType}-board`;
-
-        // 상세 정보 로드 함수 호출 (세션 기반 조회수 제어 기능 포함)
-        return loadPostDetails(postId, boardTypeWithSuffix);
+        return loadPostDetails(
+          postId,
+          boardType.endsWith("-board") ? boardType : `${boardType}-board`
+        );
       } catch (error) {
         console.error(`게시물 상세 정보 로딩 중 오류 발생:`, error);
       }
@@ -522,11 +521,14 @@ document.addEventListener("DOMContentLoaded", function () {
      */
     async function loadBoardPosts(boardType, params = {}) {
       try {
-        console.log(`loadBoardPosts 호출: boardType=${boardType}`);
+        console.log(
+          `[board.js] loadBoardPosts 호출 시작: boardType=${boardType}, params=`,
+          params
+        ); // 로그 추가
         const boardContainer = document.getElementById(`${boardType}-board`);
         if (!boardContainer) {
           console.error(
-            `게시판 컨테이너를 찾을 수 없습니다: ${boardType}-board`
+            `[board.js] 게시판 컨테이너를 찾을 수 없습니다: ${boardType}-board`
           );
           return;
         }
@@ -534,51 +536,56 @@ document.addEventListener("DOMContentLoaded", function () {
         const postsTable = boardContainer.querySelector(".board-table tbody");
         if (!postsTable) {
           console.error(
-            `게시판 테이블을 찾을 수 없습니다: ${boardType}-board .board-table tbody`
+            `[board.js] 게시판 테이블 tbody를 찾을 수 없습니다: ${boardType}-board .board-table tbody`
           );
           return;
         }
 
-        // 로딩 표시 추가
         postsTable.innerHTML =
           '<tr><td colspan="5" class="loading">게시글을 불러오는 중...</td></tr>';
 
-        // 게시글 목록 로드 (Auth 체크 없이 모든 사용자가 볼 수 있게)
         const response = await BoardService.getPosts(boardType, params);
-        console.log("게시판 API 응답:", response);
+        console.log(
+          `[board.js] BoardService.getPosts 응답 (${boardType}):`,
+          response
+        ); // 로그 추가
 
-        // 응답 구조 처리
-        // 가능한 응답 구조:
-        // 1. 게시글 배열: [...]
-        // 2. {newsList: [...]} (news 게시판용)
-        // 3. {freeboardList: [...]} (freeboard 게시판용)
-        // 4. {posts: [...]} (일반적인 형식)
         let posts = [];
-
         if (Array.isArray(response)) {
-          // 응답이 바로 배열인 경우
           posts = response;
-        } else if (response?.newsList) {
-          // {newsList: [...]} 형태인 경우
+        } else if (boardType === "news" && response?.newsList) {
+          // boardType에 따라 명확히 구분
           posts = response.newsList;
-        } else if (response?.freeboardList) {
-          // {freeboardList: [...]} 형태인 경우
+        } else if (boardType === "free" && response?.freeboardList) {
+          // boardType에 따라 명확히 구분
           posts = response.freeboardList;
         } else if (response?.posts) {
-          // {posts: [...]} 형태인 경우
           posts = response.posts;
-        } else if (typeof response === "object") {
-          // 기타 다른 형태의 객체 응답인 경우, 배열처럼 사용 가능한 값 찾기
+        } else if (typeof response === "object" && response !== null) {
+          // 응답 객체의 값들 중 첫 번째 배열을 사용 (예: { data: [...] })
           const possiblePostArrays = Object.values(response).filter((val) =>
             Array.isArray(val)
           );
           if (possiblePostArrays.length > 0) {
-            // 첫 번째 발견된 배열 사용
             posts = possiblePostArrays[0];
+            console.warn(
+              `[board.js] 특정 키(newsList, freeboardList, posts)를 찾지 못해 첫 번째 배열 사용 (${boardType}):`,
+              posts
+            );
+          } else {
+            console.warn(
+              `[board.js] 응답 객체에서 게시글 배열을 찾을 수 없습니다 (${boardType}):`,
+              response
+            );
           }
+        } else {
+          console.warn(
+            `[board.js] 예상치 못한 응답 형태 (${boardType}):`,
+            response
+          );
         }
 
-        console.log("처리된 게시글 배열:", posts);
+        console.log(`[board.js] 파싱된 게시글 배열 (${boardType}):`, posts); // 로그 추가
 
         if (posts && posts.length > 0) {
           postsTable.innerHTML = "";
@@ -629,11 +636,12 @@ document.addEventListener("DOMContentLoaded", function () {
           // 게시글 목록이 로드된 후 클릭 이벤트 다시 등록
           attachPostClickEvents();
         } else {
+          console.log(`[board.js] 게시글 없음 또는 빈 배열 (${boardType})`); // 로그 추가
           postsTable.innerHTML =
             '<tr><td colspan="5">게시글이 없습니다.</td></tr>';
         }
       } catch (error) {
-        console.error(`${boardType} 게시글 목록 로드 오류:`, error);
+        console.error(`[board.js] ${boardType} 게시글 목록 로드 오류:`, error);
         const boardContainer = document.getElementById(`${boardType}-board`);
         if (boardContainer) {
           const postsTable = boardContainer.querySelector(".board-table tbody");

@@ -872,22 +872,4 @@ window.GlossaryService = GlossaryService;
 window.ReviewService = ReviewService;
 window.QnaService = QnaService;
 
-// 새로운 라우터 추가
-router.getJson("/view", (req, res) => {
-  try {
-    // 모든 요청 파라미터 디버깅
-    const paramNames = req.getParameterNames();
-    const paramDebug = ["요청 파라미터: "];
-    while (paramNames.hasMoreElements()) {
-      const name = paramNames.nextElement();
-      const value = req.getParameter(name);
-      paramDebug.push(`${name}=${value}, `);
-    }
-    console.log(paramDebug.join(""));
-    // 나머지 코드는 그대로 유지
-    // ...
-  } catch (error) {
-    console.error("요청 처리 중 오류:", error);
-    res.status(500).send("서버 오류");
-  }
-});
+
