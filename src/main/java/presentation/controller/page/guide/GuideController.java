@@ -235,7 +235,7 @@ public class GuideController extends HttpServlet implements Controller { // Cont
     // 현재 구조에서는 HttpServlet의 doGet/doPost를 직접 사용하므로,
     // Controller 인터페이스의 execute 메소드가 반드시 필요하지 않을 수 있다냥.
     // 만약 Controller 인터페이스가 execute 메소드를 강제한다면 아래와 같이 구현할 수 있다냥.
-    @Override
+    //@Override
     public String execute(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // 요청 메소드에 따라 doGet 또는 doPost 호출
         if ("GET".equalsIgnoreCase(request.getMethod())) {
