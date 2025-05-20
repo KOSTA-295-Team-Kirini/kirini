@@ -58,23 +58,35 @@ class ApiClient {
     const token = ApiClient.getAuthToken();
     return token ? { ...headers, Authorization: `Bearer ${token}` } : headers;
   }
-
   /**
    * API 요청 생성
    * @param {string} endpoint API 엔드포인트 (예: 'login.do')
    * @param {Object} options fetch 옵션
    * @returns {Promise} API 응답
-   */
-  static async request(endpoint, options = {}) {
+   */ static async request(endpoint, options = {}) {
     const url = `${API_CONFIG.baseUrl}${endpoint}`;
     const headers = {
       ...API_CONFIG.defaultHeaders,
       ...(options.headers || {}),
     };
 
-    // 인증 토큰이 있는 경우 Authorization 헤더 추가
+    // 인증 토큰이 있고 endpoint가 인증이 필요한 엔드포인트인 경우에만 토큰 추가
+    // news, freeboard 관련 조회는 인증을 요구하지 않도록 변경
     const token = this.getAuthToken();
-    if (token) {
+    const isPublicEndpoint =
+      endpoint.includes("/news/list") ||
+      endpoint.includes("/news/view") ||
+      endpoint.includes("/news/comments") ||
+      endpoint.includes("/freeboard/list") ||
+      endpoint.includes("/freeboard/view") ||
+      endpoint.includes("/freeboard/comments");
+
+    // 인증 디버깅
+    console.log(
+      `API 요청: ${endpoint}, 공개 엔드포인트: ${isPublicEndpoint}, 토큰 있음: ${!!token}`
+    );
+
+    if (token && !isPublicEndpoint) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
@@ -82,6 +94,7 @@ class ApiClient {
     const fetchOptions = {
       ...options,
       headers,
+      credentials: "include", // 세션 쿠키를 자동으로 포함시킵니다
     };
 
     try {
@@ -94,7 +107,16 @@ class ApiClient {
         endpoint !== "/auth/refresh.do" &&
         endpoint !== "login.do"
       ) {
-        return ApiClient.handleUnauthorized(endpoint, options);
+        // 401 Unauthorized 에러 처리 - 토큰 만료 등 처리 로직이 구현될 예정
+        console.warn(
+          "인증 토큰이 만료되었거나 유효하지 않습니다. 재로그인이 필요합니다."
+        );
+        // 로그아웃 처리
+        ApiClient.removeAuthToken();
+        return {
+          status: "error",
+          message: "인증이 만료되었습니다. 다시 로그인해주세요.",
+        };
       }
 
       // 응답 데이터가 없는 경우 (204 No Content)
@@ -111,17 +133,30 @@ class ApiClient {
       throw error;
     }
   }
-
   /**
    * GET 요청 헬퍼 함수
    * @param {string} endpoint - API 엔드포인트
    * @param {Object} options - 추가 fetch 옵션
    * @returns {Promise} - API 응답
-   */
-  static async get(endpoint, options = {}) {
-    return this.fetch(endpoint, {
-      ...options,
+   */ static async get(endpoint, params = {}, withAuth = false) {
+    const queryParams = new URLSearchParams();
+
+    for (const key in params) {
+      if (params[key] !== undefined && params[key] !== null) {
+        queryParams.append(key, String(params[key]));
+      }
+    }
+
+    const queryString = queryParams.toString();
+    const url = queryString ? `${endpoint}?${queryString}` : endpoint;
+
+    console.log(`API GET 요청: ${url}, 파라미터:`, params);
+
+    const headers = withAuth ? ApiClient.getAuthHeaders() : {};
+
+    return ApiClient.request(url, {
       method: "GET",
+      headers: headers,
     });
   }
   /**
@@ -130,8 +165,7 @@ class ApiClient {
    * @param {Object} data - 요청 본문 데이터
    * @param {Object} options - 추가 fetch 옵션
    * @returns {Promise} - API 응답
-   */
-  static async post(endpoint, data = {}, withAuth = false) {
+   */ static async post(endpoint, data = {}, withAuth = false) {
     const headers = withAuth ? ApiClient.getAuthHeaders() : {};
     // Content-Type을 application/x-www-form-urlencoded로 변경
     headers["Content-Type"] = "application/x-www-form-urlencoded";
@@ -145,7 +179,7 @@ class ApiClient {
 
     return ApiClient.request(endpoint, {
       method: "POST",
-      headers,
+      headers: headers,
       body: urlEncodedData,
     });
   }
@@ -155,13 +189,13 @@ class ApiClient {
    * @param {Object} data 요청 데이터
    * @param {boolean} withAuth 인증 필요 여부
    * @returns {Promise} API 응답
-   */
-  static async postJson(endpoint, data = {}, withAuth = false) {
+   */ static async postJson(endpoint, data = {}, withAuth = false) {
     const headers = withAuth
       ? ApiClient.getAuthHeaders({ "Content-Type": "application/json" })
       : { "Content-Type": "application/json" };
     return ApiClient.request(endpoint, {
       method: "POST",
+      headers: headers,
       body: JSON.stringify(data),
     });
   }
@@ -172,13 +206,12 @@ class ApiClient {
    * @param {FormData} formData 요청 데이터
    * @param {boolean} withAuth 인증 필요 여부
    * @returns {Promise} API 응답
-   */
-  static async postFormData(endpoint, formData, withAuth = false) {
+   */ static async postFormData(endpoint, formData, withAuth = false) {
     // FormData의 경우 Content-Type 헤더를 브라우저가 자동으로 설정하도록 비워둠
     const headers = withAuth ? ApiClient.getAuthHeaders({}) : {};
     return ApiClient.request(endpoint, {
       method: "POST",
-      headers,
+      headers: headers,
       body: formData,
     });
   }
@@ -200,14 +233,12 @@ class ApiClient {
         (key) => encodeURIComponent(key) + "=" + encodeURIComponent(data[key])
       )
       .join("&");
-
     return ApiClient.request(endpoint, {
       method: "PUT",
-      headers,
+      headers: headers,
       body: urlEncodedData,
     });
   }
-
   /**
    * DELETE 요청 헬퍼 함수
    * @param {string} endpoint - API 엔드포인트
@@ -215,7 +246,7 @@ class ApiClient {
    * @returns {Promise} - API 응답
    */
   static async delete(endpoint, options = {}) {
-    return this.fetch(endpoint, {
+    return ApiClient.request(endpoint, {
       ...options,
       method: "DELETE",
     });
@@ -232,14 +263,14 @@ class UserService {
    * @param {string} password 비밀번호
    * @param {boolean} rememberMe 로그인 유지 여부
    * @returns {Promise} 로그인 결과
-   */
-  static async login(email, password) {
+   */ static async login(email, password) {
     try {
       const response = await fetch("/login.do", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // 세션 쿠키를 포함
         body: JSON.stringify({ email, password }),
       });
 
@@ -264,10 +295,12 @@ class UserService {
    * 이메일 중복 확인
    * @param {string} email 확인할 이메일
    * @returns {Promise} 중복 확인 결과
-   */
-  static async checkEmailDuplicate(email) {
+   */ static async checkEmailDuplicate(email) {
     const response = await fetch(
-      `/signup.do?action=checkEmail&email=${encodeURIComponent(email)}`
+      `/signup.do?action=checkEmail&email=${encodeURIComponent(email)}`,
+      {
+        credentials: "include", // 세션 쿠키를 포함
+      }
     );
     return await response.json();
   }
@@ -275,10 +308,14 @@ class UserService {
    * 닉네임 중복 확인
    * @param {string} nickname 확인할 닉네임
    * @returns {Promise} 중복 확인 결과
-   */
-  static async checkNicknameDuplicate(nickname) {
+   */ static async checkNicknameDuplicate(nickname) {
     const response = await fetch(
-      `/signup.do?action=checkNickname&nickname=${encodeURIComponent(nickname)}`
+      `/signup.do?action=checkNickname&nickname=${encodeURIComponent(
+        nickname
+      )}`,
+      {
+        credentials: "include", // 세션 쿠키를 포함
+      }
     );
     return await response.json();
   }
@@ -323,11 +360,19 @@ class UserService {
   /**
    * 로그아웃
    * @returns {void}
-   */
-  static logout() {
+   */ static logout() {
+    // 토큰 기반 인증 데이터 삭제
     ApiClient.removeAuthToken();
     localStorage.removeItem("kirini_refresh_token");
-    window.dispatchEvent(new CustomEvent("auth:logout"));
+
+    // 서버에 로그아웃 요청 보내기 (세션 삭제)
+    fetch("/logout.do", {
+      method: "GET",
+      credentials: "include", // 세션 쿠키를 포함
+    }).finally(() => {
+      // 로그아웃 이벤트 발생
+      window.dispatchEvent(new CustomEvent("auth:logout"));
+    });
   }
 }
 
@@ -469,27 +514,83 @@ class BoardService {
    * @returns {Promise} 게시물 목록
    */
   static async getPosts(boardType, params = {}) {
-    return ApiClient.get(`/${boardType}/list.do`, params);
-  }
+    // 백엔드 컨트롤러 URL 패턴에 맞게 조정
+    const boardTypeMapping = {
+      news: "news",
+      free: "freeboard",
+    };
 
+    const mappedType = boardTypeMapping[boardType] || boardType;
+    // withAuth 매개변수를 false로 명시적으로 설정하여 인증 없이도 접근 가능하게 함
+    return ApiClient.get(`/${mappedType}/list`, params);
+  }
   /**
-   * 게시물 상세 조회
+   * 게시물 상세 조회 (댓글 포함)
    * @param {string} boardType 게시판 유형
    * @param {string} postId 게시물 ID
-   * @returns {Promise} 게시물 상세 정보
+   * @param {boolean} increaseReadCount 조회수 증가 여부
+   * @returns {Promise} 게시물 및 댓글 상세 정보
    */
-  static async getPost(boardType, postId) {
-    return ApiClient.get(`/${boardType}/detail.do`, { id: postId });
-  }
+  static async getPost(boardType, postId, increaseReadCount = true) {
+    // 백엔드 컨트롤러 URL 패턴에 맞게 조정
+    const boardTypeMapping = {
+      news: "news",
+      free: "freeboard",
+    };
+    const mappedType = boardTypeMapping[boardType] || boardType;
+    console.log(
+      `getPost 호출: boardType=${boardType}, mappedType=${mappedType}, postId=${postId}, increaseReadCount=${increaseReadCount}`
+    );
 
+    // 게시글 ID 확인
+    if (!postId || isNaN(postId)) {
+      console.error(`유효하지 않은 게시글 ID: ${postId}`);
+      return { status: "error", message: "유효하지 않은 게시글 ID입니다." };
+    }
+
+    // 게시글 조회 요청 파라미터
+    const params = {
+      id: Number(postId),
+      postId: Number(postId),
+      includeComments: true, // 서버에 댓글도 함께 요청
+    };
+
+    // increaseReadCount 파라미터가 false인 경우에만 명시적으로 추가
+    // (기본값이 true이므로 true인 경우 전송하지 않음)
+    if (increaseReadCount === false) {
+      params.increaseReadCount = false;
+    }
+
+    console.log(`게시글 상세 요청 파라미터:`, params);
+
+    // 게시글 상세 정보 API 호출
+    return ApiClient.get(`/${mappedType}/view`, params);
+  }
   /**
    * 게시물 작성
    * @param {string} boardType 게시판 유형
-   * @param {Object} postData 게시물 데이터
+   * @param {Object|FormData} postData 게시물 데이터
    * @returns {Promise} 작성 결과
    */
   static async createPost(boardType, postData) {
-    return ApiClient.post(`/${boardType}/create.do`, postData, true);
+    // 백엔드 컨트롤러 URL 패턴에 맞게 조정
+    const boardTypeMapping = {
+      news: "news",
+      free: "freeboard",
+      anonymous: "anonymous",
+    };
+
+    const mappedType = boardTypeMapping[boardType] || boardType;
+
+    // postData가 FormData인지 확인
+    if (postData instanceof FormData) {
+      return ApiClient.postFormData(`/${mappedType}/create`, postData, true);
+    } else if (typeof postData === "object") {
+      // JSON 데이터인 경우 postJson 사용
+      return ApiClient.postJson(`/${mappedType}/create`, postData, true);
+    } else {
+      return ApiClient.post(`/${mappedType}/create`, postData, true);
+    }
   }
 
   /**
@@ -509,7 +610,6 @@ class BoardService {
       true
     );
   }
-
   /**
    * 게시물 삭제
    * @param {string} boardType 게시판 유형
@@ -517,9 +617,26 @@ class BoardService {
    * @returns {Promise} 삭제 결과
    */
   static async deletePost(boardType, postId) {
-    return ApiClient.post(`/${boardType}/delete.do`, { id: postId }, true);
-  }
+    // 백엔드 URL 패턴에 맞게 조정
+    const boardTypeMapping = {
+      news: "news",
+      free: "freeboard",
+    };
 
+    const mappedType = boardTypeMapping[boardType] || boardType;
+    console.log(
+      `게시글 삭제 요청: boardType=${boardType}, mappedType=${mappedType}, postId=${postId}`
+    );
+
+    // 삭제 요청 - /delete 엔드포인트를 사용하여 삭제 요청 전송
+    return ApiClient.post(
+      `/${mappedType}/delete`,
+      {
+        id: Number(postId),
+      },
+      true // withAuth를 true로 설정
+    );
+  }
   /**
    * 댓글 작성
    * @param {string} boardType 게시판 유형
@@ -529,8 +646,15 @@ class BoardService {
    * @returns {Promise} 작성 결과
    */
   static async createComment(boardType, postId, content, parentId = null) {
+    // 백엔드 URL 패턴에 맞게 조정
+    const boardTypeMapping = {
+      news: "news",
+      free: "freeboard",
+    };
+
+    const mappedType = boardTypeMapping[boardType] || boardType;
     return ApiClient.post(
-      `/${boardType}/comment/create.do`,
+      `/${mappedType}/comment`,
       {
         postId,
         content,
@@ -539,36 +663,65 @@ class BoardService {
       true
     );
   }
-
   /**
    * 댓글 목록 조회
    * @param {string} boardType 게시판 유형
    * @param {string} postId 게시물 ID
    * @param {Object} params 페이징 옵션
    * @returns {Promise} 댓글 목록
-   */
-  static async getComments(boardType, postId, params = {}) {
-    return ApiClient.get(`/${boardType}/comment/list.do`, {
-      postId,
-      ...params,
-    });
-  }
+   */ static async getComments(boardType, postId, params = {}) {
+    // 백엔드 URL 패턴에 맞게 조정
+    const boardTypeMapping = {
+      news: "news",
+      free: "freeboard",
+    };
 
+    const mappedType = boardTypeMapping[boardType] || boardType;
+    console.log(
+      `getComments 호출: boardType=${boardType}, mappedType=${mappedType}, postId=${postId}`
+    );
+
+    // 게시글 ID 확인
+    if (isNaN(postId)) {
+      console.error(`유효하지 않은 게시글 ID: ${postId}`);
+      return { status: "error", message: "유효하지 않은 게시글 ID입니다." };
+    }
+
+    // 두 가지 파라미터 이름을 모두 지원하기 위해 id와 postId 둘 다 전송
+    const queryParams = {
+      postId: postId,
+      id: postId,
+      increaseReadCount: false, // 중요: 댓글 조회 시 조회수 증가하지 않도록 설정
+      ...params,
+    };
+
+    return ApiClient.get(`/${mappedType}/comments`, queryParams);
+  }
   /**
    * 게시물 좋아요/싫어요
    * @param {string} boardType 게시판 유형
    * @param {string} postId 게시물 ID
    * @param {string} type 'like' 또는 'dislike'
    * @returns {Promise} 처리 결과
-   */
-  static async reactToPost(boardType, postId, type) {
-    return ApiClient.post(
-      `/${boardType}/react.do`,
+   */ static async reactToPost(boardType, postId, type) {
+    const boardTypeMapping = {
+      news: "news",
+      free: "freeboard",
+    };
+
+    const mappedType = boardTypeMapping[boardType] || boardType;
+    console.log(
+      `게시글 추천 요청: 게시판=${mappedType}, 게시글ID=${postId}, 타입=${type}`
+    );
+
+    // withAuth 매개변수를 true로 설정하여 세션 쿠키 포함
+    return ApiClient.get(
+      `/${mappedType}/recommend`,
       {
-        postId,
-        type,
+        id: Number(postId),
+        postId: Number(postId),
       },
-      true
+      true // withAuth를 true로 설정
     );
   }
 }
@@ -718,3 +871,23 @@ window.BoardService = BoardService;
 window.GlossaryService = GlossaryService;
 window.ReviewService = ReviewService;
 window.QnaService = QnaService;
+
+// 새로운 라우터 추가
+router.getJson("/view", (req, res) => {
+  try {
+    // 모든 요청 파라미터 디버깅
+    const paramNames = req.getParameterNames();
+    const paramDebug = ["요청 파라미터: "];
+    while (paramNames.hasMoreElements()) {
+      const name = paramNames.nextElement();
+      const value = req.getParameter(name);
+      paramDebug.push(`${name}=${value}, `);
+    }
+    console.log(paramDebug.join(""));
+    // 나머지 코드는 그대로 유지
+    // ...
+  } catch (error) {
+    console.error("요청 처리 중 오류:", error);
+    res.status(500).send("서버 오류");
+  }
+});

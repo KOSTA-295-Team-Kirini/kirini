@@ -57,9 +57,7 @@ public class FreeboardController extends HttpServlet implements Controller {
         
         // 라우터 설정
         initRequestRouter();
-    }
-
-    /**
+    }    /**
      * 요청 라우터 초기화
      */
     private void initRequestRouter() {
@@ -70,6 +68,86 @@ public class FreeboardController extends HttpServlet implements Controller {
             result.put("status", "success");
             result.put("message", "자유게시판 API");
             return result;
+        });
+        
+        // 게시글 삭제 API 추가
+        router.postJson("/delete", (req, res) -> {
+            try {
+                // 로그인 확인
+                HttpSession session = req.getSession();
+                UserDTO user = (UserDTO) session.getAttribute("user");
+                
+                if (user == null) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("success", false);
+                    errorResult.put("message", "로그인이 필요합니다.");
+                    return errorResult;
+                }
+                
+                // 파라미터 가져오기 (id 파라미터 지원)
+                String idParam = req.getParameter("id");
+                System.out.println("삭제 요청 ID: " + idParam);
+                
+                if (idParam == null || idParam.trim().isEmpty()) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("success", false);
+                    errorResult.put("message", "게시글 ID가 제공되지 않았습니다.");
+                    return errorResult;
+                }
+                
+                try {
+                    long freeboardId = Long.parseLong(idParam.trim());
+                    
+                    // 원본 게시글 가져오기
+                    FreeboardDTO original = freeboardService.getFreeboardById(freeboardId);
+                    
+                    if (original == null) {
+                        Map<String, Object> errorResult = new HashMap<>();
+                        errorResult.put("status", "error");
+                        errorResult.put("success", false);
+                        errorResult.put("message", "존재하지 않는 게시글입니다.");
+                        return errorResult;
+                    }
+                      // 작성자 또는 관리자만 삭제 가능
+                    if (original.getUserUid() != user.getUserUid() && user.getUserLevel() < 3) {
+                        Map<String, Object> errorResult = new HashMap<>();
+                        errorResult.put("status", "error");
+                        errorResult.put("success", false);
+                        errorResult.put("message", "삭제 권한이 없습니다.");
+                        return errorResult;
+                    }                    // 게시글 삭제
+                    boolean success = freeboardService.deleteFreeboard(freeboardId, user.getUserUid(), user.getUserAuthority());
+                    
+                    Map<String, Object> result = new HashMap<>();
+                    if (success) {
+                        result.put("status", "success");
+                        result.put("success", true);
+                        result.put("message", "게시글이 삭제되었습니다.");
+                    } else {
+                        result.put("status", "error");
+                        result.put("success", false);
+                        result.put("message", "게시글 삭제에 실패했습니다.");
+                    }
+                    return result;
+                    
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("success", false);
+                    errorResult.put("message", "잘못된 게시글 ID입니다.");
+                    return errorResult;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("status", "error");
+                errorResult.put("success", false);
+                errorResult.put("message", "서버 오류가 발생했습니다: " + e.getMessage());
+                return errorResult;
+            }
         });
           router.getJson("/list", (req, res) -> {
             int page = 1;
@@ -225,10 +303,21 @@ public class FreeboardController extends HttpServlet implements Controller {
                 return errorResult;
             }
         });
-    }
-
-    @Override
+    }    @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // API 요청인지 먼저 확인 (router에 의해 처리될 수 있는지)
+        String pathInfo = request.getPathInfo();
+        
+        // pathInfo가 있으면 API 요청으로 간주하고 Router를 통해 처리 시도
+        if (pathInfo != null) {
+            boolean handled = router.handleGetJson(request, response);
+            if (handled) {
+                // Router가 요청을 처리했으므로 메서드 종료
+                return;
+            }
+        }
+        
+        // API 요청이 아니거나 Router가 처리하지 못한 경우, 기존 로직으로 처리
         String action = request.getParameter("action");
         
         if (action == null || action.equals("list")) {
@@ -249,10 +338,21 @@ public class FreeboardController extends HttpServlet implements Controller {
         } else {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
-    }
-
-    @Override
+    }    @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // API 요청인지 먼저 확인 (router에 의해 처리될 수 있는지)
+        String pathInfo = request.getPathInfo();
+        
+        // pathInfo가 있으면 API 요청으로 간주하고 Router를 통해 처리 시도
+        if (pathInfo != null) {
+            boolean handled = router.handlePostJson(request, response);
+            if (handled) {
+                // Router가 요청을 처리했으므로 메서드 종료
+                return;
+            }
+        }
+        
+        // API 요청이 아니거나 Router가 처리하지 못한 경우, 기존 로직으로 처리
         String action = request.getParameter("action");
         
         if (action == null) {
@@ -325,13 +425,15 @@ public class FreeboardController extends HttpServlet implements Controller {
         int totalCount = freeboardService.getTotalCount();
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
         
-        request.setAttribute("freeboardList", freeboardList);
-        request.setAttribute("currentPage", page);
-        request.setAttribute("totalPages", totalPages);
-        request.setAttribute("pageSize", pageSize);
-        request.setAttribute("totalCount", totalCount);
+        // JSP 페이지로 포워딩 대신 JSON 응답 반환
+        Map<String, Object> result = new HashMap<>();
+        result.put("freeboardList", freeboardList);
+        result.put("currentPage", page);
+        result.put("totalPages", totalPages);
+        result.put("pageSize", pageSize);
+        result.put("totalCount", totalCount);
         
-        request.getRequestDispatcher("/WEB-INF/views/board/freeboard-list.jsp").forward(request, response);
+        sendJsonResponse(response, result);
     }
     
     /**
@@ -347,8 +449,15 @@ public class FreeboardController extends HttpServlet implements Controller {
                 return;
             }
             
-            request.setAttribute("freeboard", freeboard);
-            request.getRequestDispatcher("/WEB-INF/views/board/freeboard-view.jsp").forward(request, response);
+            // JSP 페이지로 포워딩 대신 JSON 응답 반환
+            Map<String, Object> result = new HashMap<>();
+            result.put("freeboard", freeboard);
+            
+            // 댓글 목록도 함께 조회
+            List<FreeboardCommentDTO> comments = freeboardService.getCommentsByPostId(postId);
+            result.put("comments", comments);
+            
+            sendJsonResponse(response, result);
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 게시글 ID입니다.");
         }
@@ -356,14 +465,18 @@ public class FreeboardController extends HttpServlet implements Controller {
     
     /**
      * 게시글 등록
-     */
-    private void postFreeboard(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+     */    private void postFreeboard(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // 로그인 확인
         HttpSession session = request.getSession();
         UserDTO user = (UserDTO) session.getAttribute("user");
         
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login?redirect=freeboard&action=write");
+            // 로그인이 필요하다는 JSON 응답
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            result.put("redirect", request.getContextPath() + "/login?redirect=freeboard&action=write");
+            sendJsonResponse(response, result);
             return;
         }
         
@@ -375,13 +488,20 @@ public class FreeboardController extends HttpServlet implements Controller {
         
         boolean result = freeboardService.createFreeboard(freeboard);
         
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("success", result);
+        
         if (result) {
-            response.sendRedirect(request.getContextPath() + "/freeboard?action=view&id=" + freeboard.getFreeboardUid());
+            responseData.put("message", "게시글이 성공적으로 등록되었습니다.");
+            responseData.put("postId", freeboard.getFreeboardUid());
+            responseData.put("redirect", request.getContextPath() + "/freeboard?action=view&id=" + freeboard.getFreeboardUid());
         } else {
-            request.setAttribute("error", "게시글 등록에 실패했습니다.");
-            request.setAttribute("freeboard", freeboard);
-            request.getRequestDispatcher("/WEB-INF/views/board/freeboard-write.jsp").forward(request, response);
+            responseData.put("message", "게시글 등록에 실패했습니다.");
+            responseData.put("error", "게시글 등록에 실패했습니다.");
+            responseData.put("freeboard", freeboard);
         }
+        
+        sendJsonResponse(response, responseData);
     }
     
     /**
@@ -394,7 +514,12 @@ public class FreeboardController extends HttpServlet implements Controller {
             UserDTO user = (UserDTO) session.getAttribute("user");
             
             if (user == null) {
-                response.sendRedirect(request.getContextPath() + "/login?redirect=freeboard&action=edit");
+                // 로그인되지 않은 경우 권한 없음 응답
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", false);
+                result.put("message", "로그인이 필요합니다.");
+                result.put("redirect", request.getContextPath() + "/login?redirect=freeboard&action=edit");
+                sendJsonResponse(response, result);
                 return;
             }
             
@@ -402,25 +527,37 @@ public class FreeboardController extends HttpServlet implements Controller {
             FreeboardDTO freeboard = freeboardService.getFreeboardById(postId);
             
             if (freeboard == null) {
-                response.sendError(HttpServletResponse.SC_NOT_FOUND, "게시글을 찾을 수 없습니다.");
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", false);
+                result.put("message", "게시글을 찾을 수 없습니다.");
+                sendJsonResponse(response, result);
                 return;
             }
             
             // 작성자 본인 또는 관리자만 수정 가능
             if (freeboard.getUserUid() != user.getUserUid() && 
                     !("admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority()))) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "수정 권한이 없습니다.");
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", false);
+                result.put("message", "수정 권한이 없습니다.");
+                sendJsonResponse(response, result);
                 return;
             }
             
-            request.setAttribute("freeboard", freeboard);
-            request.getRequestDispatcher("/WEB-INF/views/board/freeboard-edit.jsp").forward(request, response);
+            // 수정 폼 정보를 JSON으로 반환
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("freeboard", freeboard);
+            
+            sendJsonResponse(response, result);
         } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 게시글 ID입니다.");
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "잘못된 게시글 ID입니다.");
+            sendJsonResponse(response, result);
         }
     }
-    
-    /**
+      /**
      * 게시글 수정
      */
     private void updateFreeboardById(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -429,7 +566,12 @@ public class FreeboardController extends HttpServlet implements Controller {
         UserDTO user = (UserDTO) session.getAttribute("user");
         
         if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login?redirect=freeboard&action=edit");
+            // 로그인이 필요하다는 JSON 응답
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            result.put("redirect", request.getContextPath() + "/login?redirect=freeboard&action=edit");
+            sendJsonResponse(response, result);
             return;
         }
         
@@ -445,15 +587,24 @@ public class FreeboardController extends HttpServlet implements Controller {
             
             boolean result = freeboardService.updateFreeboard(freeboard, user.getUserUid(), user.getUserAuthority());
             
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", result);
+            
             if (result) {
-                response.sendRedirect(request.getContextPath() + "/freeboard?action=view&id=" + postId);
+                responseData.put("message", "게시글이 성공적으로 수정되었습니다.");
+                responseData.put("postId", postId);
+                responseData.put("redirect", request.getContextPath() + "/freeboard?action=view&id=" + postId);
             } else {
-                request.setAttribute("error", "게시글 수정에 실패했습니다.");
-                request.setAttribute("freeboard", freeboard);
-                request.getRequestDispatcher("/WEB-INF/views/board/freeboard-edit.jsp").forward(request, response);
+                responseData.put("message", "게시글 수정에 실패했습니다.");
+                responseData.put("freeboard", freeboard);
             }
+            
+            sendJsonResponse(response, responseData);
         } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 게시글 ID입니다.");
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "잘못된 게시글 ID입니다.");
+            sendJsonResponse(response, errorResult);
         }
     }
     
@@ -466,7 +617,11 @@ public class FreeboardController extends HttpServlet implements Controller {
         UserDTO user = (UserDTO) session.getAttribute("user");
         
         if (user == null) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "로그인이 필요합니다.");
+            // 로그인이 필요하다는 JSON 응답
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            sendJsonResponse(response, result);
             return;
         }
         
@@ -475,13 +630,22 @@ public class FreeboardController extends HttpServlet implements Controller {
             
             boolean result = freeboardService.deleteFreeboard(postId, user.getUserUid(), user.getUserAuthority());
             
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", result);
+            
             if (result) {
-                response.sendRedirect(request.getContextPath() + "/freeboard?action=list");
+                responseData.put("message", "게시글이 성공적으로 삭제되었습니다.");
+                responseData.put("redirect", request.getContextPath() + "/freeboard?action=list");
             } else {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "게시글 삭제에 실패했습니다.");
+                responseData.put("message", "게시글 삭제에 실패했습니다. 권한을 확인해주세요.");
             }
+            
+            sendJsonResponse(response, responseData);
         } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 게시글 ID입니다.");
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "잘못된 게시글 ID입니다.");
+            sendJsonResponse(response, errorResult);
         }
     }
     
@@ -494,7 +658,11 @@ public class FreeboardController extends HttpServlet implements Controller {
         UserDTO user = (UserDTO) session.getAttribute("user");
         
         if (user == null || !("admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority()))) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자 권한이 필요합니다.");
+            // 권한 없음 JSON 응답
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "관리자 권한이 필요합니다.");
+            sendJsonResponse(response, result);
             return;
         }
         
@@ -504,13 +672,23 @@ public class FreeboardController extends HttpServlet implements Controller {
             
             boolean result = freeboardService.setNotice(postId, isNotice, user.getUserAuthority());
             
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", result);
+            
             if (result) {
-                response.sendRedirect(request.getContextPath() + "/freeboard?action=view&id=" + postId);
+                responseData.put("message", isNotice ? "공지사항으로 설정되었습니다." : "공지사항에서 해제되었습니다.");
+                responseData.put("redirect", request.getContextPath() + "/freeboard?action=view&id=" + postId);
+                responseData.put("isNotice", isNotice);
             } else {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "공지사항 설정/해제에 실패했습니다.");
+                responseData.put("message", "공지사항 설정/해제에 실패했습니다.");
             }
+            
+            sendJsonResponse(response, responseData);
         } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 게시글 ID입니다.");
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "잘못된 게시글 ID입니다.");
+            sendJsonResponse(response, errorResult);
         }
     }
     
@@ -523,7 +701,11 @@ public class FreeboardController extends HttpServlet implements Controller {
         UserDTO user = (UserDTO) session.getAttribute("user");
         
         if (user == null || !("admin".equals(user.getUserAuthority()) || "armband".equals(user.getUserAuthority()))) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자 권한이 필요합니다.");
+            // 권한 없음 JSON 응답
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "관리자 권한이 필요합니다.");
+            sendJsonResponse(response, result);
             return;
         }
         
@@ -533,13 +715,22 @@ public class FreeboardController extends HttpServlet implements Controller {
             
             boolean result = freeboardService.hideFreeboard(postId, hideReason, user.getUserAuthority());
             
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", result);
+            
             if (result) {
-                response.sendRedirect(request.getContextPath() + "/freeboard?action=list");
+                responseData.put("message", "게시글이 숨김 처리되었습니다.");
+                responseData.put("redirect", request.getContextPath() + "/freeboard?action=list");
             } else {
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "게시글 숨김 처리에 실패했습니다.");
+                responseData.put("message", "게시글 숨김 처리에 실패했습니다.");
             }
+            
+            sendJsonResponse(response, responseData);
         } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 게시글 ID입니다.");
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "잘못된 게시글 ID입니다.");
+            sendJsonResponse(response, errorResult);
         }
     }
     
@@ -552,7 +743,11 @@ public class FreeboardController extends HttpServlet implements Controller {
         UserDTO user = (UserDTO) session.getAttribute("user");
         
         if (user == null) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "로그인이 필요합니다.");
+            // 로그인이 필요하다는 JSON 응답
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            sendJsonResponse(response, result);
             return;
         }
         
@@ -563,34 +758,33 @@ public class FreeboardController extends HttpServlet implements Controller {
             
             // 필수 파라미터 검증
             if (reportReason == null || reportReason.trim().isEmpty()) {
-                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "신고 사유를 입력해주세요.");
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", false);
+                result.put("message", "신고 사유를 입력해주세요.");
+                sendJsonResponse(response, result);
                 return;
             }
             
             boolean result = freeboardService.reportFreeboard(postId, user.getUserUid(), reportReason, reportCategory);
             
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", result);
+            
             if (result) {
-                // AJAX 요청인 경우 JSON 응답
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": true, \"message\": \"신고가 접수되었습니다.\"}");
-                } else {
-                    // 일반 요청인 경우 리다이렉트
-                    response.sendRedirect(request.getContextPath() + "/freeboard?action=view&id=" + postId + "&reported=true");
-                }
+                responseData.put("message", "신고가 접수되었습니다.");
+                responseData.put("postId", postId);
+                // 리다이렉트 정보 추가
+                responseData.put("redirect", request.getContextPath() + "/freeboard?action=view&id=" + postId + "&reported=true");
             } else {
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    response.getWriter().write("{\"success\": false, \"message\": \"신고 처리 중 오류가 발생했습니다.\"}");
-                } else {
-                    request.setAttribute("error", "신고 처리 중 오류가 발생했습니다.");
-                    request.getRequestDispatcher("/WEB-INF/views/board/freeboard-view.jsp").forward(request, response);
-                }
+                responseData.put("message", "신고 처리 중 오류가 발생했습니다.");
             }
+            
+            sendJsonResponse(response, responseData);
         } catch (NumberFormatException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 게시글 ID입니다.");
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "잘못된 게시글 ID입니다.");
+            sendJsonResponse(response, errorResult);
         }
     }
     
