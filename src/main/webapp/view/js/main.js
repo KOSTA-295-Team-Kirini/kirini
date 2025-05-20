@@ -400,6 +400,11 @@ async function submitPost(boardType, title, content, file) {
           loadBoardData(boardType);
         }
 
+        // 페이지 새로고침 추가
+        setTimeout(() => {
+          window.location.reload();
+        }, 500); // 0.5초 후 새로고침(알림 확인 시간)
+
         return true;
       } else {
         const errorMsg = response?.message || "게시글 등록에 실패했습니다.";
