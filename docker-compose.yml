@@ -80,9 +80,6 @@ services:
       - ./docker-settings/certbot/www:/var/www/html
     command: ["renew", "--webroot", "-w", "/var/www/html"]
 
-
-
-
   nginx:
     image: nginx:latest
     #container_name: nginx
@@ -104,14 +101,6 @@ services:
       # 순서 지정을 통해 service1-tomcat을 먼저 올리고 nginx를 올림
     networks:
       - kirini-network
-  # cpu-watcher:
-  # # CPU 사용량 모니터링을 위한 
-  #   build: ./docker-settings/cpu-watcher
-  #   container_name: cpu-watcher
-  #   pid: host
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #     - ./sys-logs:/logs
 
 volumes:
   #static-assets: #더이상 사용하지 않음
