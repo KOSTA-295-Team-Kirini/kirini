@@ -85,6 +85,8 @@ class ApiClient {
     console.log(
       `API 요청: ${endpoint}, 공개 엔드포인트: ${isPublicEndpoint}, 토큰 있음: ${!!token}`
     );
+    console.log("[ApiClient] 현재 localStorage 토큰:", ApiClient.getAuthToken()); // localStorage 토큰 상태 확인
+    console.log("[ApiClient] 현재 document.cookie:", document.cookie); // 세션 쿠키 확인용 로그
 
     if (token && !isPublicEndpoint) {
       headers["Authorization"] = `Bearer ${token}`;

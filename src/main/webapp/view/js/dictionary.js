@@ -231,13 +231,13 @@ function initializeDictionarySearch() {
     const linksDiv = document.createElement('div');
     popularTermsData.forEach(term => {
       const link = document.createElement('a');
-      // 이클립스 환경인지 확인하고 경로 조정
+      // 이클립스 경인지 확인하고 경로 조정
       if (isEclipse) {
         // 이클립스 환경에서는 /kirini/view/로 시작하는 절대 경로 사용
         let linkPath = term.link;
         if (linkPath.startsWith('../')) {
           linkPath = linkPath.replace('../', '/kirini/view/');
-        }
+        }환
         link.href = linkPath;
       } else {
         // 일반 환경에서는 원래 상대 경로 사용

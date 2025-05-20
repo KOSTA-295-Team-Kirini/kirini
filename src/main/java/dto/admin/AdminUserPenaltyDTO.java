@@ -8,34 +8,31 @@ import java.sql.Date;
  */
 public class AdminUserPenaltyDTO {
     private long penaltyUid;           // penalty_uid
-    private String penaltyReason;      // penalty_reason
     private Date penaltyStartDate;     // penalty_start_date
     private Date penaltyEndDate;       // penalty_end_date
     private String penaltyStatus;      // penalty_status: 'active' 또는 'inactive'
-    private String penaltyDuration;    // penalty_duration: 'temporary' 또는 'permanent'
     private long userUid;              // user_uid
-    private String username;           // 표시용 사용자 이름 (DB에는 없음)
-    private long adminUid;             // 패널티 부여한 관리자 ID
-    private String adminUsername;      // 관리자 이름 (표시용)
+    private String username;           // 표시용 사용자 이름 (DB의 user_name 매핑)
+    private String userEmail;          // 표시용 사용자 이메일
+    private int penaltyDays;           // 차단 일수 (계산된 값)
+
 
     // 기본 생성자
     public AdminUserPenaltyDTO() {
     }
 
-    // 모든 필드를 포함한 생성자
-    public AdminUserPenaltyDTO(long penaltyUid, String penaltyReason, Date penaltyStartDate, 
-                         Date penaltyEndDate, String penaltyStatus, String penaltyDuration, 
-                         long userUid, String username, long adminUid, String adminUsername) {
+    // 모든 필드를 사용하는 생성자 (penaltyDays는 보통 계산되므로 제외하거나 필요시 추가)
+    public AdminUserPenaltyDTO(long penaltyUid, Date penaltyStartDate,
+                         Date penaltyEndDate, String penaltyStatus,
+                         long userUid, String username, String userEmail) {
         this.penaltyUid = penaltyUid;
-        this.penaltyReason = penaltyReason;
         this.penaltyStartDate = penaltyStartDate;
         this.penaltyEndDate = penaltyEndDate;
         this.penaltyStatus = penaltyStatus;
-        this.penaltyDuration = penaltyDuration;
         this.userUid = userUid;
         this.username = username;
-        this.adminUid = adminUid;
-        this.adminUsername = adminUsername;
+        this.userEmail = userEmail;
+        // penaltyDays는 보통 startDate와 endDate로 계산되므로 생성자에서 직접 받지 않을 수 있음
     }
 
     // Getter, Setter 메서드
@@ -45,14 +42,6 @@ public class AdminUserPenaltyDTO {
 
     public void setPenaltyUid(long penaltyUid) {
         this.penaltyUid = penaltyUid;
-    }
-
-    public String getPenaltyReason() {
-        return penaltyReason;
-    }
-
-    public void setPenaltyReason(String penaltyReason) {
-        this.penaltyReason = penaltyReason;
     }
 
     public Date getPenaltyStartDate() {
@@ -79,14 +68,6 @@ public class AdminUserPenaltyDTO {
         this.penaltyStatus = penaltyStatus;
     }
 
-    public String getPenaltyDuration() {
-        return penaltyDuration;
-    }
-
-    public void setPenaltyDuration(String penaltyDuration) {
-        this.penaltyDuration = penaltyDuration;
-    }
-
     public long getUserUid() {
         return userUid;
     }
@@ -103,35 +84,33 @@ public class AdminUserPenaltyDTO {
         this.username = username;
     }
 
-    public long getAdminUid() {
-        return adminUid;
+    public String getUserEmail() {
+        return userEmail;
     }
 
-    public void setAdminUid(long adminUid) {
-        this.adminUid = adminUid;
-    }
-    
-    public String getAdminUsername() {
-        return adminUsername;
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
-    public void setAdminUsername(String adminUsername) {
-        this.adminUsername = adminUsername;
+    public int getPenaltyDays() {
+        return penaltyDays;
+    }
+
+    public void setPenaltyDays(int penaltyDays) {
+        this.penaltyDays = penaltyDays;
     }
 
     @Override
     public String toString() {
         return "AdminUserPenaltyDTO{" +
                 "penaltyUid=" + penaltyUid +
-                ", penaltyReason='" + penaltyReason + '\'' +
                 ", penaltyStartDate=" + penaltyStartDate +
                 ", penaltyEndDate=" + penaltyEndDate +
                 ", penaltyStatus='" + penaltyStatus + '\'' +
-                ", penaltyDuration='" + penaltyDuration + '\'' +
                 ", userUid=" + userUid +
                 ", username='" + username + '\'' +
-                ", adminUid=" + adminUid +
-                ", adminUsername='" + adminUsername + '\'' +
+                ", userEmail='" + userEmail + '\'' +
+                ", penaltyDays=" + penaltyDays +
                 '}';
     }
 }
