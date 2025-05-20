@@ -9,6 +9,7 @@
   <script src="../js/main.js" defer></script>
   <script src="../js/auth.js"></script>
   <script src="../js/components.js"></script>
+  <script src="../js/api-client.js"></script> <!-- api-client.js 추가 -->
   <script src="../js/mypage.js" defer></script>
 </head>
 <body>
@@ -35,21 +36,21 @@
         <!-- 내 정보 섹션 -->
         <div class="mypage-section active" id="profile">
           <div class="profile-info">
-            <div class="profile-avatar">👤</div>
+            <div class="profile-avatar">👤</div> <!-- 프로필 아바타도 필요시 id 추가 가능 -->
             <div class="profile-details">
-              <h3>홍길동님</h3>
-              <p>kirini_user@example.com</p>
+              <h3 id="profile-username-display"></h3> <!-- 기존: 홍길동님 -->
+              <p id="profile-email-display"></p> <!-- 기존: kirini_user@example.com -->
               <div class="profile-stats">
                 <div class="stat-item">
-                  <div class="stat-value">12</div>
+                  <div class="stat-value" id="profile-post-count"></div> <!-- 기존: 12 -->
                   <div class="stat-label">작성글</div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-value">8</div>
+                  <div class="stat-value" id="profile-scrap-count"></div> <!-- 기존: 8 -->
                   <div class="stat-label">스크랩</div>
                 </div>
                 <div class="stat-item">
-                  <div class="stat-value">1,250</div>
+                  <div class="stat-value" id="profile-point-count"></div> <!-- 기존: 1,250 -->
                   <div class="stat-label">포인트</div>
                 </div>
               </div>
@@ -60,11 +61,11 @@
           <form>
             <div class="form-group">
               <label for="username">이름</label>
-              <input type="text" id="username" value="홍길동">
+              <input type="text" id="username" placeholder="이름을 입력하세요">
             </div>
             <div class="form-group">
               <label for="email">이메일</label>
-              <input type="email" id="email" value="kirini_user@example.com">
+              <input type="email" id="email" placeholder="이메일 주소" readonly> <!-- 이메일은 보통 수정 불가, readonly 추가 -->
             </div>
             <div class="form-group">
               <label for="password">비밀번호</label>
@@ -76,7 +77,7 @@
             </div>
             <div class="form-group">
               <label for="bio">자기소개</label>
-              <textarea id="bio">키보드 입문자입니다. 기계식 키보드에 관심이 많습니다.</textarea>
+              <textarea id="bio" placeholder="자기소개를 입력하세요"></textarea>
             </div>
             <button type="submit" class="btn">정보 수정</button>
           </form>
@@ -89,31 +90,8 @@
         <!-- 스크랩 섹션 -->
         <div class="mypage-section" id="scraps">
           <h2>스크랩한 키보드</h2>
-          <div class="keyboard-grid">
-            <div class="keyboard-card">
-              <img src="../img/keyboard1.jpg" alt="게이밍 키보드" class="keyboard-image" onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
-              <div class="keyboard-content">
-                <h3 class="keyboard-title">로지텍 G Pro X</h3>
-                <div class="keyboard-price">189,000원</div>
-                <button class="btn" style="margin-top: 0.5rem; padding: 0.5rem;">상세보기</button>
-              </div>
-            </div>
-            <div class="keyboard-card">
-              <img src="../img/keyboard3.jpg" alt="커스텀 키보드" class="keyboard-image" onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
-              <div class="keyboard-content">
-                <h3 class="keyboard-title">ToFu60 DIY 키트</h3>
-                <div class="keyboard-price">189,000원</div>
-                <button class="btn" style="margin-top: 0.5rem; padding: 0.5rem;">상세보기</button>
-              </div>
-            </div>
-            <div class="keyboard-card">
-              <img src="../img/keyboard5.jpg" alt="사무용 키보드" class="keyboard-image" onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
-              <div class="keyboard-content">
-                <h3 class="keyboard-title">레오폴드 FC900R</h3>
-                <div class="keyboard-price">149,000원</div>
-                <button class="btn" style="margin-top: 0.5rem; padding: 0.5rem;">상세보기</button>
-              </div>
-            </div>
+          <div class="keyboard-grid" id="scrap-keyboard-grid">
+            <!-- 스크랩된 키보드 아이템이 여기에 동적으로 추가됩니다. -->
           </div>
         </div>
 

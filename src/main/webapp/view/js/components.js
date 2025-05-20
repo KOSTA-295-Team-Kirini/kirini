@@ -1,5 +1,17 @@
 // HTML 컴포넌트 로드 관리 스크립트
 
+// 이클립스와 일반 환경에서 모두 작동하도록 경로 설정 (즉시 실행)
+(function() {
+  // base 태그 대신 전역 변수로 환경 정보 저장 
+  // (base 태그는 다른 스크립트의 상대 경로에 영향을 줄 수 있음)
+  window.KIRINI_ENV = {
+    isEclipse: window.location.pathname.includes('/kirini/'),
+    basePath: window.location.pathname.includes('/kirini/') ? '/kirini/view/' : ''
+  };
+  
+  console.log('환경 설정:', window.KIRINI_ENV);
+})();
+
 // 헤더 초기화 및 UI 처리 (기존 header.js의 내용)
 const Header = {
   // 헤더 UI 처리
@@ -96,9 +108,9 @@ const Header = {
 window.Header = Header;
 
 // HTML 컴포넌트 로드 함수
-document.addEventListener('DOMContentLoaded', function() {
-  // 현재 페이지의 경로를 확인합니다
+document.addEventListener('DOMContentLoaded', function() {  // 현재 페이지의 경로를 확인합니다
   const currentPath = window.location.pathname;
+  console.log('현재 경로:', currentPath);
   
   // 헤더 플레이스홀더 엘리먼트를 가져옵니다
   const headerPlaceholder = document.getElementById('header-placeholder');
@@ -106,8 +118,28 @@ document.addEventListener('DOMContentLoaded', function() {
   // 푸터 플레이스홀더 엘리먼트를 가져옵니다
   const footerPlaceholder = document.getElementById('footer-placeholder');
   
-  // 상대 경로를 결정합니다 (현재 경로가 /pages/로 시작하면 상위 디렉토리로 이동해야 함)
-  const relativePath = currentPath.includes('/pages/') ? '../' : '';
+  // 상대 경로를 결정합니다
+  let relativePath = '';
+  
+  // 이클립스 환경인지 확인 (전역 변수 사용)
+  const isEclipse = window.KIRINI_ENV && window.KIRINI_ENV.isEclipse;
+  
+  if (isEclipse) {
+    // 이클립스 환경일 경우
+    relativePath = '';  // 기본값
+    
+    // 하위 폴더에 있을 경우 상대 경로 조정
+    if (currentPath.includes('/keyboard_terms/') || currentPath.includes('/pages/')) {
+      console.log('이클립스 환경: 하위 폴더 감지');
+      relativePath = '../';
+    }
+  } else {
+    // 일반 환경일 경우
+    const isInSubFolder = currentPath.includes('/pages/') || currentPath.includes('/keyboard_terms/');
+    relativePath = isInSubFolder ? '../' : '';
+  }
+  
+  console.log('사용할 상대 경로:', relativePath);
   
   // 헤더 로드
   if (headerPlaceholder) {

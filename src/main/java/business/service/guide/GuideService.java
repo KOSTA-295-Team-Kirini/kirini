@@ -115,12 +115,14 @@ public class GuideService {
         guide.setGuideId(rs.getLong("keyboard_glossary_uid"));
         guide.setTerm(rs.getString("keyboard_glossary_title"));
         guide.setDescription(rs.getString("keyboard_glossary_summary"));
-        
-        // URL 정보 매핑 추가
+          // URL 정보 매핑 추가
         String url = rs.getString("keyboard_glossary_url");
         if (url != null && !url.isEmpty()) {
-            // URL을 description에 추가하거나 별도 처리할 수 있음
-            guide.setDescription(guide.getDescription() + "\n\n참고 링크: " + url);
+            // URL은 별도 필드에 설정 (GuideDTO에 url 필드 있음) 
+            guide.setUrl(url);
+            
+            // 설명에 URL 정보 추가 (선택적)
+            // guide.setDescription(guide.getDescription() + "\n\n참고 링크: " + url);
         }
         
         guide.setCategory("keyboard"); // 기본 카테고리 설정

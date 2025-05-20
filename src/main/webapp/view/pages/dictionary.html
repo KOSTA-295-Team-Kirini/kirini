@@ -6,9 +6,24 @@
   <title>용어집 - KIRINI</title>
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/dictionary.css">
+  <link rel="stylesheet" href="../css/dictionary-extras.css">
   <script src="../js/main.js" defer></script>
   <script src="../js/auth.js"></script>
   <script src="../js/components.js"></script>
+  <script src="../js/dictionary.js" defer></script>
+  <script>
+    // HTML에 있는 정적 링크도 이클립스 환경에서 동작하도록 수정
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.location.pathname.includes('/kirini/')) {
+        document.querySelectorAll('a.term-link').forEach(link => {
+          if (link.href.includes('/keyboard_terms/')) {
+            let newHref = link.href.replace(/\/keyboard_terms\//, '/kirini/view/keyboard_terms/');
+            link.href = newHref;
+          }
+        });
+      }
+    });
+  </script>
 </head>
 <body>
   <!-- 헤더 플레이스홀더 -->
@@ -21,28 +36,19 @@
 
   <div class="search-container">
     <input type="text" id="search-input" placeholder="용어 검색">
-    <button type="button">검색</button>
+    <button type="button" id="search-button">검색</button> <!-- 검색 버튼에 ID 추가 -->
   </div>
 
   <div class="dictionary-wrapper">
     <div class="dictionary-container">
       <h2 class="term">검색 결과</h2>
       <ul id="search-results">
-        <!-- 초기 표시를 위한 기본 컨텐츠 -->
-        <li>
-          <div class="popular-term">인기 검색어</div>
-          <div>
-            <a href="../keyboard_terms/axis.html" class="term-link">축</a>
-            <a href="../keyboard_terms/axis_red.html" class="term-link">적축</a>
-            <a href="../keyboard_terms/axis_brown.html" class="term-link">갈축</a>
-          </div>
-        </li>
+        <!-- 검색 결과가 여기에 동적으로 추가됩니다. -->
       </ul>
     </div>
   </div>
 
   <!-- 푸터 플레이스홀더 -->
   <div id="footer-placeholder"></div>
-  <script src="../js/main.js"></script>
 </body>
 </html>
