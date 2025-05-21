@@ -63,13 +63,12 @@ public class UserDAO {
             if (conn != null) try { conn.close(); } catch (SQLException e) {}
         }
     }
-    
-    // 사용자 ID로 조회
+      // 사용자 ID로 조회
     public UserDTO getUserById(long userId) throws SQLException {
         UserDTO user = null;
         try {
             conn = DBConnectionUtil.getConnection();
-            String sql = "SELECT * FROM user WHERE user_id = ?";
+            String sql = "SELECT * FROM user WHERE user_uid = ?";
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, userId);
             rs = pstmt.executeQuery();
@@ -296,12 +295,11 @@ public class UserDAO {
             DBConnectionUtil.close(rs, pstmt, conn);
         }
     }
-    
-    // 회원 탈퇴 (실제로는 is_active만 false로 변경)
+      // 회원 탈퇴 (실제로는 is_active만 false로 변경)
     public boolean deactivateUser(long userId) throws SQLException {
         try {
             conn = DBConnectionUtil.getConnection();
-            String sql = "UPDATE user SET is_active = false WHERE user_id = ?";
+            String sql = "UPDATE user SET is_active = false WHERE user_uid = ?";
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, userId);
             
@@ -310,19 +308,27 @@ public class UserDAO {
             DBConnectionUtil.close(rs, pstmt, conn);
         }
     }
-    
-    // DTO와 DB 매핑을 처리하는 메서드
+      // DTO와 DB 매핑을 처리하는 메서드
     private UserDTO mapResultSetToUser(ResultSet rs) throws SQLException {
         UserDTO user = new UserDTO();
         
-        // 핵심 매핑 (필드명 불일치 해결)
-        user.setUserId(rs.getLong("user_uid"));  // 또는 user_id로 통일
-        user.setUsername(rs.getString("user_id"));     // DB: user_id → DTO: username
-        user.setPassword(rs.getString("user_password")); // DB: user_password → DTO: password
-        user.setEmail(rs.getString("user_email"));     // DB: user_email → DTO: email
-        user.setNickname(rs.getString("user_name"));   // DB: user_name → DTO: nickname
+        // 디버그 로그 추가
+        long userUid = rs.getLong("user_uid");
+        String userId = rs.getString("user_id");
+        String userName = rs.getString("user_name");
+        String userEmail = rs.getString("user_email");
         
-        // 권한 변환 (enum → int)
+        logger.info("사용자 매핑: user_uid=" + userUid + ", user_id=" + userId + ", user_name=" + userName + ", user_email=" + userEmail);
+        
+        // 핵심 매핑 (필드명 불일치 해결)
+        user.setUserId(userUid);  // user_uid → userId
+        user.setUsername(userId);     // DB: user_id → DTO: username
+        user.setPassword(rs.getString("user_password")); // DB: user_password → DTO: password
+        user.setEmail(userEmail);     // DB: user_email → DTO: email
+        user.setNickname(userName);   // DB: user_name → DTO: nickname
+        // userName도 설정 (마이페이지 호환용)
+        user.setUserName(userName);   // DB: user_name → DTO: userName
+          // 권한 변환 (enum → int)
         String authority = rs.getString("user_authority");
         if ("admin".equals(authority)) {
             user.setUserLevel(3);  // 관리자
@@ -341,6 +347,7 @@ public class UserDAO {
         user.setIntroduce(rs.getString("user_introduce"));
         user.setUserStatus(rs.getString("user_status"));
         
+        logger.info("UserDTO 객체 생성 완료: " + user.toString());
         return user;
     }
     
