@@ -94,8 +94,15 @@ public class PostDTO {
     public long getUserId() {
         return userId;
     }
-    
-    public void setUserId(long userId) {
+      public void setUserId(long userId) {
         this.userId = userId;
+    }
+    
+    /**
+     * getViewCount 메서드 - 마이페이지 컨트롤러 호환용
+     * readCount 필드를 반환합니다.
+     */
+    public int getViewCount() {
+        return readCount;
     }
 }

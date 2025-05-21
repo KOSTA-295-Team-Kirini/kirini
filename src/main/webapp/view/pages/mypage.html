@@ -1,289 +1,165 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>마이페이지 - KIRINI</title>
-  <link rel="stylesheet" href="../css/style.css">
-  <link rel="stylesheet" href="../css/mypage.css">
-  <script src="../js/main.js" defer></script>
-  <script src="../js/auth.js"></script>
-  <script src="../js/components.js"></script>
-  <script src="../js/mypage.js" defer></script>
-</head>
-<body>
-  <!-- 헤더 플레이스홀더 -->
-  <div id="header-placeholder"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>마이페이지 - KIRINI</title>
+    <link rel="stylesheet" href="/view/css/style.css" />
+    <link rel="stylesheet" href="/view/css/mypage.css" />
+    <link rel="stylesheet" href="/view/css/mypage-additions.css" />
+    <script src="/view/js/main.js" defer></script>
+    <script src="/view/js/auth.js"></script>
+    <script src="/view/js/components.js"></script>
+    <script src="/view/js/api-client.js"></script>
+    <script src="/view/js/mypage.js" defer></script>
+  </head>
+  <body>
+    <!-- 헤더 플레이스홀더 -->
+    <div id="header-placeholder"></div>
 
-  <section class="page-title">
-    <h1>마이페이지</h1>
-    <p>나의 회원 정보와 활동 내역을 관리할 수 있습니다.</p>
-  </section>
+    <section class="page-title">
+      <h1>마이페이지</h1>
+      <p>나의 회원 정보와 활동 내역을 관리할 수 있습니다.</p>
+    </section>
 
-  <div class="mypage-wrapper">
-    <div class="mypage-container">
-      <div class="mypage-tabs">
-        <button class="mypage-tab active" data-tab="profile">내 정보</button>
-        <button class="mypage-tab" data-tab="scraps">스크랩</button>
-        <button class="mypage-tab" data-tab="posts">내가 쓴 글</button>
-        <button class="mypage-tab" data-tab="ratings">별점 내역</button>
-        <button class="mypage-tab" data-tab="points">활동 포인트</button>
-        <button class="mypage-tab" data-tab="customize">꾸미기</button>
-      </div>
+    <div class="mypage-wrapper">
+      <div class="mypage-container">
+        <div class="mypage-tabs">
+          <button class="mypage-tab active" data-tab="profile">내 정보</button>
+          <button class="mypage-tab" data-tab="scraps">스크랩</button>
+          <button class="mypage-tab" data-tab="posts">내가 쓴 글</button>
+          <button class="mypage-tab" data-tab="ratings">별점 내역</button>
+          <button class="mypage-tab" data-tab="points">활동 포인트</button>
+          <button class="mypage-tab" data-tab="customize">꾸미기</button>
+        </div>
 
-      <div class="mypage-content">
-        <!-- 내 정보 섹션 -->
-        <div class="mypage-section active" id="profile">
-          <div class="profile-info">
-            <div class="profile-avatar">👤</div>
-            <div class="profile-details">
-              <h3>홍길동님</h3>
-              <p>kirini_user@example.com</p>
-              <div class="profile-stats">
-                <div class="stat-item">
-                  <div class="stat-value">12</div>
-                  <div class="stat-label">작성글</div>
+        <div class="mypage-content">
+          <!-- 내 정보 섹션 -->
+          <div class="mypage-section active" id="profile">
+            <div class="profile-info">
+              <div class="profile-avatar">👤</div>
+              <div class="profile-details">
+                <h3></h3>
+                <p></p>
+                <div class="profile-stats">
+                  <div class="stat-item">
+                    <div class="stat-value"></div>
+                    <div class="stat-label">작성글</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value"></div>
+                    <div class="stat-label">스크랩</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value"></div>
+                    <div class="stat-label">포인트</div>
+                  </div>
                 </div>
-                <div class="stat-item">
-                  <div class="stat-value">8</div>
-                  <div class="stat-label">스크랩</div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-value">1,250</div>
-                  <div class="stat-label">포인트</div>
-                </div>
               </div>
+            </div>
+
+            <h2>내 정보 수정</h2>
+            <form>
+              <div class="form-group">
+                <label for="username">이름</label>
+                <input type="text" id="username" value="" />
+              </div>
+              <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" value="" />
+              </div>
+              <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input
+                  type="password"
+                  id="password"
+                  placeholder="새 비밀번호 입력"
+                />
+              </div>
+              <div class="form-group">
+                <label for="password-confirm">비밀번호 확인</label>
+                <input
+                  type="password"
+                  id="password-confirm"
+                  placeholder="비밀번호 확인"
+                />
+              </div>
+              <div class="form-group">
+                <label for="bio">자기소개</label>
+                <textarea id="bio"></textarea>
+              </div>
+              <button type="submit" class="btn">정보 수정</button>
+            </form>
+
+            <h2 style="margin-top: 3rem">회원 탈퇴</h2>
+            <p>회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.</p>
+            <button class="btn btn-danger">회원 탈퇴</button>
+          </div>
+
+          <!-- 스크랩 섹션 -->
+          <div class="mypage-section" id="scraps">
+            <h2>스크랩한 키보드</h2>
+            <div class="keyboard-grid">
+              <!-- 스크랩 데이터는 JavaScript로 동적 로드됩니다 -->
             </div>
           </div>
 
-          <h2>내 정보 수정</h2>
-          <form>
-            <div class="form-group">
-              <label for="username">이름</label>
-              <input type="text" id="username" value="홍길동">
-            </div>
-            <div class="form-group">
-              <label for="email">이메일</label>
-              <input type="email" id="email" value="kirini_user@example.com">
-            </div>
-            <div class="form-group">
-              <label for="password">비밀번호</label>
-              <input type="password" id="password" placeholder="새 비밀번호 입력">
-            </div>
-            <div class="form-group">
-              <label for="password-confirm">비밀번호 확인</label>
-              <input type="password" id="password-confirm" placeholder="비밀번호 확인">
-            </div>
-            <div class="form-group">
-              <label for="bio">자기소개</label>
-              <textarea id="bio">키보드 입문자입니다. 기계식 키보드에 관심이 많습니다.</textarea>
-            </div>
-            <button type="submit" class="btn">정보 수정</button>
-          </form>
-
-          <h2 style="margin-top: 3rem;">회원 탈퇴</h2>
-          <p>회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.</p>
-          <button class="btn btn-danger">회원 탈퇴</button>
-        </div>
-
-        <!-- 스크랩 섹션 -->
-        <div class="mypage-section" id="scraps">
-          <h2>스크랩한 키보드</h2>
-          <div class="keyboard-grid">
-            <div class="keyboard-card">
-              <img src="../img/keyboard1.jpg" alt="게이밍 키보드" class="keyboard-image" onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
-              <div class="keyboard-content">
-                <h3 class="keyboard-title">로지텍 G Pro X</h3>
-                <div class="keyboard-price">189,000원</div>
-                <button class="btn" style="margin-top: 0.5rem; padding: 0.5rem;">상세보기</button>
-              </div>
-            </div>
-            <div class="keyboard-card">
-              <img src="../img/keyboard3.jpg" alt="커스텀 키보드" class="keyboard-image" onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
-              <div class="keyboard-content">
-                <h3 class="keyboard-title">ToFu60 DIY 키트</h3>
-                <div class="keyboard-price">189,000원</div>
-                <button class="btn" style="margin-top: 0.5rem; padding: 0.5rem;">상세보기</button>
-              </div>
-            </div>
-            <div class="keyboard-card">
-              <img src="../img/keyboard5.jpg" alt="사무용 키보드" class="keyboard-image" onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
-              <div class="keyboard-content">
-                <h3 class="keyboard-title">레오폴드 FC900R</h3>
-                <div class="keyboard-price">149,000원</div>
-                <button class="btn" style="margin-top: 0.5rem; padding: 0.5rem;">상세보기</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 내가 쓴 글 섹션 -->
-        <div class="mypage-section" id="posts">
-          <h2>내가 쓴 글</h2>
-          <ul class="item-list">
-            <li class="item-card">
-              <div class="item-info">
-                <div class="item-title">기계식 키보드 추천 부탁드립니다.</div>
-                <div class="item-meta">게시판 | 2025-04-28 | 조회 42</div>
-              </div>
-              <div class="item-actions">
-                <button class="btn" style="padding: 0.5rem 1rem;">보기</button>
-                <button class="btn" style="padding: 0.5rem 1rem; background: #f44336;">삭제</button>
-              </div>
-            </li>
-            <li class="item-card">
-              <div class="item-info">
-                <div class="item-title">키캡 교체 방법 질문드립니다.</div>
-                <div class="item-meta">Q&A | 2025-04-15 | 조회 78</div>
-              </div>
-              <div class="item-actions">
-                <button class="btn" style="padding: 0.5rem 1rem;">보기</button>
-                <button class="btn" style="padding: 0.5rem 1rem; background: #f44336;">삭제</button>
-              </div>
-            </li>
-            <li class="item-card">
-              <div class="item-info">
-                <div class="item-title">새로 구매한 키보드 인증합니다!</div>
-                <div class="item-meta">게시판 | 2025-04-10 | 조회 156</div>
-              </div>
-              <div class="item-actions">
-                <button class="btn" style="padding: 0.5rem 1rem;">보기</button>
-                <button class="btn" style="padding: 0.5rem 1rem; background: #f44336;">삭제</button>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- 별점 내역 섹션 -->
-        <div class="mypage-section" id="ratings">
-          <h2>내 별점 내역</h2>
-          <div class="rating-list">
-            <div class="rating-item">
-              <div class="rating-info">
-                <div class="rating-title">로지텍 G Pro X</div>
-                <div class="rating-date">2025-04-28</div>
-              </div>
-              <div class="rating-stars">★★★★☆</div>
-            </div>
-            <div class="rating-item">
-              <div class="rating-info">
-                <div class="rating-title">레오폴드 FC900R</div>
-                <div class="rating-date">2025-04-15</div>
-              </div>
-              <div class="rating-stars">★★★★★</div>
-            </div>
-            <div class="rating-item">
-              <div class="rating-info">
-                <div class="rating-title">앤프로 2</div>
-                <div class="rating-date">2025-04-10</div>
-              </div>
-              <div class="rating-stars">★★★☆☆</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 활동 포인트 섹션 -->
-        <div class="mypage-section" id="points">
-          <h2>나의 활동 포인트</h2>
-          <div class="point-card">
-            <div class="point-value">1,250</div>
-            <div class="point-label">현재 포인트</div>
+          <!-- 내가 쓴 글 섹션 -->
+          <div class="mypage-section" id="posts">
+            <h2>내가 쓴 글</h2>
+            <ul class="item-list">
+              <!-- 게시글 데이터는 JavaScript로 동적 로드됩니다 -->
+            </ul>
           </div>
 
-          <h3>포인트 내역</h3>
-          <div class="point-history">
-            <div class="point-item">
-              <div class="point-desc">게시글 작성</div>
-              <div class="point-change plus">+50</div>
-              <div class="point-date">2025-04-28</div>
-            </div>
-            <div class="point-item">
-              <div class="point-desc">댓글 작성</div>
-              <div class="point-change plus">+10</div>
-              <div class="point-date">2025-04-25</div>
-            </div>
-            <div class="point-item">
-              <div class="point-desc">출석 체크</div>
-              <div class="point-change plus">+5</div>
-              <div class="point-date">2025-04-25</div>
-            </div>
-            <div class="point-item">
-              <div class="point-desc">아이템 구매</div>
-              <div class="point-change minus">-100</div>
-              <div class="point-date">2025-04-20</div>
-            </div>
-            <div class="point-item">
-              <div class="point-desc">게시글 작성</div>
-              <div class="point-change plus">+50</div>
-              <div class="point-date">2025-04-15</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 꾸미기 섹션 -->
-        <div class="mypage-section" id="customize">
-          <h2>프로필 꾸미기</h2>
-          <p>포인트를 사용하여 프로필을 꾸밀 수 있는 아이템을 구매하세요.</p>
-          
-          <div class="item-customize">
-            <h3>프로필 아이콘</h3>
-            <div class="customize-options">
-              <div class="customize-item active">
-                <div class="customize-icon">👤</div>
-                <div class="customize-name">기본</div>
-              </div>
-              <div class="customize-item">
-                <div class="customize-icon">🦒</div>
-                <div class="customize-name">기린</div>
-              </div>
-              <div class="customize-item">
-                <div class="customize-icon">🐱</div>
-                <div class="customize-name">고양이</div>
-              </div>
-              <div class="customize-item">
-                <div class="customize-icon">⌨️</div>
-                <div class="customize-name">키보드</div>
-              </div>
-              <div class="customize-item">
-                <div class="customize-icon">🤖</div>
-                <div class="customize-name">로봇</div>
-              </div>
-              <div class="customize-item">
-                <div class="customize-icon">🎮</div>
-                <div class="customize-name">게이머</div>
-              </div>
+          <!-- 별점 내역 섹션 -->
+          <div class="mypage-section" id="ratings">
+            <h2>내 별점 내역</h2>
+            <div class="rating-list">
+              <!-- 별점 데이터는 JavaScript로 동적 로드됩니다 -->
             </div>
           </div>
 
-          <div class="item-customize">
-            <h3>배경 테마</h3>
-            <div class="customize-options">
-              <div class="customize-item active">
-                <div class="customize-icon" style="background: #fffceb; color: #333; border-radius: 4px;">🌞</div>
-                <div class="customize-name">기본</div>
-              </div>
-              <div class="customize-item">
-                <div class="customize-icon" style="background: #263238; color: white; border-radius: 4px;">🌙</div>
-                <div class="customize-name">다크</div>
-              </div>
-              <div class="customize-item">
-                <div class="customize-icon" style="background: #e3f2fd; color: #333; border-radius: 4px;">💧</div>
-                <div class="customize-name">블루</div>
-              </div>
-              <div class="customize-item">
-                <div class="customize-icon" style="background: #f3e5f5; color: #333; border-radius: 4px;">💜</div>
-                <div class="customize-name">퍼플</div>
-              </div>
+          <!-- 활동 포인트 섹션 -->
+          <div class="mypage-section" id="points">
+            <h2>나의 활동 포인트</h2>
+            <div class="point-card">
+              <div class="point-value"></div>
+              <div class="point-label">현재 포인트</div>
+            </div>
+
+            <h3>포인트 내역</h3>
+            <div class="point-history">
+              <!-- 포인트 내역 데이터는 JavaScript로 동적 로드됩니다 -->
             </div>
           </div>
 
-          <button class="btn" style="margin-top: 2rem;">변경사항 저장</button>
+          <!-- 꾸미기 섹션 -->
+          <div class="mypage-section" id="customize">
+            <h2>프로필 꾸미기</h2>
+            <p>포인트를 사용하여 프로필을 꾸밀 수 있는 아이템을 구매하세요.</p>
+
+            <div class="item-customize">
+              <h3>프로필 아이콘</h3>
+              <div class="customize-options">
+                <!-- 아이콘 아이템은 JavaScript로 동적 로드됩니다 -->
+              </div>
+            </div>
+
+            <div class="item-customize">
+              <h3>배경 테마</h3>
+              <div class="customize-options">
+                <!-- 테마 아이템은 JavaScript로 동적 로드됩니다 -->
+              </div>
+            </div>
+
+            <button class="btn" style="margin-top: 2rem">변경사항 저장</button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- 푸터 플레이스홀더 -->
-  <div id="footer-placeholder"></div>
-</body>
+    <!-- 푸터 플레이스홀더 -->
+    <div id="footer-placeholder"></div>
+  </body>
 </html>

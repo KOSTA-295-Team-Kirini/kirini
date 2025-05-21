@@ -30,8 +30,7 @@ public class KeyboardInfoService {
             return null;
         }
     }
-    
-    /**
+      /**
      * 키보드 상세 정보 조회
      */
     public KeyboardInfoDTO getKeyboardInfoById(long keyboardId) {
@@ -41,6 +40,13 @@ public class KeyboardInfoService {
             e.printStackTrace();
             return null;
         }
+    }
+    
+    /**
+     * 키보드 상세 정보 조회 (별칭 메서드 - UserpageController 호환용)
+     */
+    public KeyboardInfoDTO getKeyboardById(long keyboardId) {
+        return getKeyboardInfoById(keyboardId);
     }
     
     /**

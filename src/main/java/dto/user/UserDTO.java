@@ -204,11 +204,49 @@ public class UserDTO {
                 return "user";
         }
     }
-    
-    // userAuthority 설정 메서드
+      // userAuthority 설정 메서드
     public void setUserAuthority(String userAuthority) {
         this.userAuthority = userAuthority;
-    }      @Override
+    }
+    
+    // 마이페이지 컨트롤러 호환용 메서드 추가
+    public String getUserName() {
+        return username;
+    }
+    
+    public void setUserName(String username) {
+        this.username = username;
+    }
+    
+    public String getUserEmail() {
+        return email;
+    }
+    
+    public void setUserEmail(String email) {
+        this.email = email;
+    }
+    
+    public String getUserIntroduce() {
+        return introduce;
+    }
+    
+    public void setUserIntroduce(String introduce) {
+        this.introduce = introduce;
+    }
+    
+    public String getUserPw() {
+        return password;
+    }
+    
+    public void setUserPw(String password) {
+        this.password = password;
+    }
+    
+    public void setUserUid(long userId) {
+        this.userId = userId;
+    }
+    
+    @Override
     public String toString() {
         return "UserDTO{" +
                 "userId=" + userId +
