@@ -415,7 +415,7 @@
       <h2>불량 이용자 관리</h2>
       
       <div class="search-container">
-        <input type="text" id="user-search" placeholder="사용자 검색 (아이디, 이메일)">
+        <input type="text" id="user-search" placeholder="사용자 검색 (이메일, 닉네임)">
         <button type="button">검색</button>
       </div>
 
@@ -423,40 +423,18 @@
         <table class="admin-table">
           <thead>
             <tr>
-              <th>아이디</th>
               <th>이메일</th>
-              <th>가입일</th>
-              <th>신고 횟수</th>
+              <th>닉네임</th>
+              <th>차단당한 날짜</th>
+              <th>해제되는 날짜</th>
+              <th>차단 일수</th>
               <th>상태</th>
               <th>액션</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>baduser123</td>
-              <td>baduser123@example.com</td>
-              <td>2025-01-15</td>
-              <td>5</td>
-              <td><span class="status status-reported">신고됨</span></td>
-              <td>
-                <div class="action-buttons">
-                  <button class="btn btn-secondary">경고</button>
-                  <button class="btn btn-danger">차단</button>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td>spammer456</td>
-              <td>spammer456@example.com</td>
-              <td>2025-03-20</td>
-              <td>3</td>
-              <td><span class="status status-reported">신고됨</span></td>
-              <td>
-                <div class="action-buttons">
-                  <button class="btn btn-secondary">경고</button>
-                  <button class="btn btn-danger">차단</button>
-                </div>
-              </td>
+              <td colspan="7" class="text-center">불량 이용자 목록을 불러오는 중...</td>
             </tr>
           </tbody>
         </table>
