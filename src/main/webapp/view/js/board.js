@@ -1040,183 +1040,186 @@ document.addEventListener("DOMContentLoaded", function () {
             );
           }
 
-          console.log(`API 응답 데이터 구조:`, response);
-
-          // 조회 기록 저장 (게시글 내용을 성공적으로 가져온 경우에만)
-          if (
-            response &&
-            (response.news ||
-              response.post ||
-              response.freeboard ||
-              response.status !== "error")
-          ) {
-            sessionStorage.setItem(viewedPostKey, "true");
-            console.log(`게시글 조회 기록 저장: ${viewedPostKey}=true`);
-          }
-
           console.log("게시글 응답:", response);
 
           // 응답 데이터 구조 자세히 출력
-          if (
-            response &&
-            (response.news || response.post || response.freeboard)
-          ) {
-            const post =
-              response.news || response.post || response.freeboard || response;
-            console.log("게시글 구조:", Object.keys(post));
+          // 자유게시판 응답 구조 처리 개선
+          let post = null;
+          let comments = [];
+
+          if (apiType === "free" || boardType === "free-board") {
+            // 자유게시판은 response 자체가 게시글 데이터인 경우를 처리
+            if (response && response.freeboardUid) {
+              post = response;
+              comments = response.comments || [];
+              console.log("자유게시판 게시글 구조:", Object.keys(post));
+            } else if (response && response.freeboard) {
+              post = response.freeboard;
+              comments = response.comments || [];
+              console.log("자유게시판 게시글 구조(중첩):", Object.keys(post));
+            }
+          } else {
+            // 다른 게시판(뉴스 등)
+            if (response && (response.news || response.post)) {
+              post = response.news || response.post;
+              comments = response.comments || [];
+              console.log("일반 게시글 구조:", Object.keys(post));
+            } else {
+              // 마지막 수단으로 response 자체를 사용
+              post = response;
+              comments = response.comments || [];
+              console.log("게시글 구조(기본):", Object.keys(post));
+            }
+          }
+
+          // 게시글 정보가 존재하는지 확인
+          if (!post) {
+            console.error("게시글 정보를 찾을 수 없습니다:", response);
+            throw new Error("게시글 정보를 찾을 수 없습니다");
+          }
+
+          // 각 필드 로깅
+          console.log(
+            "조회수 필드:",
+            post.newsRead,
+            post.freeboardRead,
+            post.views
+          );
+          console.log(
+            "추천수 필드:",
+            post.newsRecommend,
+            post.freeboardRecommend,
+            post.likes
+          );
+          console.log(
+            "내용 필드:",
+            post.newsContents,
+            post.freeboardContents,
+            post.content
+          );
+
+          // 게시글 정보 표시
+          if (detailTitle) {
+            // 게시판 타입에 따라 제목 필드를 다르게 처리
+            if (apiType === "free" || boardType === "free-board") {
+              detailTitle.textContent = post.freeboardTitle || post.title || "";
+              detailTitle.dataset.postId = post.freeboardUid || post.id;
+            } else {
+              detailTitle.textContent = post.newsTitle || post.title || "";
+              detailTitle.dataset.postId = post.newsId || post.id;
+            }
+            detailTitle.dataset.boardType = boardType;
             console.log(
-              "조회수 필드:",
-              post.newsRead,
-              post.freeboardRead,
-              post.views
-            );
-            console.log(
-              "추천수 필드:",
-              post.newsRecommend,
-              post.freeboardRecommend,
-              post.likes
-            );
-            console.log(
-              "내용 필드:",
-              post.newsContents,
-              post.freeboardContents,
-              post.content
+              `게시글 상세정보 ID 설정: ${detailTitle.dataset.postId}, 게시판: ${boardType}, API타입: ${apiType}`
             );
           }
-          if (
-            response &&
-            (response.news || response.post || response.freeboard)
-          ) {
-            const post =
-              response.news || response.post || response.freeboard || response;
-            // 서버 응답에서 댓글 정보 추출
-            const comments = response.comments || []; // 게시글 정보 표시
-            if (detailTitle) {
-              // 게시판 타입에 따라 제목 필드를 다르게 처리
-              if (apiType === "free" || boardType === "free-board") {
-                detailTitle.textContent =
-                  post.freeboardTitle || post.title || "";
-                detailTitle.dataset.postId = post.freeboardUid || post.id;
-              } else {
-                detailTitle.textContent = post.newsTitle || post.title || "";
-                detailTitle.dataset.postId = post.newsId || post.id;
-              }
-              detailTitle.dataset.boardType = boardType;
-              console.log(
-                `게시글 상세정보 ID 설정: ${detailTitle.dataset.postId}, 게시판: ${boardType}, API타입: ${apiType}`
-              );
+
+          // 작성자 정보 표시
+          if (detailAuthor) {
+            detailAuthor.textContent = post.userName || post.author || "익명";
+          }
+
+          // 날짜 정보 표시
+          if (detailDate) {
+            const postDate = post.newsDate || post.date || post.createdAt;
+            const formattedDate = formatDate(postDate);
+            detailDate.textContent = formattedDate;
+          }
+
+          // 조회수 정보 표시
+          if (detailViews) {
+            const views =
+              post.newsRead !== undefined
+                ? post.newsRead
+                : post.freeboardRead !== undefined
+                ? post.freeboardRead
+                : post.views !== undefined
+                ? post.views
+                : 0;
+            detailViews.textContent = views;
+          }
+
+          // 추천수 정보 표시
+          if (detailLikes) {
+            const likes =
+              post.newsRecommend !== undefined
+                ? post.newsRecommend
+                : post.freeboardRecommend !== undefined
+                ? post.freeboardRecommend
+                : post.likes !== undefined
+                ? post.likes
+                : 0;
+            detailLikes.textContent = likes;
+
+            // 추천 버튼의 카운터도 함께 업데이트
+            const likeCountDisplay = document.getElementById(
+              "post-like-count-display"
+            );
+            if (likeCountDisplay) {
+              likeCountDisplay.textContent = likes;
+            }
+          } // 게시글 내용 표시
+          if (detailContent) {
+            let content = "";
+
+            // 게시판 타입에 따라 내용 필드를 다르게 처리
+            if (apiType === "free" || boardType === "free-board") {
+              content =
+                post.freeboardContents !== undefined
+                  ? post.freeboardContents
+                  : post.content || "";
+            } else if (apiType === "news" || boardType === "news-board") {
+              content =
+                post.newsContents !== undefined
+                  ? post.newsContents
+                  : post.content || "";
+            } else {
+              content = post.content || "";
             }
 
-            // 작성자 정보 표시
-            if (detailAuthor) {
-              detailAuthor.textContent = post.userName || post.author || "익명";
-            }
+            console.log(
+              `게시글 내용 타입: ${apiType}, 내용길이: ${content.length}`
+            );
+            detailContent.innerHTML = content;
+          }
 
-            // 날짜 정보 표시
-            if (detailDate) {
-              const postDate = post.newsDate || post.date || post.createdAt;
-              const formattedDate = formatDate(postDate);
-              detailDate.textContent = formattedDate;
-            }
+          // 댓글 수 표시
+          if (detailCommentCount) {
+            const commentCount = comments ? comments.length : 0;
+            detailCommentCount.textContent =
+              commentCount > 0 ? `${commentCount}개의 댓글` : "댓글 없음";
+          }
 
-            // 조회수 정보 표시
-            if (detailViews) {
-              const views =
-                post.newsRead !== undefined
-                  ? post.newsRead
-                  : post.freeboardRead !== undefined
-                  ? post.freeboardRead
-                  : post.views !== undefined
-                  ? post.views
-                  : 0;
-              detailViews.textContent = views;
-            }
+          // 댓글 표시
+          displayComments(comments);
 
-            // 추천수 정보 표시
-            if (detailLikes) {
-              const likes =
-                post.newsRecommend !== undefined
-                  ? post.newsRecommend
-                  : post.freeboardRecommend !== undefined
-                  ? post.freeboardRecommend
-                  : post.likes !== undefined
-                  ? post.likes
-                  : 0;
-              detailLikes.textContent = likes;
+          // 댓글이 없는 경우에도 댓글 목록을 서버에서 다시 한번 요청
+          if (!comments || comments.length === 0) {
+            // 추가 댓글 로드 (조회수 증가 없이)
+            const commentsResponse = await loadPostComments(boardType, postId);
+            if (
+              commentsResponse &&
+              commentsResponse.comments &&
+              commentsResponse.comments.length > 0
+            ) {
+              displayComments(commentsResponse.comments);
 
-              // 추천 버튼의 카운터도 함께 업데이트
-              const likeCountDisplay = document.getElementById(
-                "post-like-count-display"
-              );
-              if (likeCountDisplay) {
-                likeCountDisplay.textContent = likes;
-              }
-            } // 게시글 내용 표시
-            if (detailContent) {
-              let content = "";
-
-              // 게시판 타입에 따라 내용 필드를 다르게 처리
-              if (apiType === "free" || boardType === "free-board") {
-                content =
-                  post.freeboardContents !== undefined
-                    ? post.freeboardContents
-                    : post.content || "";
-              } else if (apiType === "news" || boardType === "news-board") {
-                content =
-                  post.newsContents !== undefined
-                    ? post.newsContents
-                    : post.content || "";
-              } else {
-                content = post.content || "";
-              }
-
-              console.log(
-                `게시글 내용 타입: ${apiType}, 내용길이: ${content.length}`
-              );
-              detailContent.innerHTML = content;
-            }
-
-            // 댓글 수 표시
-            if (detailCommentCount) {
-              const commentCount = comments ? comments.length : 0;
-              detailCommentCount.textContent =
-                commentCount > 0 ? `${commentCount}개의 댓글` : "댓글 없음";
-            }
-
-            // 댓글 표시
-            displayComments(comments);
-
-            // 댓글이 없는 경우에도 댓글 목록을 서버에서 다시 한번 요청
-            if (!comments || comments.length === 0) {
-              // 추가 댓글 로드 (조회수 증가 없이)
-              const commentsResponse = await loadPostComments(
-                boardType,
-                postId
-              );
-              if (
-                commentsResponse &&
-                commentsResponse.comments &&
-                commentsResponse.comments.length > 0
-              ) {
-                displayComments(commentsResponse.comments);
-
-                // 댓글 수 업데이트
-                if (detailCommentCount) {
-                  const commentCount = commentsResponse.comments.length;
-                  detailCommentCount.textContent =
-                    commentCount > 0 ? `${commentCount}개의 댓글` : "댓글 없음";
-                }
+              // 댓글 수 업데이트
+              if (detailCommentCount) {
+                const commentCount = commentsResponse.comments.length;
+                detailCommentCount.textContent =
+                  commentCount > 0 ? `${commentCount}개의 댓글` : "댓글 없음";
               }
             }
+          }
 
-            // 삭제 버튼 표시 여부 설정
-            const postDeleteButton =
-              document.getElementById("post-delete-button");
-            if (postDeleteButton) {
-              // 서버에서 받은 사용자 정보와 게시글 작성자 비교 로직을 여기에 추가
-              // 임시로 항상 보이게 설정 (실제로는 권한 체크 필요)
-              postDeleteButton.style.display = "block";
-            }
+          // 삭제 버튼 표시 여부 설정
+          const postDeleteButton =
+            document.getElementById("post-delete-button");
+          if (postDeleteButton) {
+            // 서버에서 받은 사용자 정보와 게시글 작성자 비교 로직을 여기에 추가
+            // 임시로 항상 보이게 설정 (실제로는 권한 체크 필요)
+            postDeleteButton.style.display = "block";
           }
         } finally {
           // 요청 완료 표시 (성공 또는 실패와 관계없이)
