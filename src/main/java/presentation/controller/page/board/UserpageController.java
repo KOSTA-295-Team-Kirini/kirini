@@ -1,8 +1,9 @@
 package presentation.controller.page.board;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 import business.service.board.BoardService;
@@ -95,11 +96,11 @@ public class UserpageController extends HttpServlet implements Controller {
                 getMyUserInfo(request, response);
                 break;
         }
-    }
-
-    @Override
+    }    @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // 로그인 확인
+        System.out.println("doPost 메소드 시작: " + request.getRequestURI());
+        
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("user") == null) {
             if (isAjaxRequest(request)) {
@@ -107,6 +108,21 @@ public class UserpageController extends HttpServlet implements Controller {
             } else {
                 response.sendRedirect(request.getContextPath() + "/login");
             }
+            return;
+        }
+        
+        // API 요청 처리 (ajax 기반 데이터 요청)
+        // URL 경로를 확인하여 API 요청 감지
+        String requestURI = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        
+        // 요청 URI에서 컨텍스트 경로를 제외한 실제 경로
+        String effectivePath = requestURI.substring(contextPath.length());
+        
+        // /mypage/api로 시작하는 경로인지 확인
+        if (effectivePath.startsWith("/mypage/api")) {
+            System.out.println("POST 요청: API 경로 감지 - " + effectivePath);
+            handleApiRequest(request, response);
             return;
         }
         
@@ -128,9 +144,7 @@ public class UserpageController extends HttpServlet implements Controller {
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST, "지원하지 않는 작업입니다.");
                 break;
         }
-    }
-
-    /**
+    }    /**
      * API 요청 처리 (AJAX 요청에 JSON으로 응답)
      */    private void handleApiRequest(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
@@ -139,7 +153,7 @@ public class UserpageController extends HttpServlet implements Controller {
         UserDTO user = (UserDTO) session.getAttribute("user");
         long userId = user.getUserId(); // getUserId() 메서드 사용
         
-        System.out.println("API 요청 처리: 엔드포인트=" + endpoint + ", 사용자 ID=" + userId);  // 디버깅 로그 추가
+        System.out.println("API 요청 처리: 메소드=" + request.getMethod() + ", 엔드포인트=" + endpoint + ", 사용자 ID=" + userId);  // 디버깅 로그 추가
         
         try {
             int page = getPageParameter(request);
@@ -889,23 +903,122 @@ public class UserpageController extends HttpServlet implements Controller {
         json.append("}");
         response.getWriter().write(json.toString());
     }
-    
-    /**
+      /**
      * 프로필 업데이트 요청 처리
      */
     private void handleProfileUpdate(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         try {
+            System.out.println("handleProfileUpdate 메소드 시작");
+            
+            // 요청 정보 상세 출력
+            System.out.println("요청 메소드: " + request.getMethod());
+            System.out.println("Content-Type: " + request.getContentType());
+            
+            // POST 파라미터 로깅
+            System.out.println("POST 요청 파라미터:");
+            Enumeration<String> paramNames = request.getParameterNames();
+            while (paramNames.hasMoreElements()) {
+                String paramName = paramNames.nextElement();
+                System.out.println("  " + paramName + " = " + request.getParameter(paramName));
+            }
+            
             HttpSession session = request.getSession();
             UserDTO user = (UserDTO) session.getAttribute("user");
             long userId = user.getUserId();
             
-            // 요청 파라미터 가져오기
-            String username = request.getParameter("username");
-            String email = request.getParameter("email");
-            String bio = request.getParameter("bio");
-            String password = request.getParameter("password");
-            String passwordConfirm = request.getParameter("passwordConfirm");
+            System.out.println("사용자 ID: " + userId);            // 요청 데이터 가져오기 (JSON 형식)
+            String username = null;
+            String email = null;
+            String bio = null;
+            String password = null;
+            String passwordConfirm = null;
+            
+            // Content-Type이 application/json인 경우 JSON으로 파싱
+            if (request.getContentType() != null && request.getContentType().startsWith("application/json")) {
+                System.out.println("JSON 요청 감지, 요청 본문 파싱 시도");
+                try {
+                    // 요청 본문 읽기
+                    BufferedReader reader = request.getReader();
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+                    String jsonBody = sb.toString();
+                    System.out.println("JSON 요청 본문: " + jsonBody);
+                    
+                    // 수동 JSON 파싱 (간단한 방식)
+                    // username 추출
+                    int usernameIdx = jsonBody.indexOf("\"username\":");
+                    if (usernameIdx > 0) {
+                        int startIdx = jsonBody.indexOf("\"", usernameIdx + 11) + 1;
+                        int endIdx = jsonBody.indexOf("\"", startIdx);
+                        if (startIdx > 0 && endIdx > 0) {
+                            username = jsonBody.substring(startIdx, endIdx);
+                        }
+                    }
+                    
+                    // email 추출
+                    int emailIdx = jsonBody.indexOf("\"email\":");
+                    if (emailIdx > 0) {
+                        int startIdx = jsonBody.indexOf("\"", emailIdx + 8) + 1;
+                        int endIdx = jsonBody.indexOf("\"", startIdx);
+                        if (startIdx > 0 && endIdx > 0) {
+                            email = jsonBody.substring(startIdx, endIdx);
+                        }
+                    }
+                    
+                    // bio 추출
+                    int bioIdx = jsonBody.indexOf("\"bio\":");
+                    if (bioIdx > 0) {
+                        int startIdx = jsonBody.indexOf("\"", bioIdx + 6) + 1;
+                        int endIdx = jsonBody.indexOf("\"", startIdx);
+                        if (startIdx > 0 && endIdx > 0) {
+                            bio = jsonBody.substring(startIdx, endIdx);
+                        }
+                    }
+                    
+                    // password 추출
+                    int passwordIdx = jsonBody.indexOf("\"password\":");
+                    if (passwordIdx > 0) {
+                        int startIdx = jsonBody.indexOf("\"", passwordIdx + 11) + 1;
+                        int endIdx = jsonBody.indexOf("\"", startIdx);
+                        if (startIdx > 0 && endIdx > 0) {
+                            password = jsonBody.substring(startIdx, endIdx);
+                        }
+                    }
+                    
+                    // passwordConfirm 추출
+                    int passwordConfirmIdx = jsonBody.indexOf("\"passwordConfirm\":");
+                    if (passwordConfirmIdx > 0) {
+                        int startIdx = jsonBody.indexOf("\"", passwordConfirmIdx + 18) + 1;
+                        int endIdx = jsonBody.indexOf("\"", startIdx);
+                        if (startIdx > 0 && endIdx > 0) {
+                            passwordConfirm = jsonBody.substring(startIdx, endIdx);
+                        }
+                    }
+                    
+                    System.out.println("JSON 파싱 결과:");
+                    System.out.println("  username: " + (username != null ? username : "null"));
+                    System.out.println("  email: " + (email != null ? email : "null"));
+                    System.out.println("  bio: " + (bio != null ? (bio.length() > 20 ? bio.substring(0, 20) + "..." : bio) : "null"));
+                    System.out.println("  password: " + (password != null ? "********" : "null"));
+                    System.out.println("  passwordConfirm: " + (passwordConfirm != null ? "********" : "null"));
+                } catch (Exception e) {
+                    System.err.println("JSON 파싱 오류: " + e.getMessage());
+                    e.printStackTrace();
+                    sendJsonResponse(response, false, "요청 형식이 잘못되었습니다: " + e.getMessage());
+                    return;
+                }
+            } else {
+                // 일반 POST 파라미터에서 가져오기
+                username = request.getParameter("username");
+                email = request.getParameter("email");
+                bio = request.getParameter("bio");
+                password = request.getParameter("password");
+                passwordConfirm = request.getParameter("passwordConfirm");
+            }
             
             // 기본 유효성 검사
             if (username == null || username.trim().isEmpty()) {
@@ -924,40 +1037,70 @@ public class UserpageController extends HttpServlet implements Controller {
             updatedUser.setUserName(username);
             updatedUser.setUserEmail(email);
             updatedUser.setUserIntroduce(bio);
-            
-            // 비밀번호 변경이 요청된 경우
+              // 비밀번호 변경이 요청된 경우 - 유효성 검사만 수행 (실제 업데이트는 아래에서 별도로 처리)
             if (password != null && !password.isEmpty()) {
                 if (!password.equals(passwordConfirm)) {
                     sendJsonResponse(response, false, "비밀번호와 비밀번호 확인이 일치하지 않습니다.");
-                    return;                }
+                    return;                
+                }
                 
                 if (password.length() < 8) {
                     sendJsonResponse(response, false, "비밀번호는 8자 이상이어야 합니다.");
                     return;
                 }
                 
-                // 비밀번호 암호화
-                String hashedPassword = SecurityUtil.hashPassword(password);
-                updatedUser.setUserPw(hashedPassword);
+                // 여기서는 비밀번호 해시 및 DTO 설정을 하지 않음 (별도로 updatePassword 메서드에서 처리)
+                System.out.println("비밀번호 변경 요청 확인 완료");
             }
-            
-            // 사용자 정보 업데이트
+              // 1. 사용자 기본 정보 업데이트
             boolean updateSuccess = false;
             try {
+                System.out.println("프로필 기본 정보 업데이트 시도: 이름=" + username + ", 이메일=" + email + ", 소개=" + bio);
                 // 실제 서비스 메서드 호출
                 updateSuccess = userService.updateUser(updatedUser);
+                System.out.println("프로필 기본 정보 업데이트 결과: " + (updateSuccess ? "성공" : "실패"));
             } catch (Exception e) {
                 System.err.println("사용자 업데이트 메서드 호출 중 오류: " + e.getMessage());
+                e.printStackTrace();
                 // 테스트를 위해 성공 처리
                 updateSuccess = true;
             }
+              // 2. 비밀번호 변경이 요청된 경우 별도로 처리
+            boolean passwordUpdateSuccess = true; // 비밀번호 변경이 없으면 기본적으로 성공
+            if (password != null && !password.isEmpty()) {
+                try {
+                    System.out.println("비밀번호 변경 시도: userId=" + userId);
+                    // 원본 비밀번호를 직접 전달 (userService.updatePassword 내부에서 해시 처리)
+                    passwordUpdateSuccess = userService.updatePassword(userId, password);
+                    System.out.println("비밀번호 변경 결과: " + (passwordUpdateSuccess ? "성공" : "실패"));
+                } catch (Exception e) {
+                    System.err.println("비밀번호 업데이트 메서드 호출 중 오류: " + e.getMessage());
+                    e.printStackTrace();
+                    passwordUpdateSuccess = false;
+                }
+            }
             
-            if (updateSuccess) {
-                // 세션에 저장된 사용자 정보도 업데이트
-                session.setAttribute("user", updatedUser);
+            // 3. 모든 업데이트 결과 확인
+            if (updateSuccess && passwordUpdateSuccess) {
+                try {
+                    // 최신 사용자 정보로 세션 업데이트
+                    UserDTO refreshedUser = userService.getUserById(userId);
+                    if (refreshedUser != null) {
+                        session.setAttribute("user", refreshedUser);
+                        System.out.println("세션 사용자 정보 업데이트 완료");
+                    } else {
+                        session.setAttribute("user", updatedUser);
+                        System.out.println("새로운 사용자 정보 조회 실패, 업데이트된 정보로만 세션 갱신");
+                    }
+                } catch (Exception e) {
+                    System.err.println("세션 업데이트용 사용자 정보 조회 중 오류: " + e.getMessage());
+                    session.setAttribute("user", updatedUser);
+                }
                 sendJsonResponse(response, true, "프로필 정보가 성공적으로 업데이트되었습니다.");
-            } else {
+            } else if (!updateSuccess) {
                 sendJsonResponse(response, false, "프로필 정보 업데이트에 실패했습니다.");
+            } else {
+                sendJsonResponse(response, false, "비밀번호 변경에 실패했습니다.");
             }
             
         } catch (Exception e) {

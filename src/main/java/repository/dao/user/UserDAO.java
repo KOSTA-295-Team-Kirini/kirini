@@ -262,46 +262,54 @@ public class UserDAO {
             }
         }
     }
-    
-    // 사용자 정보 업데이트
+      // 사용자 정보 업데이트
     public boolean updateUser(UserDTO user) throws SQLException {
         try {
             conn = DBConnectionUtil.getConnection();
-            String sql = "UPDATE user SET email = ?, nickname = ?, user_level = ?, is_active = ? WHERE user_id = ?";
+            String sql = "UPDATE user SET user_email = ?, user_name = ?, user_introduce = ? WHERE user_uid = ?";
             pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, user.getEmail());
-            pstmt.setString(2, user.getNickname());
-            pstmt.setInt(3, user.getUserLevel());
-            pstmt.setBoolean(4, user.isActive());
-            pstmt.setLong(5, user.getUserId());
+            pstmt.setString(2, user.getUserName());
+            pstmt.setString(3, user.getIntroduce());
+            pstmt.setLong(4, user.getUserId());
+            
+            System.out.println("SQL 실행: " + sql);
+            System.out.println("파라미터: user_email=" + user.getEmail() + 
+                             ", user_name=" + user.getUserName() + 
+                             ", user_introduce=" + user.getIntroduce() + 
+                             ", user_uid=" + user.getUserId());
             
             return pstmt.executeUpdate() > 0;
         } finally {
             DBConnectionUtil.close(rs, pstmt, conn);
         }
     }
-    
-    // 비밀번호 변경
+      // 비밀번호 변경
     public boolean updatePassword(long userId, String newPassword) throws SQLException {
         try {
             conn = DBConnectionUtil.getConnection();
-            String sql = "UPDATE user SET user_password = ? WHERE user_id = ?";
+            String sql = "UPDATE user SET user_password = ? WHERE user_uid = ?";
             pstmt = conn.prepareStatement(sql);
             pstmt.setString(1, newPassword); // 실제로는 암호화 처리 필요
             pstmt.setLong(2, userId);
             
+            System.out.println("비밀번호 업데이트 SQL 실행: " + sql);
+            System.out.println("파라미터: user_password=[암호화된 값], user_uid=" + userId);
+            
             return pstmt.executeUpdate() > 0;
         } finally {
             DBConnectionUtil.close(rs, pstmt, conn);
         }
-    }
-      // 회원 탈퇴 (실제로는 is_active만 false로 변경)
+    }    // 회원 탈퇴 (user_status를 'banned'으로 변경)
     public boolean deactivateUser(long userId) throws SQLException {
         try {
             conn = DBConnectionUtil.getConnection();
-            String sql = "UPDATE user SET is_active = false WHERE user_uid = ?";
+            String sql = "UPDATE user SET user_status = 'banned' WHERE user_uid = ?";
             pstmt = conn.prepareStatement(sql);
             pstmt.setLong(1, userId);
+            
+            System.out.println("회원 탈퇴 처리 SQL 실행: " + sql);
+            System.out.println("파라미터: user_uid=" + userId);
             
             return pstmt.executeUpdate() > 0;
         } finally {
