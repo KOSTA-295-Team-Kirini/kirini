@@ -34,31 +34,20 @@ document.addEventListener('DOMContentLoaded', function() {
       const formData = new FormData();
       formData.append('content', answerContent);
       formData.append('questionId', questionId || '0'); // 질문 ID가 없으면 기본값 0 사용
-        // 서버로 데이터 전송 - QnaService 사용
-      QnaService.createAnswer(formData)
-      .then(response => {
-        // QnaService는 이미 응답 처리를 수행했으므로 바로 데이터에 접근 가능
-      })
-      .then(data => {
-        // 성공 처리
+      
+      try {
         showNotification('답변이 성공적으로 등록되었습니다!', 'success');
-        
-        // 답변 목록에 새 답변 추가 (임시 구현)
         addNewAnswerToList(answerContent, questionId);
-        
-        // 입력 필드 초기화
         textarea.value = '';
-      })
-      .catch(error => {
-        console.error('Error:', error);
+      } catch (error) {
+        console.error('Mock Error:', error);
         showNotification('답변 등록 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
-      })
-      .finally(() => {
+      } finally {
         // 버튼 상태 복원
         e.target.disabled = false;
         e.target.textContent = '답변 등록';
         e.target.classList.remove('loading');
-      });
+      }
     }
   });
   
@@ -154,37 +143,64 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('file', fileInput.files[0]);
       }
         // 서버로 데이터 전송 - QnaService 사용
-      QnaService.createQuestion(formData)
-      .then(response => {
-        // QnaService는 이미 응답 처리를 수행했으므로 바로 데이터에 접근 가능
-      })
-      .then(data => {
-        // 성공 처리
+      // QnaService.createQuestion(formData)
+      // .then(response => {
+      //   // QnaService는 이미 응답 처리를 수행했으므로 바로 데이터에 접근 가능
+      // })
+      // .then(data => {
+      //   // 성공 처리
+      //   showNotification('질문이 성공적으로 등록되었습니다!', 'success');
+      //   
+      //   // 입력 필드 초기화
+      //   document.getElementById('post-title').value = '';
+      //   document.getElementById('post-content').value = '';
+      //   document.getElementById('post-file').value = '';
+      //   
+      //   // 모달 닫기
+      //   writeModal.style.display = 'none';
+      //   
+      //   // 0.5초 후에 페이지 새로고침 (사용자에게 성공 메시지를 보여주기 위한 지연)
+      //   setTimeout(() => {
+      //     location.reload();
+      //   }, 500);
+      // })
+      // .catch(error => {
+      //   console.error('Error:', error);
+      //   showNotification('질문 등록 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+      // })
+      // .finally(() => {
+      //   // 버튼 상태 복원
+      //   submitBtn.disabled = false;
+      //   submitBtn.textContent = '질문 등록하기';
+      //   submitBtn.classList.remove('loading');
+      // });
+
+      // 목업 로직: 서버 호출 없이 진행
+      try {
         showNotification('질문이 성공적으로 등록되었습니다!', 'success');
         
-        // 입력 필드 초기화
         document.getElementById('post-title').value = '';
         document.getElementById('post-content').value = '';
         document.getElementById('post-file').value = '';
         
-        // 모달 닫기
         writeModal.style.display = 'none';
         
-        // 0.5초 후에 페이지 새로고침 (사용자에게 성공 메시지를 보여주기 위한 지연)
+        // 목업 환경에서는 페이지 새로고침 시 동적으로 추가된 내용이 사라집니다.
+        // 실제 서비스에서는 서버에서 데이터를 가져와 목록을 갱신합니다.
         setTimeout(() => {
-          location.reload();
+          // location.reload(); // 목업에서는 이 부분을 주석 처리거나, 
+                               // 새로운 질문을 목록에 동적으로 추가하는 로직으로 변경할 수 있습니다.
+                               // 현재는 사용자의 요청에 따라 최소한으로 변경합니다.
+          console.log('질문 등록 완료 (목업). 페이지 새로고침은 주석 처리됨.');
         }, 500);
-      })
-      .catch(error => {
-        console.error('Error:', error);
+      } catch (error) {
+        console.error('Mock Error:', error);
         showNotification('질문 등록 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
-      })
-      .finally(() => {
-        // 버튼 상태 복원
+      } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = '질문 등록하기';
         submitBtn.classList.remove('loading');
-      });
+      }
     });
   }
   
@@ -455,12 +471,77 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
   
+  // 목업 QnA 데이터
+  const mockQnaData = [
+    {
+      id: '1',
+      title: '기계식 키보드 입문, 어떤 축이 좋을까요?',
+      author: '키린이123',
+      createdAt: '2025-05-20',
+      views: 152,
+      content: '안녕하세요! 최근 기계식 키보드에 관심이 생겨 입문해보려고 합니다. 주로 게임(롤, 배그)과 문서 작업을 하는데, 어떤 축(스위치)을 선택해야 할지 고민입니다. 소음이 너무 크지 않으면서 타건감이 좋은 축을 추천해주세요! 예산은 10~15만원 사이입니다.',
+      answerCount: 2,
+      answers: [
+        { id: 'ans1-1', author: '기키고수', createdAt: '2025-05-20', content: '문서 작업과 게임을 겸하신다면 갈축이나 저소음 적축을 추천드립니다. 갈축은 구분감이 있어 타건의 재미가 있고, 저소음 적축은 조용하면서도 부드러운 타건감을 제공합니다. 해당 예산으로 레오폴드, 바밀로, 덱 같은 브랜드 제품을 알아보시면 좋을 것 같아요.' },
+        { id: 'ans1-2', author: '겜돌이77', createdAt: '2025-05-21', content: '배그 하시면 반응속도 빠른 은축도 고려해보세요! 다만, 은축은 입력 지점이 짧아서 오타가 좀 날 수 있습니다. 타건샵에서 직접 쳐보시는 걸 추천해요.' }
+      ]
+    },
+    {
+      id: '2',
+      title: '커스텀 키보드 윤활, 꼭 해야 하나요?',
+      author: '궁금해요',
+      createdAt: '2025-05-18',
+      views: 88,
+      content: '커스텀 키보드를 맞추려고 하는데, 스위치 윤활이 필수인지 궁금합니다. 윤활을 하면 어떤 점이 좋아지고, 안 하면 어떤 단점이 있나요? 초보자도 쉽게 할 수 있는 윤활 방법이 있다면 알려주세요.',
+      answerCount: 1,
+      answers: [
+        { id: 'ans2-1', author: '윤활장인', createdAt: '2025-05-19', content: '필수는 아니지만, 윤활을 하면 스위치의 서걱임이나 스프링 소음을 줄여주고, 타건감을 더 부드럽고 정갈하게 만들어줍니다. 초보자분들은 붓윤활보다는 스프레이 윤활이 간편할 수 있지만, 효과는 붓윤활이 더 좋습니다. 유튜브에 관련 영상 많으니 참고해보세요!' }
+      ]
+    },
+    {
+      id: '3',
+      title: '무접점 키보드, 기계식과 차이점이 뭔가요?',
+      author: '알고싶다',
+      createdAt: '2025-05-15',
+      views: 230,
+      content: '무접점 키보드가 좋다는 얘기를 많이 들었는데, 정확히 기계식 키보드와 어떤 차이가 있는지 궁금합니다. 타건감, 소음, 내구성 등 여러 측면에서 비교 설명해주시면 감사하겠습니다!',
+      answerCount: 3,
+      answers: [
+        { id: 'ans3-1', author: '토프레매니아', createdAt: '2025-05-16', content: '가장 큰 차이는 입력 방식입니다. 기계식은 물리적인 접점으로 입력되지만, 무접점은 정전용량 변화를 감지하여 입력됩니다. 그래서 무접점이 내구성이 더 좋고, 특유의 보글보글하거나 초콜릿 부러뜨리는 듯한 타건감을 가지고 있죠. 대표적으로 리얼포스, 한성무접점 등이 있습니다.' },
+        { id: 'ans3-2', author: '앱코사랑', createdAt: '2025-05-16', content: '요즘은 앱코나 COX에서도 가성비 좋은 무접점 키보드가 많이 나와요. 타건감은 개인 취향이 많이 타니, 직접 타건해보시는 게 제일 좋습니다.' },
+        { id: 'ans3-3', author: '키보드연구원', createdAt: '2025-05-17', content: '소음 면에서는 무접점이 기계식보다 전반적으로 조용한 편입니다. 물론 기계식도 저소음 축을 사용하면 조용하지만, 무접점 특유의 정숙함이 있죠.' }
+      ]
+    },
+    {
+      id: '4',
+      title: '키캡놀이 하고 싶은데, 키캡 호환성 어떻게 확인하나요?',
+      author: '뉴비개발자',
+      createdAt: '2025-05-12',
+      views: 75,
+      content: '제 키보드에 예쁜 키캡을 끼워주고 싶은데, 아무 키캡이나 다 호환되는 건 아니라고 들었습니다. 어떤 기준으로 호환성을 확인해야 하는지, 주로 사용되는 키캡 프로파일(체리, OEM 등)은 어떤 것들이 있는지 알려주세요.',
+      answerCount: 1,
+      answers: [
+        { id: 'ans4-1', author: '키캡컬렉터', createdAt: '2025-05-13', content: '가장 중요한 건 스위치 종류(MX 호환인지)와 키보드 배열(표준 배열인지, 특수 배열인지)입니다. 스테빌라이저 형태(체리식, 마제식)도 확인해야 하고요. 키캡 프로파일은 높이나 모양에 따라 타건감에 영향을 주니, 선호하는 프로파일을 찾아보시는 것도 좋습니다. 보통 상품 상세페이지에 호환 정보가 나와있으니 잘 확인해보세요.' }
+      ]
+    },
+    {
+      id: '5',
+      title: '노트북에 연결할 휴대용 기계식 키보드 추천해주세요!',
+      author: '맥북유저',
+      createdAt: '2025-05-10',
+      views: 110,
+      content: '카페나 외부에서 노트북으로 작업할 때 사용할 휴대성 좋은 기계식 키보드를 찾고 있습니다. 블루투스 연결이 가능하고, 텐키리스나 미니 배열이면 좋겠습니다. 추천 부탁드려요!',
+      answerCount: 0,
+      answers: []
+    }
+  ];
+
   // 페이지 로드 시 QnA 목록 불러오기
   loadQnaList();
 
   /**
    * QnA 목록 불러오기
-   * @param {Object} params - 페이징 및 필터링 파라미터
+   * @param {Object} params - 페이징 및 필터링 파라미터 (목업에서는 사용 안 함)
    */
   async function loadQnaList(params = {}) {
     try {
@@ -470,9 +551,13 @@ document.addEventListener('DOMContentLoaded', function() {
         qnaListContainer.innerHTML = '<div class="loading">질문 목록을 불러오는 중...</div>';
       }
 
-      // API 호출하여 QnA 목록 가져오기
-      const response = await BoardService.getPosts('qna', params);
+      // API 호출하여 QnA 목록 가져오기 -> 목업 데이터 사용으로 변경
+      // const response = await BoardService.getPosts('qna', params);
+      const response = { data: mockQnaData }; // 목업 데이터 사용
       
+      // 데이터를 불러오는 데 시간이 걸리는 것처럼 보이게 하기 위한 임시 지연 (0.5초)
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       if (response && response.data && response.data.length > 0) {
         // 컨테이너 초기화
         qnaListContainer.innerHTML = '';
@@ -564,9 +649,21 @@ document.addEventListener('DOMContentLoaded', function() {
    */
   async function incrementViewCount(qnaId) {
     try {
-      await BoardService.post(`/qna/view.do`, { id: qnaId });
+      // await BoardService.post(`/qna/view.do`, { id: qnaId });
+      console.log(`Mock: Increment view count for QnA ID: ${qnaId}`);
+      // 목업 환경에서는 실제 조회수를 업데이트하지 않거나, 로컬 mockQnaData를 직접 수정할 수 있습니다.
+      // 예를 들어, mockQnaData에서 해당 id의 views를 1 증가시키는 로직 추가 가능
+      const qnaItem = mockQnaData.find(q => q.id === qnaId);
+      if (qnaItem) {
+        qnaItem.views = (qnaItem.views || 0) + 1;
+        // 화면에 표시된 조회수도 업데이트 (선택 사항)
+        const viewCountElement = document.querySelector(`#qna-${qnaId} .qna-meta span:nth-child(3)`);
+        if (viewCountElement) {
+          viewCountElement.textContent = `조회수: ${qnaItem.views}`;
+        }
+      }
     } catch (error) {
-      console.error('조회수 증가 오류:', error);
+      console.error('조회수 증가 오류 (목업):', error);
       // 조회수 증가 실패해도 사용자 경험에 큰 영향이 없으므로 오류 표시하지 않음
     }
   }
@@ -586,9 +683,14 @@ document.addEventListener('DOMContentLoaded', function() {
       // 로딩 표시
       answersContainer.innerHTML = '<div class="loading">답변을 불러오는 중...</div>';
       
-      // API 호출하여 답변 목록 가져오기
-      const response = await BoardService.get(`/answer/list.do`, { questionId: qnaId });
-      
+      // API 호출하여 답변 목록 가져오기 -> 목업 데이터 사용으로 변경
+      // const response = await BoardService.get(`/answer/list.do`, { questionId: qnaId });
+      const qnaItem = mockQnaData.find(q => q.id === qnaId);
+      const response = { data: qnaItem ? qnaItem.answers : [] }; // 해당 질문의 목업 답변 사용
+
+      // 데이터를 불러오는 데 시간이 걸리는 것처럼 보이게 하기 위한 임시 지연 (0.3초)
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       if (response && response.data && response.data.length > 0) {
         // 컨테이너 초기화
         answersContainer.innerHTML = '';
