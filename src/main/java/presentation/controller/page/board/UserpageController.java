@@ -847,8 +847,7 @@ public class UserpageController extends HttpServlet implements Controller {
         
         try {
             if (data instanceof UserDTO) {
-                UserDTO user = (UserDTO) data;
-                // null 체크를 포함한 안전한 변환
+                UserDTO user = (UserDTO) data;                // null 체크를 포함한 안전한 변환
                 json.append("\"userId\":").append(user.getUserId()).append(",");
                 json.append("\"userName\":\"").append(escapeJsonString(user.getUserName())).append("\",");
                 
@@ -859,9 +858,11 @@ public class UserpageController extends HttpServlet implements Controller {
                 // email이 null인 경우 빈 문자열로 처리
                 String email = user.getEmail();
                 json.append("\"email\":\"").append(escapeJsonString(email != null ? email : "")).append("\",");
+                // userEmail 필드 추가 (프론트엔드 호환성을 위해)
+                json.append("\"userEmail\":\"").append(escapeJsonString(email != null ? email : "")).append("\",");
                 
                 // userIntroduce가 null인 경우 빈 문자열로 처리
-                String introduce = null;
+                String introduce = null;                
                 try {
                     introduce = user.getUserIntroduce();
                 } catch (Exception e) {
