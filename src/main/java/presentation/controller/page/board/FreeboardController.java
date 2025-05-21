@@ -511,23 +511,39 @@ public class FreeboardController extends HttpServlet implements Controller {
                     res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     Map<String, Object> errorResult = new HashMap<>();
                     errorResult.put("success", false);
-                    errorResult.put("message", "필수 파라미터(freeboardUid, type)가 누락되었습니다.");
+                    errorResult.put("message", "필수 파라미터 (freeboardUid, type)가 누락되었습니다.");
                     return errorResult;
                 }
 
                 long freeboardUid = jsonRequest.get("freeboardUid").getAsLong();
-                String type = jsonRequest.get("type").getAsString();
+                String type = jsonRequest.get("type").getAsString(); // 예: "like", "unlike"
 
-                boolean success = true;
-                String message = "추천 처리되었습니다.";
-                int likeCount = 0;
-
+                // 서비스 호출하여 추천 처리
+                boolean recommendationSuccess = freeboardService.handleRecommendation(freeboardUid, user.getUserUid(), type);
+                
                 Map<String, Object> responseMap = new HashMap<>();
-                responseMap.put("success", success);
-                responseMap.put("message", message);
-                if (success) {
+                String message;
+
+                if (recommendationSuccess) {
+                    message = "추천이 " + (type.equalsIgnoreCase("like") ? "반영" : "취소") + "되었습니다.";
+                    responseMap.put("success", true);
                 } else {
+                    // 실패 원인은 서비스 로직에 따라 다를 수 있음 (예: 이미 추천/취소됨, DB 오류 등)
+                    // 여기서는 일반적인 실패 메시지를 사용합니다.
+                    message = "추천 처리에 실패했습니다. 이미 처리되었거나 내부 오류일 수 있습니다.";
+                    responseMap.put("success", false);
+                    // 필요시 특정 HTTP 상태 코드 설정 (예: res.setStatus(HttpServletResponse.SC_CONFLICT);)
                 }
+                
+                // 업데이트된 추천 수 가져오기
+                int currentLikeCount = freeboardService.getPostLikeCount(freeboardUid);
+                
+                responseMap.put("message", message);
+                responseMap.put("likeCount", currentLikeCount);
+                // 필요하다면 사용자의 현재 추천 상태 (예: "liked", "unliked")도 추가할 수 있습니다.
+                // String userAction = freeboardService.getUserRecommendationForPost(user.getUserUid(), freeboardUid);
+                // responseMap.put("userAction", userAction);
+
                 return responseMap;
 
             } catch (com.google.gson.JsonSyntaxException e) {

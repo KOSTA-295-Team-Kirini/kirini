@@ -1,5 +1,8 @@
 package business.service.freeboard;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -7,6 +10,7 @@ import dto.board.AttachmentDTO;
 import dto.board.FreeboardCommentDTO;
 import dto.board.FreeboardDTO;
 import repository.dao.board.FreeboardDAO;
+import util.db.DBConnectionUtil;
 
 public class FreeboardService {
     private final FreeboardDAO freeboardDAO;
@@ -384,7 +388,8 @@ public class FreeboardService {
             return false;
         }
     }
-      /**
+    
+    /**
      * 댓글 상세 조회
      */
     public FreeboardCommentDTO getCommentById(long commentId) {
@@ -405,6 +410,162 @@ public class FreeboardService {
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
+        }
+    }    /**
+     * 게시글 추천 처리 (좋아요/좋아요 취소 토글)
+     * @param postId 게시글 ID
+     * @param userId 사용자 ID
+     * @param type 추천 유형 (현재는 "like"만 사용됨)
+     * @return 처리 성공 여부
+     */
+    public boolean handleRecommendation(long postId, long userId, String type) {
+        try {
+            if (!"like".equalsIgnoreCase(type)) {
+                // 현재는 "like" 타입만 지원, 필요시 다른 타입 처리 로직 추가
+                return false; 
+            }
+            
+            // 기존 freeboard 테이블의 freeboard_recommend 컬럼에 직접 +1/-1 하는 방식으로 구현
+            // 사용자별 추천 상태는 log_recommend 테이블을 통해 관리
+            
+            // 이미 추천했는지 확인
+            boolean hasRecommended = false;
+            try {
+                // log_recommend 테이블에서 조회
+                String sql = "SELECT COUNT(*) FROM log_recommend " +
+                             "WHERE log_recommend_boardtype = 'freeboard' " +
+                             "AND log_recommend_post_id = ? AND user_uid = ?";
+                
+                Connection conn = DBConnectionUtil.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+                pstmt.setLong(1, postId);
+                pstmt.setLong(2, userId);
+                ResultSet rs = pstmt.executeQuery();
+                
+                if (rs.next()) {
+                    hasRecommended = rs.getInt(1) > 0;
+                }
+                
+                rs.close();
+                pstmt.close();
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+            }
+            
+            if (hasRecommended) {
+                // 이미 추천한 상태면 추천 취소
+                try {
+                    Connection conn = DBConnectionUtil.getConnection();
+                    conn.setAutoCommit(false);
+                    
+                    // 1. 추천 로그 삭제
+                    String deleteSql = "DELETE FROM log_recommend " +
+                                     "WHERE log_recommend_boardtype = 'freeboard' " +
+                                     "AND log_recommend_post_id = ? AND user_uid = ?";
+                    
+                    PreparedStatement pstmt = conn.prepareStatement(deleteSql);
+                    pstmt.setLong(1, postId);
+                    pstmt.setLong(2, userId);
+                    int deleteResult = pstmt.executeUpdate();
+                    
+                    // 2. freeboard 테이블의 추천 수 감소
+                    String updateSql = "UPDATE freeboard SET freeboard_recommend = " +
+                                     "GREATEST(0, freeboard_recommend - 1) " +
+                                     "WHERE freeboard_uid = ?";
+                    
+                    pstmt = conn.prepareStatement(updateSql);
+                    pstmt.setLong(1, postId);
+                    int updateResult = pstmt.executeUpdate();
+                    
+                    if (deleteResult > 0 && updateResult > 0) {
+                        conn.commit();
+                        pstmt.close();
+                        conn.close();
+                        return true;
+                    } else {
+                        conn.rollback();
+                        pstmt.close();
+                        conn.close();
+                        return false;
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            } else {
+                // 아직 추천하지 않은 상태면 추천 추가
+                try {
+                    Connection conn = DBConnectionUtil.getConnection();
+                    conn.setAutoCommit(false);
+                    
+                    // 1. 추천 로그 추가
+                    String insertSql = "INSERT INTO log_recommend " +
+                                     "(log_recommend_boardtype, log_recommend_post_id, log_recommend_date, user_uid) " +
+                                     "VALUES ('freeboard', ?, NOW(), ?)";
+                    
+                    PreparedStatement pstmt = conn.prepareStatement(insertSql);
+                    pstmt.setLong(1, postId);
+                    pstmt.setLong(2, userId);
+                    int insertResult = pstmt.executeUpdate();
+                    
+                    // 2. freeboard 테이블의 추천 수 증가
+                    String updateSql = "UPDATE freeboard SET freeboard_recommend = freeboard_recommend + 1 " +
+                                     "WHERE freeboard_uid = ?";
+                    
+                    pstmt = conn.prepareStatement(updateSql);
+                    pstmt.setLong(1, postId);
+                    int updateResult = pstmt.executeUpdate();
+                    
+                    if (insertResult > 0 && updateResult > 0) {
+                        conn.commit();
+                        pstmt.close();
+                        conn.close();
+                        return true;
+                    } else {
+                        conn.rollback();
+                        pstmt.close();
+                        conn.close();
+                        return false;
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }    /**
+     * 게시글의 추천 수 조회
+     * @param postId 게시글 ID
+     * @return 추천 수
+     */
+    public int getPostLikeCount(long postId) {
+        try {
+            // freeboard 테이블에서 직접 추천 수를 가져옴
+            String sql = "SELECT freeboard_recommend FROM freeboard WHERE freeboard_uid = ?";
+            
+            Connection conn = DBConnectionUtil.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setLong(1, postId);
+            ResultSet rs = pstmt.executeQuery();
+            
+            int likeCount = 0;
+            if (rs.next()) {
+                likeCount = rs.getInt("freeboard_recommend");
+            }
+            
+            rs.close();
+            pstmt.close();
+            conn.close();
+            
+            return likeCount;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
         }
     }
 }
