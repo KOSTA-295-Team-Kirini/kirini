@@ -353,177 +353,187 @@ async function submitPost(boardType, title, content, file) {
     alert("내용을 입력해주세요.");
     return false;
   }
-
   try {
     // BoardService를 이용하여 서버에 게시글 제출
     const boardTypeMapping = {
       news: "news",
       free: "freeboard",
-      anonymous: "anonymous",
+      anonymous: "chatboard", // anonymous -> chatboard로 변경 (실제 컨트롤러 URL과 일치)
     };
 
-    // API 경로 생성
-    const mappedType = boardTypeMapping[boardType] || boardType; // FormData 객체를 생성하여 데이터 추가
-    const formData = new FormData();
+    // API 경로 생성 및 엔드포인트 설정
+    const mappedType = boardTypeMapping[boardType] || boardType;
+    let response = null;
 
-    // 게시판 타입에 따라 파라미터 이름 설정
     if (boardType === "news") {
-      // FormData 대신 일반 객체를 사용해 JSON으로 전송
       const newsData = {
         newsTitle: title,
         newsContents: content,
-        userId: 1,
+        userId: 1, // 실제 사용자 ID로 교체 필요
       };
-
       console.log("뉴스 게시글 데이터:", newsData);
 
-      // API 호출 (BoardService 사용 또는 ApiClient 직접 사용)
-      let response;
-      if (window.BoardService) {
-        response = await window.BoardService.createPost(mappedType, newsData);
-      } else {
+      try {
+        if (window.BoardService) {
+          response = await window.BoardService.createPost(mappedType, newsData);
+        } else {
+          response = await window.ApiClient.postJson(
+            `/${mappedType}/create`,
+            newsData,
+            true
+          );
+        }
+        if (
+          response &&
+          (response.status === "success" || response.success === true)
+        ) {
+          alert("게시글이 성공적으로 등록되었습니다.");
+          if (window.loadBoardPosts) {
+            // loadBoardPosts 함수를 직접 호출하여 뉴스 게시판 데이터 새로고침
+            await window.loadBoardPosts("news", { sort: "latest" });
+          } else if (window.loadBoardData) {
+            // 이전 방식의 함수도 호환성을 위해 유지
+            await loadBoardData(boardType, 1, 10);
+          }
+
+          // 뉴스 게시판 탭을 활성화하고 보여줌
+          if (window.showBoardList) {
+            window.showBoardList("news-board");
+          }
+          return true;
+        }
+
+        // 실패 처리
+        const errorMsg = response?.message || "게시글 등록에 실패했습니다.";
+        alert(errorMsg);
+        console.error("뉴스 게시글 등록 실패:", response);
+        return false;
+      } catch (newsError) {
+        console.error("뉴스 게시글 등록 중 오류 발생:", newsError);
+        alert("뉴스 게시글 등록 중 오류가 발생했습니다.");
+        return false;
+      }
+    } else if (boardType === "anonymous") {
+      try {
+        // ChatboardController는 JSON 형식의 데이터를 기대합니다.
+        const postData = {
+          content: title + "\n\n" + content, // 서버의 ChatboardDTO 필드명에 맞춰야 합니다. 'content'로 가정합니다.
+          // 만약 사용자 ID 등 다른 정보가 필요하다면 여기에 추가해야 합니다.
+          // 예: userId: currentUser.id (실제 사용자 정보 가져오는 로직 필요)
+        };
+
+        console.log("익명 게시글 등록 요청 데이터:", postData);
+        console.log("익명 게시글 등록 요청 경로: /chatboard/post");
+
+        // ApiClient.postJson을 사용하여 /chatboard/post 엔드포인트로 JSON 데이터 전송
+        // withAuth 파라미터는 해당 API가 인증을 필요로 하는지에 따라 true 또는 false로 설정합니다.
         response = await window.ApiClient.postJson(
-          `/${mappedType}/create`,
-          newsData,
+          "/chatboard/post",
+          postData,
           true
         );
+        if (
+          response &&
+          (response.id ||
+            response.chatboardId ||
+            response.success === true ||
+            response.status === "success")
+        ) {
+          alert("익명 게시글이 성공적으로 등록되었습니다.");
+          if (window.loadBoardPosts) {
+            // loadBoardPosts 함수를 직접 호출하여 익명 게시판 데이터 새로고침
+            await window.loadBoardPosts("chatboard", { sort: "latest" });
+          } else if (window.loadBoardData) {
+            // 이전 방식의 함수도 호환성을 위해 유지
+            await loadBoardData(boardType, 1, 10); // 'anonymous'
+          }
+
+          // 익명 게시판 탭을 활성화하고 보여줌
+          if (window.showBoardList) {
+            window.showBoardList("anonymous-board");
+          }
+          // 글쓰기 성공 후 모달 닫기 및 폼 초기화는 이 함수를 호출한 곳에서 처리합니다.
+          return true;
+        } else {
+          const errorMsg =
+            response?.message ||
+            "익명 게시글 등록에 실패했습니다. 서버 응답을 확인해주세요.";
+          alert(errorMsg);
+          console.error("익명 게시글 등록 실패:", response);
+          return false;
+        }
+      } catch (anonError) {
+        console.error("익명 게시글 등록 중 오류 발생:", anonError);
+        alert("익명 게시글 등록 중 오류가 발생했습니다.");
+        return false;
       }
+    } else {
+      try {
+        // 자유게시판
+        const formData = new FormData();
+        formData.append("title", title); // 백엔드 FreeboardController에서 기대하는 필드명에 맞춤
+        formData.append("content", content); // 백엔드 FreeboardController에서 기대하는 필드명에 맞춤
+        // userId는 서버에서 세션에서 가져오므로 클라이언트에서 전송할 필요 없음
 
-      if (
-        response &&
-        (response.status === "success" || response.success === true)
-      ) {
-        alert("게시글이 성공적으로 등록되었습니다.");
-
-        // 게시판 데이터 다시 로드
-        if (window.loadBoardData) {
-          loadBoardData(boardType);
+        if (file) {
+          formData.append("file", file);
         }
 
-        return true;
-      } else {
+        // 개발 디버깅 로그 추가
+        console.log("자유게시판 게시글 작성 요청");
+        console.log("boardType:", boardType);
+        console.log("title:", title);
+        console.log("content 길이:", content.length);
+        console.log("file:", file);
+
+        if (window.BoardService) {
+          console.log("BoardService를 통해 요청 시작");
+          response = await window.BoardService.createPost(
+            "free", // boardType만 전달 (free)
+            formData
+          );
+          console.log("BoardService 응답:", response);
+        } else {
+          console.log("ApiClient를 통해 요청 시작");
+          response = await window.ApiClient.postFormData(
+            `/freeboard?action=write`, // FreeboardController의 doPost에서 action=write 파라미터를 확인
+            formData,
+            true
+          );
+          console.log("ApiClient 응답:", response);
+        }
+        if (
+          response &&
+          (response.status === "success" || response.success === true)
+        ) {
+          alert("게시글이 성공적으로 등록되었습니다.");
+          if (window.loadBoardPosts) {
+            // loadBoardPosts 함수를 직접 호출하여 자유 게시판 데이터 새로고침
+            await window.loadBoardPosts("free", { sort: "latest" });
+          } else if (window.loadBoardData) {
+            // 이전 방식의 함수도 호환성을 위해 유지
+            await loadBoardData(boardType, 1, 10);
+          }
+
+          // 자유 게시판 탭을 활성화하고 보여줌
+          if (window.showBoardList) {
+            const mappedType = boardType === "free" ? "free" : boardType;
+            window.showBoardList(mappedType + "-board");
+          }
+          return true;
+        }
+
+        // 요청이 실패한 경우
         const errorMsg = response?.message || "게시글 등록에 실패했습니다.";
         alert(errorMsg);
         console.error("게시글 등록 실패:", response);
         return false;
-      }
-    } else if (boardType === "free") {
-      formData.append("freeboardTitle", title);
-      formData.append("freeboardContents", content);
-      formData.append("userId", "1");
-
-      if (file) {
-        formData.append("file", file);
-      }
-
-      // API 호출 (BoardService 사용 또는 ApiClient 직접 사용)
-      let response;
-      if (window.BoardService) {
-        response = await window.BoardService.createPost(mappedType, formData);
-      } else {
-        response = await window.ApiClient.postFormData(
-          `/${mappedType}/create`,
-          formData,
-          true
-        );
-      }
-
-      if (
-        response &&
-        (response.status === "success" || response.success === true)
-      ) {
-        alert("게시글이 성공적으로 등록되었습니다.");
-
-        // 게시판 데이터 다시 로드
-        if (window.loadBoardData) {
-          loadBoardData(boardType);
-        }
-
-        return true;
-      } else {
-        const errorMsg = response?.message || "게시글 등록에 실패했습니다.";
-        alert(errorMsg);
-        console.error("게시글 등록 실패:", response);
-        return false;
-      }
-    } else {
-      formData.append("title", title);
-      formData.append("content", content);
-      formData.append("userId", "1");
-
-      if (file) {
-        formData.append("file", file);
-      }
-
-      // API 호출 (BoardService 사용 또는 ApiClient 직접 사용)
-      let response;
-      if (window.BoardService) {
-        response = await window.BoardService.createPost(mappedType, formData);
-      } else {
-        response = await window.ApiClient.postFormData(
-          `/${mappedType}/create`,
-          formData,
-          true
-        );
-      }
-
-      if (
-        response &&
-        (response.status === "success" || response.success === true)
-      ) {
-        alert("게시글이 성공적으로 등록되었습니다.");
-
-        // 게시판 데이터 다시 로드
-        if (window.loadBoardData) {
-          loadBoardData(boardType);
-        }
-
-        return true;
-      } else {
-        const errorMsg = response?.message || "게시글 등록에 실패했습니다.";
-        alert(errorMsg);
-        console.error("게시글 등록 실패:", response);
+      } catch (freeboardError) {
+        console.error("자유게시판 요청 처리 중 오류 발생:", freeboardError);
+        alert("자유게시판 게시글 등록 중 오류가 발생했습니다.");
         return false;
       }
     }
-
-    // 이 부분은 더 이상 필요 없음
-    /*
-    if (file) {
-      formData.append("file", file);
-    }
-
-    // API 호출 (BoardService 사용 또는 ApiClient 직접 사용)
-    let response;
-    if (window.BoardService) {
-      response = await window.BoardService.createPost(mappedType, formData);
-    } else {
-      response = await window.ApiClient.postFormData(
-        `/${mappedType}/create`,
-        formData,
-        true
-      );
-    }
-
-    if (
-      response &&
-      (response.status === "success" || response.success === true)
-    ) {
-      alert("게시글이 성공적으로 등록되었습니다.");
-
-      // 게시판 데이터 다시 로드
-      if (window.loadBoardData) {
-        loadBoardData(boardType);
-      }
-
-      return true;
-    } else {
-      const errorMsg = response?.message || "게시글 등록에 실패했습니다.";
-      alert(errorMsg);
-      console.error("게시글 등록 실패:", response);
-      return false;
-    }
-    */
   } catch (error) {
     console.error("게시글 등록 중 오류 발생:", error);
     alert("게시글 등록 중 오류가 발생했습니다.");

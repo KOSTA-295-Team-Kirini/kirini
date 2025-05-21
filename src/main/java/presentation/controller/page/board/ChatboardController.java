@@ -1,5 +1,6 @@
 package presentation.controller.page.board;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
@@ -24,7 +25,7 @@ import util.web.IpUtil;
 import util.web.RequestRouter;
 
 /**
- * 채팅 게시판 관련 요청을 처리하는 컨트롤러
+ * 익명 게시판 관련 요청을 처리하는 컨트롤러
  * URL 패턴: /chatboard.do 형식 지원
  */
 @WebServlet({"/chatboard/*", "/chatboard.do"})
@@ -47,7 +48,8 @@ public class ChatboardController extends HttpServlet implements Controller {
      */
     private void initRequestRouter() {
         router = new util.web.RequestRouter();
-          // GET 요청 JSON 라우터 설정
+        
+        // GET 요청 JSON 라우터 설정
         router.getJson("/", (req, res) -> {
             Map<String, Object> result = new HashMap<>();
             result.put("status", "success");
@@ -61,7 +63,8 @@ public class ChatboardController extends HttpServlet implements Controller {
             result.put("chatList", chatList);
             return result;
         });
-          // POST 요청 JSON 라우터 설정
+        
+        // POST 요청 JSON 라우터 설정
         router.postJson("/post", (req, res) -> {
             // 로그인 확인
             HttpSession session = req.getSession();
@@ -72,26 +75,52 @@ public class ChatboardController extends HttpServlet implements Controller {
                 errorResult.put("success", false);
                 errorResult.put("message", "로그인이 필요합니다.");
                 return errorResult;
+            }            // JSON 요청 바디 읽기
+            StringBuilder sb = new StringBuilder();
+            String line;
+            try (BufferedReader reader = req.getReader()) {
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line);
+                }
+            } catch (IOException e) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "요청 데이터를 읽는 중 오류가 발생했습니다: " + e.getMessage());
+                return errorResult;
             }
             
-            String content = req.getParameter("content");
+            // JSON 파싱
+            JsonObject jsonRequest = new Gson().fromJson(sb.toString(), JsonObject.class);
+            String content = jsonRequest.has("content") ? jsonRequest.get("content").getAsString() : "";
             String clientIp = IpUtil.getClientIpAddr(req);
-            
+
+            // 내용 유효성 검사
+            if (content == null || content.trim().isEmpty()) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "내용을 입력해주세요.");
+                return errorResult;
+            }
+
+            // ChatboardDTO 생성 및 설정
             ChatboardDTO chat = new ChatboardDTO();
-            chat.setChatboardTitle(content);
+            chat.setChatboardTitle(content);  // content를 title 필드에 저장
             chat.setChatboardAuthorIp(clientIp);
             chat.setUserUid(user.getUserUid());
             
+            // 채팅 등록
             boolean result = chatboardService.postChat(chat);
             
             Map<String, Object> response = new HashMap<>();
             response.put("success", result);
             
             if (result) {
-                response.put("message", "채팅이 등록되었습니다.");
+                String nickname = generateConsistentNickname(user.getUserUid());
+                response.put("message", "게시글이 등록되었습니다.");
                 response.put("chatId", chat.getChatboardUid());
+                response.put("nickname", nickname);
             } else {
-                response.put("message", "채팅 등록에 실패했습니다.");
+                response.put("message", "게시글 등록에 실패했습니다.");
             }
             
             return response;
@@ -100,13 +129,15 @@ public class ChatboardController extends HttpServlet implements Controller {
     
     /**
      * JSON 응답 전송
-     */    private void sendJsonResponse(HttpServletResponse response, Object data) throws IOException {
+     */
+    private void sendJsonResponse(HttpServletResponse response, Object data) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
         out.print(new Gson().toJson(data));
         out.flush();
-    }    
-      @Override
+    }
+    
+    @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // API 요청인지 먼저 확인 (pathInfo 있는 요청은 API 요청으로 간주)
         String pathInfo = request.getPathInfo();
@@ -139,7 +170,9 @@ public class ChatboardController extends HttpServlet implements Controller {
         } else {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
-    }    @Override
+    }
+    
+    @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // API 요청인지 먼저 확인 (pathInfo 있는 요청은 API 요청으로 간주)
         String pathInfo = request.getPathInfo();
@@ -193,24 +226,29 @@ public class ChatboardController extends HttpServlet implements Controller {
     
     /**
      * 채팅 메시지 등록
-     */
-    private void postChat(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+     */    private void postChat(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // 로그인 확인
         HttpSession session = request.getSession();
         UserDTO user = (UserDTO) session.getAttribute("user");
         
         if (user == null) {
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write("{\"success\": false, \"message\": \"로그인이 필요합니다.\"}");
-            } else {
-                response.sendRedirect(request.getContextPath() + "/login?redirect=chatboard");
+            sendJsonResponse(response, false, "로그인이 필요합니다.");
+            return;
+        }        // JSON 요청 바디 읽기
+        StringBuilder sb = new StringBuilder();
+        String line;
+        try (BufferedReader reader = request.getReader()) {
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
             }
+        } catch (IOException e) {
+            sendJsonResponse(response, false, "요청 데이터를 읽는 중 오류가 발생했습니다: " + e.getMessage());
             return;
         }
-        
-        String content = request.getParameter("content");
+
+        // JSON 파싱
+        JsonObject jsonRequest = new Gson().fromJson(sb.toString(), JsonObject.class);
+        String content = jsonRequest.has("content") ? jsonRequest.get("content").getAsString() : "";
         String clientIp = IpUtil.getClientIpAddr(request);
         
         if (content == null || content.trim().isEmpty()) {
