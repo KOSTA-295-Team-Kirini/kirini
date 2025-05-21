@@ -156,22 +156,7 @@ public class AdminPageController extends HttpServlet implements Controller {
             switch (pathInfo) {
                 // 불량 회원 관리
                 case "/user/penalty":
-                    System.out.println("[패널티컨트롤러] /user/penalty 요청 처리");
-                    try {
-                        List<AdminUserPenaltyDTO> penaltyList = userService.getAllUserPenalty();
-                        System.out.println("[패널티컨트롤러] 패널티 목록 조회 결과: " + 
-                            (penaltyList != null ? penaltyList.size() + "개" : "null"));
-                        if (penaltyList != null && !penaltyList.isEmpty()) {
-                            System.out.println("[패널티컨트롤러] 첫 번째 항목 샘플: " + 
-                                "이메일=" + penaltyList.get(0).getUserEmail() + ", " +
-                                "닉네임=" + penaltyList.get(0).getUsername());
-                        }
-                        sendJsonResponse(response, penaltyList);
-                    } catch (Exception e) {
-                        System.out.println("[패널티컨트롤러 오류] 패널티 목록 조회 실패: " + e.getMessage());
-                        e.printStackTrace();
-                        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "패널티 목록 조회 실패: " + e.getMessage());
-                    }
+                    sendJsonResponse(response, userService.getAllUserPenalty());
                     break;
                 case "/user/penalty/search": {
                     String userIdStr = request.getParameter("userId");
@@ -262,37 +247,7 @@ public class AdminPageController extends HttpServlet implements Controller {
             switch (action) {
                 // 예: /admin/user/penalty.do
                 case "/admin/user/penalty":
-                    // action 파라미터가 있는지 확인하고 적절한 처리
-                    String actionParam = request.getParameter("action");
-                    if (actionParam != null && actionParam.equals("search")) {
-                        // 검색어 파라미터 가져오기
-                        String keyword = request.getParameter("keyword");
-                        if (keyword != null && !keyword.trim().isEmpty()) {
-                            // 검색 실행
-                            LoggerConfig.logBusinessAction(getClass(), "handleJsonRequest", 
-                                "사용자 검색 API 호출", "검색어: " + keyword, null);
-                            System.out.println("[AdminPageController] 사용자 검색 요청, 검색어: '" + keyword + "'");
-                            List<AdminUserPenaltyDTO> searchResults = userService.searchUserPenalty(keyword);
-                            System.out.println("[AdminPageController] 사용자 검색 결과 수: " + 
-                                (searchResults != null ? searchResults.size() : "null"));
-                            if (searchResults != null && !searchResults.isEmpty()) {
-                                for (int i = 0; i < searchResults.size(); i++) {
-                                    AdminUserPenaltyDTO p = searchResults.get(i);
-                                    System.out.println("[AdminPageController] 검색 결과 #" + (i+1) + 
-                                        ": ID=" + p.getUserUid() + 
-                                        ", 이름=" + p.getUsername() + 
-                                        ", 이메일=" + p.getUserEmail());
-                                }
-                            }
-                            sendJsonResponse(response, searchResults);
-                        } else {
-                            // 검색어가 없으면 전체 목록 반환
-                            sendJsonResponse(response, userService.getAllUserPenalty());
-                        }
-                    } else {
-                        // 일반 목록 조회
-                        sendJsonResponse(response, userService.getAllUserPenalty());
-                    }
+                    sendJsonResponse(response, userService.getAllUserPenalty());
                     break;
 
                 // 다른 API 엔드포인트들...
