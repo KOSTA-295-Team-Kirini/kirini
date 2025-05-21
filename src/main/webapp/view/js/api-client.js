@@ -9,7 +9,6 @@
 const API_CONFIG = {
   baseUrl: "", // 상대 경로 사용 (같은 도메인)
   defaultHeaders: {
-    "Content-Type": "application/json",
     Accept: "application/json",
   },
 };
@@ -65,10 +64,15 @@ class ApiClient {
    * @returns {Promise} API 응답
    */ static async request(endpoint, options = {}) {
     const url = `${API_CONFIG.baseUrl}${endpoint}`;
-    const headers = {
-      ...API_CONFIG.defaultHeaders,
-      ...(options.headers || {}),
-    };
+
+    // FormData의 경우 Content-Type 헤더를 브라우저가 자동으로 설정하게 함
+    const headers =
+      options.body instanceof FormData
+        ? { ...(options.headers || {}) } // FormData면 Content-Type을 설정하지 않음
+        : {
+            ...API_CONFIG.defaultHeaders,
+            ...(options.headers || {}),
+          };
 
     // 인증 토큰이 있고 endpoint가 인증이 필요한 엔드포인트인 경우에만 토큰 추가
     // news, freeboard 관련 조회는 인증을 요구하지 않도록 변경
@@ -83,7 +87,9 @@ class ApiClient {
 
     // 인증 디버깅
     console.log(
-      `API 요청: ${endpoint}, 공개 엔드포인트: ${isPublicEndpoint}, 토큰 있음: ${!!token}`
+      `API 요청: ${endpoint}, 공개 엔드포인트: ${isPublicEndpoint}, 토큰 있음: ${!!token}, 메서드: ${
+        options.method
+      }`
     );
 
     if (token && !isPublicEndpoint) {
@@ -96,10 +102,32 @@ class ApiClient {
       headers,
       credentials: "include", // 세션 쿠키를 자동으로 포함시킵니다
     };
-
     try {
+      console.log(`Fetch 요청 시작: ${url}`, fetchOptions);
+
+      // 모든 요청 헤더를 로깅
+      console.log("요청 헤더 상세:", fetchOptions.headers);
+      console.log("요청 메서드:", fetchOptions.method);
+      if (fetchOptions.body instanceof FormData) {
+        console.log("요청 본문 타입: FormData");
+      } else if (typeof fetchOptions.body === "string") {
+        console.log(
+          "요청 본문:",
+          fetchOptions.body.length > 1000
+            ? fetchOptions.body.substring(0, 1000) + "...(잘림)"
+            : fetchOptions.body
+        );
+      }
+
       // API 요청 실행
       const response = await fetch(url, fetchOptions);
+      console.log(`Fetch 응답 상태: ${response.status} ${response.statusText}`);
+
+      // 응답 헤더 로깅
+      console.log("응답 헤더:");
+      response.headers.forEach((value, name) => {
+        console.log(`  ${name}: ${value}`);
+      });
 
       // 토큰 리프레시 로직 (401 응답 처리)
       if (
@@ -115,21 +143,53 @@ class ApiClient {
         ApiClient.removeAuthToken();
         return {
           status: "error",
+          success: false,
           message: "인증이 만료되었습니다. 다시 로그인해주세요.",
         };
       }
 
       // 응답 데이터가 없는 경우 (204 No Content)
       if (response.status === 204) {
-        return { status: "success" };
+        return { status: "success", success: true };
       }
 
       // JSON 응답 파싱 및 반환
-      const data = await response.json();
-      return data;
+      try {
+        const data = await response.json();
+        console.log(`API 응답 데이터:`, data);
+        return data;
+      } catch (parseError) {
+        console.error(`JSON 파싱 오류:`, parseError);
+        // 응답 텍스트 읽기 시도
+        const text = await response.text();
+        console.warn(`응답 텍스트:`, text);
+
+        // 응답 본문이 HTML인 경우 (예: 500 에러 페이지)
+        if (text.includes("<!DOCTYPE html>") || text.includes("<html>")) {
+          console.warn(
+            "HTML 응답이 감지됨: 서버 오류 또는 리디렉션 가능성이 있습니다"
+          );
+        }
+
+        return {
+          status: "error",
+          success: false,
+          message: `응답 데이터 파싱 오류: ${parseError.message}`,
+          responseText:
+            text && text.length > 500
+              ? text.substring(0, 500) + "...(잘림)"
+              : text,
+        };
+      }
     } catch (error) {
       // 네트워크 오류나 JSON 파싱 오류 처리
       console.error("API 요청 오류:", error);
+      console.error("오류 세부정보:", {
+        이름: error.name,
+        메시지: error.message,
+        스택: error.stack,
+        URL: url,
+      });
       throw error;
     }
   }
@@ -199,7 +259,6 @@ class ApiClient {
       body: JSON.stringify(data),
     });
   }
-
   /**
    * POST 요청 (FormData)
    * @param {string} endpoint API 엔드포인트
@@ -208,12 +267,63 @@ class ApiClient {
    * @returns {Promise} API 응답
    */ static async postFormData(endpoint, formData, withAuth = false) {
     // FormData의 경우 Content-Type 헤더를 브라우저가 자동으로 설정하도록 비워둠
+    // 중요: 헤더에 Content-Type을 설정하지 않음
     const headers = withAuth ? ApiClient.getAuthHeaders({}) : {};
-    return ApiClient.request(endpoint, {
-      method: "POST",
-      headers: headers,
-      body: formData,
-    });
+    delete headers["Content-Type"]; // Content-Type 헤더를 명시적으로 제거
+
+    console.log(`API FormData 요청: ${endpoint}`);
+    console.log(
+      `FormData 요청 세부정보: 메서드=POST, URL=${endpoint}, 헤더=`,
+      headers
+    );
+
+    // FormData 내용 출력 (디버깅 용도)
+    for (let pair of formData.entries()) {
+      if (pair[0] === "file") {
+        console.log(
+          `FormData 필드: ${pair[0]}, 파일명: ${pair[1].name}, 크기: ${pair[1].size}`
+        );
+      } else {
+        console.log(`FormData 필드: ${pair[0]}, 값: ${pair[1]}`);
+      }
+    }
+
+    try {
+      const response = await ApiClient.request(endpoint, {
+        method: "POST",
+        headers: headers,
+        body: formData,
+      });
+      console.log(`API FormData 응답:`, response);
+
+      // 응답 분석
+      if (!response || response.success === false) {
+        console.error(`API 응답 실패 상세: `, {
+          상태: response?.status || "알 수 없음",
+          성공여부: response?.success || false,
+          메시지: response?.message || "응답 메시지 없음",
+          오류: response?.error || "오류 정보 없음",
+          응답데이터: response,
+        });
+      }
+
+      return response;
+    } catch (error) {
+      console.error(`API FormData 요청 오류:`, error);
+      console.error(`오류 상세: `, {
+        이름: error.name,
+        메시지: error.message,
+        스택: error.stack,
+        엔드포인트: endpoint,
+      });
+
+      return {
+        success: false,
+        status: "error",
+        message: `요청 처리 중 오류가 발생했습니다: ${error.message}`,
+        error: error.toString(),
+      };
+    }
   }
   /**
    * PUT 요청
@@ -512,12 +622,13 @@ class BoardService {
    * @param {string} boardType 게시판 유형 (free, qna, notice 등)
    * @param {Object} params 페이징 및 정렬 옵션
    * @returns {Promise} 게시물 목록
-   */
-  static async getPosts(boardType, params = {}) {
+   */ static async getPosts(boardType, params = {}) {
     // 백엔드 컨트롤러 URL 패턴에 맞게 조정
     const boardTypeMapping = {
       news: "news",
       free: "freeboard",
+      anonymous: "chatboard",
+      chatboard: "chatboard",
     };
 
     const mappedType = boardTypeMapping[boardType] || boardType;
@@ -540,20 +651,25 @@ class BoardService {
     const mappedType = boardTypeMapping[boardType] || boardType;
     console.log(
       `getPost 호출: boardType=${boardType}, mappedType=${mappedType}, postId=${postId}, increaseReadCount=${increaseReadCount}`
-    );
-
-    // 게시글 ID 확인
+    ); // 게시글 ID 확인
     if (!postId || isNaN(postId)) {
       console.error(`유효하지 않은 게시글 ID: ${postId}`);
       return { status: "error", message: "유효하지 않은 게시글 ID입니다." };
-    }
-
-    // 게시글 조회 요청 파라미터
+    } // 게시글 조회 요청 파라미터
     const params = {
       id: Number(postId),
-      postId: Number(postId),
       includeComments: true, // 서버에 댓글도 함께 요청
     };
+
+    // 게시판 유형에 따라 추가 파라미터 설정
+    if (mappedType === "freeboard") {
+      // freeboard는 주로 id 파라미터를 사용함
+      params.freeboardUid = Number(postId);
+    } else if (mappedType === "news") {
+      params.newsId = Number(postId);
+    } else {
+      params.postId = Number(postId);
+    }
 
     // increaseReadCount 파라미터가 false인 경우에만 명시적으로 추가
     // (기본값이 true이므로 true인 경우 전송하지 않음)
@@ -563,7 +679,13 @@ class BoardService {
 
     console.log(`게시글 상세 요청 파라미터:`, params);
 
-    // 게시글 상세 정보 API 호출
+    // 자유게시판의 경우 특별히 더 자세한 로깅
+    if (mappedType === "freeboard") {
+      console.log(
+        `[freeboard 상세조회] URL: /${mappedType}/view, ID: ${postId}, 파라미터:`,
+        params
+      );
+    } // 게시글 상세 정보 API 호출
     return ApiClient.get(`/${mappedType}/view`, params);
   }
   /**
@@ -571,8 +693,7 @@ class BoardService {
    * @param {string} boardType 게시판 유형
    * @param {Object|FormData} postData 게시물 데이터
    * @returns {Promise} 작성 결과
-   */
-  static async createPost(boardType, postData) {
+   */ static async createPost(boardType, postData) {
     // 백엔드 컨트롤러 URL 패턴에 맞게 조정
     const boardTypeMapping = {
       news: "news",
@@ -584,10 +705,22 @@ class BoardService {
 
     // postData가 FormData인지 확인
     if (postData instanceof FormData) {
-      return ApiClient.postFormData(`/${mappedType}/create`, postData, true);
+      if (mappedType === "freeboard") {
+        return ApiClient.postFormData(
+          `/freeboard?action=write`,
+          postData,
+          true
+        );
+      } else {
+        return ApiClient.postFormData(`/${mappedType}/create`, postData, true);
+      }
     } else if (typeof postData === "object") {
       // JSON 데이터인 경우 postJson 사용
-      return ApiClient.postJson(`/${mappedType}/create`, postData, true);
+      if (mappedType === "freeboard") {
+        return ApiClient.postJson(`/freeboard?action=write`, postData, true);
+      } else {
+        return ApiClient.postJson(`/${mappedType}/create`, postData, true);
+      }
     } else {
       return ApiClient.post(`/${mappedType}/create`, postData, true);
     }
@@ -871,5 +1004,3 @@ window.BoardService = BoardService;
 window.GlossaryService = GlossaryService;
 window.ReviewService = ReviewService;
 window.QnaService = QnaService;
-
-

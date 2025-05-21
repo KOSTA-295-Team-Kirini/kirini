@@ -5,10 +5,8 @@ import java.util.List;
 
 import dto.board.ChatboardDTO;
 import repository.dao.board.ChatboardDAO;
-import org.apache.log4j.Logger;
 
 public class ChatboardService {
-    private static final Logger logger = Logger.getLogger(ChatboardService.class);
     private final ChatboardDAO chatboardDAO;
     
     public ChatboardService() {
@@ -22,7 +20,6 @@ public class ChatboardService {
         try {
             return chatboardDAO.getAllChats();
         } catch (SQLException e) {
-            logger.error("채팅 메시지 조회 중 오류 발생", e);
             return null;
         }
     }
@@ -34,7 +31,6 @@ public class ChatboardService {
         try {
             return chatboardDAO.getUserIdByChatId(chatId);
         } catch (SQLException e) {
-            logger.error("채팅 작성자 확인 중 오류 발생. chatId: " + chatId, e);
             return -1;
         }
     }
@@ -46,19 +42,16 @@ public class ChatboardService {
         try {
             // 간단한 유효성 검사
             if (chat.getChatboardTitle() == null || chat.getChatboardTitle().trim().isEmpty()) {
-                logger.warn("빈 메시지 등록 시도: userId=" + chat.getUserUid());
                 return false;
             }
             
             // 내용이 너무 길면 자르기
             if (chat.getChatboardTitle().length() > 200) {
-                logger.info("메시지 길이 제한 적용: " + chat.getChatboardTitle().length() + " -> 200");
                 chat.setChatboardTitle(chat.getChatboardTitle().substring(0, 200));
             }
             
             return chatboardDAO.postChat(chat);
         } catch (SQLException e) {
-            logger.error("채팅 등록 중 오류 발생. userId: " + chat.getUserUid(), e);
             return false;
         }
     }
@@ -75,10 +68,8 @@ public class ChatboardService {
                 return chatboardDAO.updateChatById(chat);
             }
             
-            logger.warn("수정 권한 없음: userId=" + userId + ", chatId=" + chat.getChatboardUid());
             return false;
         } catch (SQLException e) {
-            logger.error("채팅 수정 중 오류 발생. userId: " + userId + ", chatId: " + chat.getChatboardUid(), e);
             return false;
         }
     }
@@ -95,10 +86,8 @@ public class ChatboardService {
                 return chatboardDAO.deleteChatById(chatId);
             }
             
-            logger.warn("삭제 권한 없음: userId=" + userId + ", chatId=" + chatId);
             return false;
         } catch (SQLException e) {
-            logger.error("채팅 삭제 중 오류 발생. userId: " + userId + ", chatId: " + chatId, e);
             return false;
         }
     }
@@ -110,7 +99,6 @@ public class ChatboardService {
         try {
             return chatboardDAO.reportChat(chatId, reporterId, reason, category);
         } catch (SQLException e) {
-            logger.error("불량 채팅 신고 중 오류 발생. reporterId: " + reporterId + ", chatId: " + chatId, e);
             return false;
         }
     }
@@ -122,14 +110,12 @@ public class ChatboardService {
                                           String reason, long adminId, String adminAuthority) {
         // 관리자 권한 확인
         if (!("admin".equals(adminAuthority) || "armband".equals(adminAuthority))) {
-            logger.warn("제재 권한 없음: adminId=" + adminId + ", userId=" + userId);
             return false;
         }
         
         try {
             return chatboardDAO.updateUserPenaltyStatus(userId, penaltyType, duration, reason, adminId);
         } catch (SQLException e) {
-            logger.error("불량 이용자 제재 중 오류 발생. adminId: " + adminId + ", userId: " + userId, e);
             return false;
         }
     }

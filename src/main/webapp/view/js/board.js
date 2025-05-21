@@ -99,6 +99,9 @@ document.addEventListener("DOMContentLoaded", function () {
     // 초기 로드 시: 기본으로 'news-board' 또는 활성화된 탭의 내용을 보여줌
     showBoardList(previouslyActiveBoardId);
 
+    // main.js에서 호출할 수 있도록 전역 스코프에 노출
+    window.showBoardList = showBoardList;
+
     // 게시판 컨테이너에 이벤트 위임 등록 (한 번만)
     // board-wrapper 또는 특정 게시판 컨텐츠에 이벤트 위임
     const boardWrapper = document.querySelector(".board-wrapper");
@@ -316,14 +319,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         return false;
       }
-    }
-
-    // 페이지 초기화 시 데이터 로드
-    initBoardData();
-
-    // 화면 초기화 시 게시판 목록 로드
-    loadBoardPosts("news");
-    loadBoardPosts("free");
+    } // 페이지 초기화 시 데이터 로드
+    initBoardData(); // 화면 초기화 시 게시판 목록 로드
+    loadBoardPosts("news", { sort: "latest" });
+    loadBoardPosts("free", { sort: "latest" });
+    loadBoardPosts("chatboard", { sort: "latest" }); // 익명게시판(chatboard) 데이터 로드 추가
 
     // 날짜 포맷 함수
     function formatDate(dateInput) {
@@ -405,16 +405,14 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       console.log(`${clickableRows.length}개의 게시글에 클릭 이벤트 등록 완료`);
-    }
-
-    // 게시판 API를 통해 게시물 목록 로드
+    } // 게시판 API를 통해 게시물 목록 로드
     async function loadBoardData(boardType, page = 1, size = 10) {
       try {
         // API를 통해 게시물 목록 가져오기 (백엔드 URL 패턴에 맞게)
         const response = await BoardService.getPosts(boardType, {
           page: page,
           size: size,
-          sort: "latest",
+          sort: "latest", // 항상 최신순으로 정렬
         }); // 백엔드 응답 구조에 맞게 처리
         // NewsController에서는 newsList 필드로 반환
         // FreeboardController에서는 freeboardList 필드로 반환
@@ -435,12 +433,14 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!postsTable) return;
 
         // 테이블 내용 비우기
-        postsTable.innerHTML = "";
-
-        // 각 게시물 정보 표시
+        postsTable.innerHTML = ""; // 각 게시물 정보 표시
         posts.forEach((post, index) => {
+          // 각 게시판별 필드에 맞는 데이터 참조 (news, freeboard, chatboard)
           const formattedDate = formatDate(
-            post.newsWritetime || post.createdAt || new Date()
+            post.newsWritetime ||
+              post.freeboardWritetime ||
+              post.createdAt ||
+              new Date()
           );
           const commentCount = post.commentCount || 0;
           const commentDisplay =
@@ -448,19 +448,24 @@ document.addEventListener("DOMContentLoaded", function () {
               ? ` <span class="comment-count">[${commentCount}]</span>`
               : "";
 
-          // 새 행 생성
+          // 새 행 생성 - 게시판 타입별 ID 필드 다르게 매핑
           const row = document.createElement("tr");
           row.className = "clickable-row";
-          row.dataset.postId = post.newsId || post.id;
+          // 자유게시판인 경우 freeboardUid를 postId로 사용
+          row.dataset.postId = post.newsId || post.freeboardUid || post.id;
           row.dataset.boardType = boardType; // 게시판 타입도 데이터 속성으로 저장
+          console.log(
+            `게시글 ID 매핑: ${boardType} - ${row.dataset.postId} (원본 데이터: newsId=${post.newsId}, freeboardUid=${post.freeboardUid}, id=${post.id})`
+          );
+
           row.innerHTML = `
-            <td>${post.newsId || post.id}</td>
+            <td>${post.newsId || post.freeboardUid || post.id}</td>
             <td><a href="javascript:void(0)">${
-              post.newsTitle || post.title
+              post.newsTitle || post.freeboardTitle || post.title
             }</a>${commentDisplay}</td>
             <td>${post.userName || post.author || "익명"}</td>
             <td>${formattedDate}</td>
-            <td>${post.newsRead || post.views || 0}</td>
+            <td>${post.newsRead || post.freeboardRead || post.views || 0}</td>
           `;
 
           postsTable.appendChild(row);
@@ -513,141 +518,459 @@ document.addEventListener("DOMContentLoaded", function () {
           '<div class="error">댓글을 불러오는 중 오류가 발생했습니다.</div>';
       }
     }
-
     /**
      * 게시판 목록 로드
-     * @param {string} boardType 게시판 타입 (news, free 등)
-     * @param {Object} params 페이징 및 정렬 옵션
-     */
-    async function loadBoardPosts(boardType, params = {}) {
+     * @param {string} boardType 게시판 타입 (news, free, chatboard 등)
+     * @param {Object} params 페이징 및 정렬 옵션     */ async function loadBoardPosts(
+      boardType,
+      params = {}
+    ) {
       try {
+        // 기본 정렬 파라미터 설정 (최신 글이 맨 위에 오도록)
+        params.sort = params.sort || "latest";
+
         console.log(
           `[board.js] loadBoardPosts 호출 시작: boardType=${boardType}, params=`,
           params
-        ); // 로그 추가
-        const boardContainer = document.getElementById(`${boardType}-board`);
+        );
+
+        // 익명 게시판 처리를 위한 매핑
+        const boardIdMapping = {
+          chatboard: "anonymous-board", // chatboard는 anonymous-board ID를 사용함
+          anonymous: "anonymous-board",
+        };
+
+        // 실제 HTML에서 사용하는 ID로 매핑
+        const boardId = boardIdMapping[boardType] || `${boardType}-board`;
+
+        const boardContainer = document.getElementById(boardId);
         if (!boardContainer) {
           console.error(
-            `[board.js] 게시판 컨테이너를 찾을 수 없습니다: ${boardType}-board`
+            `[board.js] 게시판 컨테이너를 찾을 수 없습니다: ${boardId}`
           );
           return;
         }
 
-        const postsTable = boardContainer.querySelector(".board-table tbody");
-        if (!postsTable) {
-          console.error(
-            `[board.js] 게시판 테이블 tbody를 찾을 수 없습니다: ${boardType}-board .board-table tbody`
-          );
-          return;
-        }
+        // 익명 게시판(chatboard)인지 확인
+        const isAnonymousBoard =
+          boardType === "chatboard" || boardType === "anonymous";
 
-        postsTable.innerHTML =
-          '<tr><td colspan="5" class="loading">게시글을 불러오는 중...</td></tr>';
+        if (isAnonymousBoard) {
+          // 익명 게시판은 oneline-board 클래스를 사용하는 div를 처리
+          const onelineBoardContainer =
+            boardContainer.querySelector(".oneline-board");
+          if (!onelineBoardContainer) {
+            console.error(
+              `[board.js] 익명 게시판 컨테이너를 찾을 수 없습니다: ${boardId} .oneline-board`
+            );
+            return;
+          }
 
-        const response = await BoardService.getPosts(boardType, params);
-        console.log(
-          `[board.js] BoardService.getPosts 응답 (${boardType}):`,
-          response
-        ); // 로그 추가
+          // 기존 내용을 로딩 메시지로 대체
+          onelineBoardContainer.innerHTML =
+            '<div class="loading">익명 게시글을 불러오는 중...</div>';
 
-        let posts = [];
-        if (Array.isArray(response)) {
-          posts = response;
-        } else if (boardType === "news" && response?.newsList) {
-          // boardType에 따라 명확히 구분
-          posts = response.newsList;
-        } else if (boardType === "free" && response?.freeboardList) {
-          // boardType에 따라 명확히 구분
-          posts = response.freeboardList;
-        } else if (response?.posts) {
-          posts = response.posts;
-        } else if (typeof response === "object" && response !== null) {
-          // 응답 객체의 값들 중 첫 번째 배열을 사용 (예: { data: [...] })
-          const possiblePostArrays = Object.values(response).filter((val) =>
-            Array.isArray(val)
-          );
-          if (possiblePostArrays.length > 0) {
-            posts = possiblePostArrays[0];
-            console.warn(
-              `[board.js] 특정 키(newsList, freeboardList, posts)를 찾지 못해 첫 번째 배열 사용 (${boardType}):`,
+          const response = await BoardService.getPosts(boardType, params);
+          console.log(`[board.js] 익명 게시판 응답:`, response);
+
+          // 게시글 배열 추출
+          let posts = [];
+          if (Array.isArray(response)) {
+            posts = response;
+          } else if (response?.chatList) {
+            posts = response.chatList;
+          } else if (typeof response === "object" && response !== null) {
+            // 응답 객체의 값들 중 첫 번째 배열을 사용
+            const possiblePostArrays = Object.values(response).filter((val) =>
+              Array.isArray(val)
+            );
+            if (possiblePostArrays.length > 0) {
+              posts = possiblePostArrays[0];
+            }
+          }
+          console.log(`[board.js] 파싱된 익명 게시글 배열:`, posts);
+          // 정렬 전 게시글 날짜 확인
+          if (posts && posts.length > 1) {
+            console.log(
+              `[board.js] 정렬 전 첫 번째와 두 번째 익명 게시글 날짜 비교:`
+            );
+            const post1 = posts[0];
+            const post2 = posts[1];
+            const date1 = new Date(
+              post1.chatboardWritetime ||
+                post1.chatboardDate ||
+                post1.createdAt ||
+                0
+            );
+            const date2 = new Date(
+              post2.chatboardWritetime ||
+                post2.chatboardDate ||
+                post2.createdAt ||
+                0
+            );
+            console.log(
+              `첫 번째 게시글(ID: ${post1.chatboardUid || post1.id}): ${date1}`
+            );
+            console.log(
+              `두 번째 게시글(ID: ${post2.chatboardUid || post2.id}): ${date2}`
+            );
+            console.log(
+              `비교 결과 (date1 > date2): ${date1 > date2}, 차이(ms): ${
+                date1 - date2
+              }`
+            );
+          }
+
+          // 클라이언트 측 정렬 처리 (서버에서 정렬이 적용되지 않는 경우를 대비)
+          if (posts && posts.length > 0 && params.sort === "latest") {
+            // 게시글 날짜 정보를 기준으로 내림차순 정렬 (최신 글이 위에 오도록)
+            posts.sort((a, b) => {
+              const dateA = new Date(
+                a.chatboardWritetime || a.chatboardDate || a.createdAt || 0
+              );
+              const dateB = new Date(
+                b.chatboardWritetime || b.chatboardDate || b.createdAt || 0
+              );
+              return dateB - dateA; // 내림차순 정렬
+            });
+            // 정렬 후 게시글 날짜 확인
+            if (posts.length > 1) {
+              console.log(
+                `[board.js] 정렬 후 첫 번째와 두 번째 익명 게시글 날짜 비교:`
+              );
+              const post1 = posts[0];
+              const post2 = posts[1];
+              const date1 = new Date(
+                post1.chatboardWritetime ||
+                  post1.chatboardDate ||
+                  post1.createdAt ||
+                  0
+              );
+              const date2 = new Date(
+                post2.chatboardWritetime ||
+                  post2.chatboardDate ||
+                  post2.createdAt ||
+                  0
+              );
+              console.log(
+                `첫 번째 게시글(ID: ${
+                  post1.chatboardUid || post1.id
+                }): ${date1}`
+              );
+              console.log(
+                `두 번째 게시글(ID: ${
+                  post2.chatboardUid || post2.id
+                }): ${date2}`
+              );
+              console.log(
+                `비교 결과 (date1 > date2): ${date1 > date2}, 차이(ms): ${
+                  date1 - date2
+                }`
+              );
+            }
+
+            console.log(
+              `[board.js] 클라이언트에서 정렬된 익명 게시글 배열:`,
               posts
             );
+          }
+
+          // 익명 게시판 컨테이너 비우기
+          onelineBoardContainer.innerHTML = "";
+
+          if (posts && posts.length > 0) {
+            // 익명 게시판의 각 게시글 렌더링
+            posts.forEach((post, index) => {
+              // 게시물 데이터 표준화
+              const postData = {
+                id: post.chatboardUid || post.id || index + 1,
+                content:
+                  post.chatboardTitle ||
+                  post.title ||
+                  post.content ||
+                  "내용 없음",
+                author:
+                  post.anonymousNickname ||
+                  post.userName ||
+                  post.author ||
+                  "익명",
+                createdAt: post.chatboardDate || post.createdAt || new Date(),
+              };
+
+              const formattedDate = formatDate(postData.createdAt);
+
+              // 익명 게시글 요소 생성
+              const postElement = document.createElement("div");
+              postElement.className = "oneline-post clickable-row";
+              postElement.dataset.postId = postData.id;
+              postElement.dataset.boardType = "anonymous-board";
+
+              postElement.innerHTML = `
+                <div class="oneline-author">${postData.author}</div>
+                <div class="oneline-content">${postData.content}</div>
+                <div class="oneline-date">${formattedDate}</div>
+                <div class="oneline-actions">
+                  <button class="oneline-reply-btn" data-post-id="${postData.id}">답글</button>
+                  <button class="oneline-report-btn" data-post-id="${postData.id}">신고</button>
+                </div>
+              `;
+
+              onelineBoardContainer.appendChild(postElement);
+            });
+
+            // 이벤트 리스너 등록
+            attachPostClickEvents();
+          } else {
+            onelineBoardContainer.innerHTML =
+              '<div class="empty-message">익명 게시글이 없습니다.</div>';
+          }
+        } else {
+          // 일반 게시판 (테이블 구조) 처리
+          const postsTable = boardContainer.querySelector(".board-table tbody");
+          if (!postsTable) {
+            console.error(
+              `[board.js] 게시판 테이블 tbody를 찾을 수 없습니다: ${boardId} .board-table tbody`
+            );
+            return;
+          }
+
+          postsTable.innerHTML =
+            '<tr><td colspan="5" class="loading">게시글을 불러오는 중...</td></tr>';
+
+          const response = await BoardService.getPosts(boardType, params);
+          console.log(
+            `[board.js] BoardService.getPosts 응답 (${boardType}):`,
+            response
+          ); // 로그 추가
+
+          let posts = [];
+          if (Array.isArray(response)) {
+            posts = response;
+          } else if (boardType === "news" && response?.newsList) {
+            // boardType에 따라 명확히 구분
+            posts = response.newsList;
+          } else if (boardType === "free" && response?.freeboardList) {
+            // boardType에 따라 명확히 구분
+            posts = response.freeboardList;
+          } else if (response?.posts) {
+            posts = response.posts;
+          } else if (typeof response === "object" && response !== null) {
+            // 응답 객체의 값들 중 첫 번째 배열을 사용 (예: { data: [...] })
+            const possiblePostArrays = Object.values(response).filter((val) =>
+              Array.isArray(val)
+            );
+            if (possiblePostArrays.length > 0) {
+              posts = possiblePostArrays[0];
+              console.warn(
+                `[board.js] 특정 키(newsList, freeboardList, posts)를 찾지 못해 첫 번째 배열 사용 (${boardType}):`,
+                posts
+              );
+            } else {
+              console.warn(
+                `[board.js] 응답 객체에서 게시글 배열을 찾을 수 없습니다 (${boardType}):`,
+                response
+              );
+            }
           } else {
             console.warn(
-              `[board.js] 응답 객체에서 게시글 배열을 찾을 수 없습니다 (${boardType}):`,
+              `[board.js] 예상치 못한 응답 형태 (${boardType}):`,
               response
             );
           }
-        } else {
-          console.warn(
-            `[board.js] 예상치 못한 응답 형태 (${boardType}):`,
-            response
-          );
-        }
+          console.log(`[board.js] 파싱된 게시글 배열 (${boardType}):`, posts); // 로그 추가
+          // 정렬 전 게시글 날짜 확인
+          if (posts && posts.length > 1) {
+            console.log(
+              `[board.js] 정렬 전 첫 번째와 두 번째 게시글 날짜 비교 (${boardType}):`
+            );
+            const post1 = posts[0];
+            const post2 = posts[1];
+            const date1 = new Date(
+              post1.newsWritetime ||
+                post1.freeboardWritetime ||
+                post1.chatboardDate ||
+                post1.createdAt ||
+                0
+            );
+            const date2 = new Date(
+              post2.newsWritetime ||
+                post2.freeboardWritetime ||
+                post2.chatboardDate ||
+                post2.createdAt ||
+                0
+            );
+            console.log(
+              `첫 번째 게시글(ID: ${
+                post1.newsId ||
+                post1.freeboardId ||
+                post1.chatboardUid ||
+                post1.id
+              }): ${date1}`
+            );
+            console.log(
+              `두 번째 게시글(ID: ${
+                post2.newsId ||
+                post2.freeboardId ||
+                post2.chatboardUid ||
+                post2.id
+              }): ${date2}`
+            );
+            console.log(
+              `비교 결과 (date1 > date2): ${date1 > date2}, 차이(ms): ${
+                date1 - date2
+              }`
+            );
+          } // 클라이언트 측 정렬 처리 (서버에서 정렬이 적용되지 않는 경우를 대비)
+          if (posts && posts.length > 0 && params.sort === "latest") {
+            // 게시글 날짜 정보를 기준으로 내림차순 정렬 (최신 글이 위에 오도록)
+            posts.sort((a, b) => {
+              const dateA = new Date(
+                a.newsWritetime ||
+                  a.freeboardWritetime ||
+                  a.chatboardWritetime ||
+                  a.chatboardDate ||
+                  a.createdAt ||
+                  0
+              );
+              const dateB = new Date(
+                b.newsWritetime ||
+                  b.freeboardWritetime ||
+                  b.chatboardWritetime ||
+                  b.chatboardDate ||
+                  b.createdAt ||
+                  0
+              );
+              return dateB - dateA; // 내림차순 정렬
+            });
+            // 정렬 후 게시글 날짜 확인
+            if (posts.length > 1) {
+              console.log(
+                `[board.js] 정렬 후 첫 번째와 두 번째 게시글 날짜 비교 (${boardType}):`
+              );
+              const post1 = posts[0];
+              const post2 = posts[1];
+              const date1 = new Date(
+                post1.newsWritetime ||
+                  post1.freeboardWritetime ||
+                  post1.chatboardDate ||
+                  post1.createdAt ||
+                  0
+              );
+              const date2 = new Date(
+                post2.newsWritetime ||
+                  post2.freeboardWritetime ||
+                  post2.chatboardDate ||
+                  post2.createdAt ||
+                  0
+              );
+              console.log(
+                `첫 번째 게시글(ID: ${
+                  post1.newsId ||
+                  post1.freeboardId ||
+                  post1.chatboardUid ||
+                  post1.id
+                }): ${date1}`
+              );
+              console.log(
+                `두 번째 게시글(ID: ${
+                  post2.newsId ||
+                  post2.freeboardId ||
+                  post2.chatboardUid ||
+                  post2.id
+                }): ${date2}`
+              );
+              console.log(
+                `비교 결과 (date1 > date2): ${date1 > date2}, 차이(ms): ${
+                  date1 - date2
+                }`
+              );
+            }
 
-        console.log(`[board.js] 파싱된 게시글 배열 (${boardType}):`, posts); // 로그 추가
+            console.log(
+              `[board.js] 클라이언트에서 정렬된 게시글 배열 (${boardType}):`,
+              posts
+            );
+          }
 
-        if (posts && posts.length > 0) {
-          postsTable.innerHTML = "";
-          posts.forEach((post, index) => {
-            // 게시물 데이터 표준화
-            const postData = {
-              id: post.newsId || post.freeboardId || post.id || index + 1,
-              title:
-                post.newsTitle ||
-                post.freeboardTitle ||
-                post.title ||
-                "제목 없음",
-              author: post.userName || post.author || "익명",
-              createdAt:
-                post.newsWritetime ||
-                post.freeboardWritetime ||
-                post.createdAt ||
-                new Date(),
-              views: post.newsRead || post.freeboardRead || post.views || 0,
-              commentCount: post.commentCount || 0,
-              hasFile: post.hasFile || false,
-            };
+          if (posts && posts.length > 0) {
+            postsTable.innerHTML = "";
+            posts.forEach((post, index) => {
+              // 게시물 데이터 표준화
+              const postData = {
+                id: post.newsId || post.freeboardUid || post.id || index + 1,
+                title:
+                  post.newsTitle ||
+                  post.freeboardTitle ||
+                  post.title ||
+                  "제목 없음",
+                author: post.userName || post.author || "익명",
+                createdAt:
+                  post.newsWritetime ||
+                  post.freeboardWritetime ||
+                  post.createdAt ||
+                  new Date(),
+                views: post.newsRead || post.freeboardRead || post.views || 0,
+                commentCount: post.commentCount || 0,
+                hasFile: post.hasFile || false,
+              };
 
-            const formattedDate = formatDate(postData.createdAt);
-            const commentDisplay =
-              postData.commentCount > 0
-                ? ` <span class="comment-count">[${postData.commentCount}]</span>`
+              const formattedDate = formatDate(postData.createdAt);
+              const commentDisplay =
+                postData.commentCount > 0
+                  ? ` <span class="comment-count">[${postData.commentCount}]</span>`
+                  : "";
+              const fileDisplay = postData.hasFile
+                ? ' <span class="file-icon">📎</span>'
                 : "";
-            const fileDisplay = postData.hasFile
-              ? ' <span class="file-icon">📎</span>'
-              : "";
 
-            const row = document.createElement("tr");
-            row.className = "clickable-row";
-            row.dataset.postId = postData.id;
-            row.dataset.boardType = boardType; // 게시판 타입도 데이터 속성으로 저장
-            row.innerHTML = `
-              <td>${postData.id}</td>
-              <td><a href="javascript:void(0)">${postData.title}</a>${commentDisplay}${fileDisplay}</td>
-              <td>${postData.author}</td>
-              <td>${formattedDate}</td>
-              <td>${postData.views}</td>
-            `;
+              const row = document.createElement("tr");
+              row.className = "clickable-row";
+              row.dataset.postId = postData.id;
+              row.dataset.boardType = boardType; // 게시판 타입도 데이터 속성으로 저장
+              row.innerHTML = `
+                <td>${postData.id}</td>
+                <td><a href="javascript:void(0)">${postData.title}</a>${commentDisplay}${fileDisplay}</td>
+                <td>${postData.author}</td>
+                <td>${formattedDate}</td>
+                <td>${postData.views}</td>
+              `;
 
-            postsTable.appendChild(row);
-          });
-
-          // 게시글 목록이 로드된 후 클릭 이벤트 다시 등록
-          attachPostClickEvents();
-        } else {
-          console.log(`[board.js] 게시글 없음 또는 빈 배열 (${boardType})`); // 로그 추가
-          postsTable.innerHTML =
-            '<tr><td colspan="5">게시글이 없습니다.</td></tr>';
+              postsTable.appendChild(row);
+            });
+            // 게시글 목록이 로드된 후 클릭 이벤트 다시 등록
+            attachPostClickEvents();
+          } else {
+            console.log(`[board.js] 게시글 없음 또는 빈 배열 (${boardType})`); // 로그 추가
+            postsTable.innerHTML =
+              '<tr><td colspan="5">게시글이 없습니다.</td></tr>';
+          }
         }
       } catch (error) {
         console.error(`[board.js] ${boardType} 게시글 목록 로드 오류:`, error);
-        const boardContainer = document.getElementById(`${boardType}-board`);
+
+        // 익명 게시판인지 확인
+        const isAnonymousBoard =
+          boardType === "chatboard" || boardType === "anonymous";
+        const boardId = isAnonymousBoard
+          ? "anonymous-board"
+          : `${boardType}-board`;
+        const boardContainer = document.getElementById(boardId);
+
         if (boardContainer) {
-          const postsTable = boardContainer.querySelector(".board-table tbody");
-          if (postsTable) {
-            postsTable.innerHTML =
-              '<tr><td colspan="5" class="error">게시글을 불러오는 중 오류가 발생했습니다.</td></tr>';
+          if (isAnonymousBoard) {
+            const onelineBoardContainer =
+              boardContainer.querySelector(".oneline-board");
+            if (onelineBoardContainer) {
+              onelineBoardContainer.innerHTML =
+                '<div class="error">익명 게시글을 불러오는 중 오류가 발생했습니다.</div>';
+            }
+          } else {
+            const postsTable =
+              boardContainer.querySelector(".board-table tbody");
+            if (postsTable) {
+              postsTable.innerHTML =
+                '<tr><td colspan="5" class="error">게시글을 불러오는 중 오류가 발생했습니다.</td></tr>';
+            }
           }
         }
       }
@@ -697,25 +1020,49 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
           // 게시글 정보 및 댓글 정보를 한 번에 가져오기 (처음 보는 경우에만 조회수 증가)
-          const response = await BoardService.getPost(
-            apiType,
-            postId,
-            shouldIncreaseReadCount
-          );
+          let response;
+
+          // 자유게시판은 API 경로를 'freeboard'로 명시적 변환
+          if (apiType === "free") {
+            console.log(
+              `자유게시판 상세 조회 특별 처리: postId=${postId}, apiType=${apiType}`
+            );
+            response = await BoardService.getPost(
+              "freeboard", // freeboard API 명시적 사용
+              postId,
+              shouldIncreaseReadCount
+            );
+          } else {
+            response = await BoardService.getPost(
+              apiType,
+              postId,
+              shouldIncreaseReadCount
+            );
+          }
+
+          console.log(`API 응답 데이터 구조:`, response);
 
           // 조회 기록 저장 (게시글 내용을 성공적으로 가져온 경우에만)
           if (
             response &&
-            (response.news || response.post || response.status !== "error")
+            (response.news ||
+              response.post ||
+              response.freeboard ||
+              response.status !== "error")
           ) {
             sessionStorage.setItem(viewedPostKey, "true");
             console.log(`게시글 조회 기록 저장: ${viewedPostKey}=true`);
           }
 
           console.log("게시글 응답:", response);
+
           // 응답 데이터 구조 자세히 출력
-          if (response && (response.news || response.post)) {
-            const post = response.news || response.post || response;
+          if (
+            response &&
+            (response.news || response.post || response.freeboard)
+          ) {
+            const post =
+              response.news || response.post || response.freeboard || response;
             console.log("게시글 구조:", Object.keys(post));
             console.log(
               "조회수 필드:",
@@ -736,17 +1083,28 @@ document.addEventListener("DOMContentLoaded", function () {
               post.content
             );
           }
-
-          if (response && (response.news || response.post)) {
-            const post = response.news || response.post || response;
+          if (
+            response &&
+            (response.news || response.post || response.freeboard)
+          ) {
+            const post =
+              response.news || response.post || response.freeboard || response;
             // 서버 응답에서 댓글 정보 추출
-            const comments = response.comments || [];
-
-            // 게시글 정보 표시
+            const comments = response.comments || []; // 게시글 정보 표시
             if (detailTitle) {
-              detailTitle.textContent = post.newsTitle || post.title;
-              detailTitle.dataset.postId = post.newsId || post.id;
+              // 게시판 타입에 따라 제목 필드를 다르게 처리
+              if (apiType === "free" || boardType === "free-board") {
+                detailTitle.textContent =
+                  post.freeboardTitle || post.title || "";
+                detailTitle.dataset.postId = post.freeboardUid || post.id;
+              } else {
+                detailTitle.textContent = post.newsTitle || post.title || "";
+                detailTitle.dataset.postId = post.newsId || post.id;
+              }
               detailTitle.dataset.boardType = boardType;
+              console.log(
+                `게시글 상세정보 ID 설정: ${detailTitle.dataset.postId}, 게시판: ${boardType}, API타입: ${apiType}`
+              );
             }
 
             // 작성자 정보 표시
@@ -793,18 +1151,28 @@ document.addEventListener("DOMContentLoaded", function () {
               if (likeCountDisplay) {
                 likeCountDisplay.textContent = likes;
               }
-            }
-
-            // 게시글 내용 표시
+            } // 게시글 내용 표시
             if (detailContent) {
-              const content =
-                post.newsContents !== undefined
-                  ? post.newsContents
-                  : post.freeboardContents !== undefined
-                  ? post.freeboardContents
-                  : post.content !== undefined
-                  ? post.content
-                  : "";
+              let content = "";
+
+              // 게시판 타입에 따라 내용 필드를 다르게 처리
+              if (apiType === "free" || boardType === "free-board") {
+                content =
+                  post.freeboardContents !== undefined
+                    ? post.freeboardContents
+                    : post.content || "";
+              } else if (apiType === "news" || boardType === "news-board") {
+                content =
+                  post.newsContents !== undefined
+                    ? post.newsContents
+                    : post.content || "";
+              } else {
+                content = post.content || "";
+              }
+
+              console.log(
+                `게시글 내용 타입: ${apiType}, 내용길이: ${content.length}`
+              );
               detailContent.innerHTML = content;
             }
 
@@ -942,10 +1310,8 @@ document.addEventListener("DOMContentLoaded", function () {
           const result = await BoardService.deletePost(apiType, postId);
 
           if (result && (result.success || result.status === "success")) {
-            alert("게시글이 삭제되었습니다.");
-
-            // 게시글 목록 다시 로드
-            loadBoardPosts(apiType);
+            alert("게시글이 삭제되었습니다."); // 게시글 목록 다시 로드
+            loadBoardPosts(apiType, { sort: "latest" });
 
             // 상세 보기 닫기
             postDetailView.style.display = "none";
@@ -1170,17 +1536,15 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("댓글 제출 오류:", error);
         alert("댓글을 작성하는 중 오류가 발생했습니다.");
       }
-    }
-
-    // 초기 데이터 로드 함수
+    } // 초기 데이터 로드 함수
     function initBoardData() {
       // 기본적으로 뉴스 게시판 로드
-      loadBoardData("news");
+      loadBoardData("news", 1, 10);
 
       // 이전에 활성화된 탭이 있다면 그 탭의 게시물도 로드
       if (previouslyActiveBoardId !== "news-board") {
         const boardType = previouslyActiveBoardId.replace("-board", "");
-        loadBoardData(boardType);
+        loadBoardData(boardType, 1, 10);
       }
     }
   }

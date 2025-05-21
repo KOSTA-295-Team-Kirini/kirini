@@ -1,12 +1,16 @@
 package presentation.controller.page.board;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +19,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
 import business.service.freeboard.FreeboardService;
 import dto.board.AttachmentDTO;
@@ -50,6 +62,27 @@ public class FreeboardController extends HttpServlet implements Controller {
     private util.web.RequestRouter router;
     private static final long serialVersionUID = 1L;
     
+    // LocalDateTime 직렬화/역직렬화를 위한 Gson 설정
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+            .create();
+    
+    // LocalDateTime 어댑터
+    private static class LocalDateTimeAdapter implements JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
+        private static final DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+        @Override
+        public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(formatter.format(src));
+        }
+
+        @Override
+        public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                throws JsonParseException {
+            return LocalDateTime.parse(json.getAsString(), formatter);
+        }
+    }
+    
     @Override
     public void init() throws ServletException {
         super.init();
@@ -59,8 +92,7 @@ public class FreeboardController extends HttpServlet implements Controller {
         initRequestRouter();
     }    /**
      * 요청 라우터 초기화
-     */
-    private void initRequestRouter() {
+     */    private void initRequestRouter() {
         router = new util.web.RequestRouter();
           // GET 요청 JSON 라우터 설정
         router.getJson("/", (req, res) -> {
@@ -68,6 +100,85 @@ public class FreeboardController extends HttpServlet implements Controller {
             result.put("status", "success");
             result.put("message", "자유게시판 API");
             return result;
+        });
+        
+        // 게시글 작성 API 추가
+        router.postJson("/create", (req, res) -> {
+            try {
+                // 로그인 확인
+                HttpSession session = req.getSession();
+                UserDTO user = (UserDTO) session.getAttribute("user");
+                
+                if (user == null) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("success", false);
+                    errorResult.put("message", "로그인이 필요합니다.");
+                    return errorResult;
+                }
+                
+                // JSON 요청 바디 읽기
+                StringBuilder sb = new StringBuilder();
+                String line;
+                try (BufferedReader reader = req.getReader()) {
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+                } catch (IOException e) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("success", false);
+                    errorResult.put("message", "요청 데이터를 읽는 중 오류가 발생했습니다: " + e.getMessage());
+                    return errorResult;
+                }
+                
+                // JSON 파싱
+                com.google.gson.JsonObject jsonRequest = new Gson().fromJson(sb.toString(), com.google.gson.JsonObject.class);
+                String title = jsonRequest.has("freeboardTitle") ? jsonRequest.get("freeboardTitle").getAsString() : "";
+                String content = jsonRequest.has("freeboardContents") ? jsonRequest.get("freeboardContents").getAsString() : "";
+                String clientIp = IpUtil.getClientIpAddr(req);
+                
+                if (title == null || title.trim().isEmpty()) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("success", false);
+                    errorResult.put("message", "제목을 입력해주세요.");
+                    return errorResult;
+                }
+                
+                if (content == null || content.trim().isEmpty()) {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("success", false);
+                    errorResult.put("message", "내용을 입력해주세요.");
+                    return errorResult;
+                }
+                
+                // 게시글 생성
+                FreeboardDTO freeboard = new FreeboardDTO(title, content, clientIp, user.getUserUid());
+                boolean result = freeboardService.createFreeboard(freeboard);
+                
+                if (result) {
+                    Map<String, Object> successResult = new HashMap<>();
+                    successResult.put("status", "success");
+                    successResult.put("success", true);
+                    successResult.put("message", "게시글이 성공적으로 등록되었습니다.");
+                    successResult.put("postId", freeboard.getFreeboardUid());
+                    return successResult;
+                } else {
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("status", "error");
+                    errorResult.put("success", false);
+                    errorResult.put("message", "게시글 등록에 실패했습니다.");
+                    return errorResult;
+                }
+            } catch (Exception e) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("status", "error");
+                errorResult.put("success", false);
+                errorResult.put("message", "오류가 발생했습니다: " + e.getMessage());
+                return errorResult;
+            }
         });
         
         // 게시글 삭제 API 추가
@@ -461,9 +572,7 @@ public class FreeboardController extends HttpServlet implements Controller {
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 게시글 ID입니다.");
         }
-    }
-    
-    /**
+    }    /**
      * 게시글 등록
      */    private void postFreeboard(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // 로그인 확인
@@ -480,28 +589,102 @@ public class FreeboardController extends HttpServlet implements Controller {
             return;
         }
         
-        String title = request.getParameter("title");
-        String content = request.getParameter("content");
-        String clientIp = IpUtil.getClientIpAddr(request);
-        
-        FreeboardDTO freeboard = new FreeboardDTO(title, content, clientIp, user.getUserUid());
-        
-        boolean result = freeboardService.createFreeboard(freeboard);
-        
-        Map<String, Object> responseData = new HashMap<>();
-        responseData.put("success", result);
-        
-        if (result) {
-            responseData.put("message", "게시글이 성공적으로 등록되었습니다.");
-            responseData.put("postId", freeboard.getFreeboardUid());
-            responseData.put("redirect", request.getContextPath() + "/freeboard?action=view&id=" + freeboard.getFreeboardUid());
-        } else {
-            responseData.put("message", "게시글 등록에 실패했습니다.");
-            responseData.put("error", "게시글 등록에 실패했습니다.");
-            responseData.put("freeboard", freeboard);
+        try {
+            // 요청 정보 디버깅 출력
+            System.out.println("==== 게시글 등록 요청 시작 ====");
+            System.out.println("ContentType: " + request.getContentType());
+            System.out.println("CharacterEncoding: " + request.getCharacterEncoding());
+            System.out.println("요청 URI: " + request.getRequestURI());
+            System.out.println("요청 URL: " + request.getRequestURL());
+            System.out.println("쿼리 스트링: " + request.getQueryString());
+            
+            // 모든 헤더 목록 출력
+            java.util.Enumeration<String> headerNames = request.getHeaderNames();
+            System.out.println("===== 요청 헤더 목록 =====");
+            while (headerNames.hasMoreElements()) {
+                String headerName = headerNames.nextElement();
+                System.out.println(headerName + ": " + request.getHeader(headerName));
+            }
+            
+            // 모든 파라미터 이름 출력
+            java.util.Enumeration<String> paramNames = request.getParameterNames();
+            System.out.println("===== 요청 파라미터 목록 =====");
+            while (paramNames.hasMoreElements()) {
+                String paramName = paramNames.nextElement();
+                String[] paramValues = request.getParameterValues(paramName);
+                if (paramValues.length > 1) {
+                    System.out.println(paramName + ": [다중 값]");
+                    for (int i = 0; i < paramValues.length; i++) {
+                        System.out.println("  - 값 " + i + ": " + paramValues[i]);
+                    }
+                } else {
+                    System.out.println(paramName + ": " + request.getParameter(paramName));
+                }
+            }
+            
+            // 폼 데이터에서 파라미터 읽기
+            String title = request.getParameter("title");
+            String content = request.getParameter("content");
+            String clientIp = IpUtil.getClientIpAddr(request);
+            
+            System.out.println("폼 데이터: title=[" + title + "], content 길이=[" + (content != null ? content.length() : "null") + "]");
+            
+            // Part 목록 출력 (멀티파트 요청인 경우)
+            if (request.getContentType() != null && request.getContentType().startsWith("multipart/form-data")) {
+                System.out.println("멀티파트 요청 감지됨, Part 목록:");
+                for (Part part : request.getParts()) {
+                    System.out.println(" - Part 이름: " + part.getName() + ", 크기: " + part.getSize());
+                }
+            }
+            
+            // 유효성 검사
+            if (title == null || title.trim().isEmpty()) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "제목을 입력해주세요.");
+                sendJsonResponse(response, errorResult);
+                System.out.println("유효성 검사 실패: 제목 없음");
+                return;
+            }
+            
+            if (content == null || content.trim().isEmpty()) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "내용을 입력해주세요.");
+                sendJsonResponse(response, errorResult);
+                System.out.println("유효성 검사 실패: 내용 없음");
+                return;
+            }
+            
+            FreeboardDTO freeboard = new FreeboardDTO(title, content, clientIp, user.getUserUid());
+            
+            boolean result = freeboardService.createFreeboard(freeboard);
+            System.out.println("게시글 등록 결과: " + (result ? "성공" : "실패") + ", ID: " + freeboard.getFreeboardUid());
+            
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("success", result);
+            
+            if (result) {
+                responseData.put("message", "게시글이 성공적으로 등록되었습니다.");
+                responseData.put("postId", freeboard.getFreeboardUid());
+                responseData.put("redirect", request.getContextPath() + "/freeboard?action=view&id=" + freeboard.getFreeboardUid());
+            } else {
+                responseData.put("message", "게시글 등록에 실패했습니다.");
+                responseData.put("error", "게시글 등록에 실패했습니다.");
+                responseData.put("freeboard", freeboard);
+            }
+            
+            System.out.println("응답 전송: " + responseData);
+            sendJsonResponse(response, responseData);
+            System.out.println("==== 게시글 등록 요청 완료 ====");
+        } catch (Exception e) {
+            System.err.println("게시글 등록 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "게시글 등록 중 오류가 발생했습니다: " + e.getMessage());
+            sendJsonResponse(response, errorResult);
         }
-        
-        sendJsonResponse(response, responseData);
     }
     
     /**
@@ -1269,14 +1452,15 @@ public class FreeboardController extends HttpServlet implements Controller {
             sendJsonResponse(response, false, "댓글 목록 조회 중 오류가 발생했습니다.");
         }
     }
-    
-    /**
+      /**
      * JSON 응답 전송
      */
     private void sendJsonResponse(HttpServletResponse response, Object data) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
         PrintWriter out = response.getWriter();
-        out.print(new Gson().toJson(data));
+        
+        // 커스텀 어댑터를 사용하여 LocalDateTime 직렬화 처리
+        out.print(gson.toJson(data));
         out.flush();
     }
     
