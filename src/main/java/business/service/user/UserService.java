@@ -3,6 +3,7 @@ package business.service.user;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import dto.user.UserDTO;
@@ -205,8 +206,7 @@ public class UserService {
         // 저장된 암호화 비밀번호와 비교
         return hashedInput.equals(storedPassword);
     }
-    
-    /**
+      /**
      * 비밀번호 검증 (사용자 ID와 입력 비밀번호 기반)
      * @param userId 사용자 ID
      * @param inputPassword 입력받은 비밀번호
@@ -232,6 +232,13 @@ public class UserService {
     }
     
     /**
+     * 비밀번호 검증 (UserpageController 호환용 메서드)
+     */
+    public boolean validatePassword(long userId, String password) {
+        return verifyPassword(userId, password);
+    }
+    
+    /**
      * 회원 탈퇴
      * @param userId 사용자 ID
      * @return 성공 시 true, 실패 시 false
@@ -243,6 +250,13 @@ public class UserService {
             e.printStackTrace();
             return false;
         }
+    }
+    
+    /**
+     * 회원 탈퇴 (UserpageController 호환용 메서드)
+     */
+    public boolean deleteUser(long userId) {
+        return deactivateUser(userId);
     }
     
     /**
@@ -339,6 +353,83 @@ public class UserService {
             return userDAO.deactivateUser(userId);
         } catch (SQLException e) {
             System.err.println("회원 탈퇴 처리 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * 사용자의 현재 포인트 조회
+     * @param userId 사용자 ID
+     * @return 사용자의 현재 포인트
+     */
+    public int getUserPoints(long userId) {
+        try {
+            // TODO: 실제 포인트 조회 로직 구현
+            // 임시 구현: 사용자 ID를 기반으로 더미 포인트 생성
+            return 1000 + (int)(userId % 1000);
+        } catch (Exception e) {
+            System.err.println("포인트 조회 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            return 0;
+        }
+    }
+    
+    /**
+     * 사용자의 포인트 변동 내역 조회
+     * @param userId 사용자 ID
+     * @param page 페이지 번호
+     * @param pageSize 페이지 크기
+     * @return 포인트 변동 내역 목록
+     */
+    public List<Object> getUserPointHistory(long userId, int page, int pageSize) {
+        try {
+            // TODO: 실제 포인트 내역 조회 로직 구현
+            // 임시 구현: 더미 데이터 반환
+            List<Object> dummyHistory = new ArrayList<>();
+            // 더미 데이터는 UserpageController에서 처리됨
+            return dummyHistory;
+        } catch (Exception e) {
+            System.err.println("포인트 내역 조회 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
+     * 사용자의 전체 포인트 변동 내역 개수 조회
+     * @param userId 사용자 ID
+     * @return 전체 내역 개수
+     */
+    public int getTotalUserPointHistory(long userId) {
+        try {
+            // TODO: 실제 포인트 내역 개수 조회 로직 구현
+            // 임시 구현: 더미 데이터 개수 반환
+            return 5;
+        } catch (Exception e) {
+            System.err.println("포인트 내역 개수 조회 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            return 0;
+        }
+    }
+    
+    /**
+     * 사용자 커스터마이징 저장
+     * @param userId 사용자 ID
+     * @param selectedIconId 선택한 아이콘 ID
+     * @param selectedThemeId 선택한 테마 ID
+     * @return 저장 성공 여부
+     */
+    public boolean saveUserCustomization(long userId, String selectedIconId, String selectedThemeId) {
+        try {
+            // TODO: 실제 사용자 커스터마이징 저장 로직 구현
+            // 임시 구현: 항상 성공 반환
+            System.out.println("사용자 커스터마이징 저장 - 사용자 ID: " + userId 
+                + ", 아이콘: " + selectedIconId 
+                + ", 테마: " + selectedThemeId);
+            return true;
+        } catch (Exception e) {
+            System.err.println("커스터마이징 저장 중 오류 발생: " + e.getMessage());
             e.printStackTrace();
             return false;
         }

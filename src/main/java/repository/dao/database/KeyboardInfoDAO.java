@@ -52,7 +52,7 @@ public class KeyboardInfoDAO {
         List<KeyboardInfoDTO> keyboardList = new ArrayList<>();
         String sql = "SELECT k.*, " +
                     "(SELECT AVG(score_value) FROM keyboard_score WHERE keyboard_uid = k.keyboard_uid) AS avg_score " +
-                    "FROM keyboard_info k " +
+                    "FROM keyboard_information k " + // keyboard_info -> keyboard_information
                     "ORDER BY k.keyboard_name " +
                     "LIMIT ? OFFSET ?";
         
@@ -87,7 +87,7 @@ public class KeyboardInfoDAO {
     public KeyboardInfoDTO getKeyboardInfoById(long keyboardId) throws SQLException {
         String sql = "SELECT k.*, " +
                     "(SELECT AVG(score_value) FROM keyboard_score WHERE keyboard_uid = k.keyboard_uid) AS avg_score " +
-                    "FROM keyboard_info k " +
+                    "FROM keyboard_information k " + // keyboard_info -> keyboard_information
                     "WHERE k.keyboard_uid = ?";
         
         try {
@@ -170,7 +170,7 @@ public class KeyboardInfoDAO {
         
         sql.append("SELECT k.*, ");
         sql.append("(SELECT AVG(score_value) FROM keyboard_score WHERE keyboard_uid = k.keyboard_uid) AS avg_score ");
-        sql.append("FROM keyboard_info k ");
+        sql.append("FROM keyboard_information k "); // keyboard_info -> keyboard_information
         sql.append("WHERE 1=1 ");
         
         // 검색 조건 추가
@@ -341,7 +341,7 @@ public class KeyboardInfoDAO {
             return cancelKeyboardScrap(keyboardId, userId);
         }
         
-        String sql = "INSERT INTO keyboard_scrap " +
+        String sql = "INSERT INTO scrap " + // keyboard_scrap -> scrap
                     "(keyboard_uid, user_uid, scrap_date) " +
                     "VALUES (?, ?, NOW())";
         
@@ -362,7 +362,7 @@ public class KeyboardInfoDAO {
      * 키보드 스크랩 취소
      */
     private boolean cancelKeyboardScrap(long keyboardId, long userId) throws SQLException {
-        String sql = "DELETE FROM keyboard_scrap " +
+        String sql = "DELETE FROM scrap " + // keyboard_scrap -> scrap
                     "WHERE keyboard_uid = ? AND user_uid = ?";
         
         try {
@@ -382,7 +382,7 @@ public class KeyboardInfoDAO {
      * 이미 스크랩했는지 확인
      */
     public boolean hasAlreadyScrapped(long keyboardId, long userId) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM keyboard_scrap " +
+        String sql = "SELECT COUNT(*) FROM scrap " + // keyboard_scrap -> scrap
                     "WHERE keyboard_uid = ? AND user_uid = ?";
         
         try {
@@ -858,7 +858,7 @@ public class KeyboardInfoDAO {
      * 총 키보드 수 조회 (페이징용)
      */
     public int getTotalKeyboardCount() throws SQLException {
-        String sql = "SELECT COUNT(*) FROM keyboard_info";
+        String sql = "SELECT COUNT(*) FROM keyboard_information"; // keyboard_info -> keyboard_information
         
         try {
             conn = getConnection();
@@ -881,7 +881,7 @@ public class KeyboardInfoDAO {
             String switchType, String layoutType, String connectType) throws SQLException {
         StringBuilder sql = new StringBuilder();
         
-        sql.append("SELECT COUNT(*) FROM keyboard_info k WHERE 1=1 ");
+        sql.append("SELECT COUNT(*) FROM keyboard_information k WHERE 1=1 "); // keyboard_info -> keyboard_information
         
         // 검색 조건 추가
         List<Object> params = new ArrayList<>();
@@ -938,7 +938,7 @@ public class KeyboardInfoDAO {
      */
     public List<String> getAllManufacturers() throws SQLException {
         List<String> manufacturers = new ArrayList<>();
-        String sql = "SELECT DISTINCT keyboard_manufacturer FROM keyboard_info ORDER BY keyboard_manufacturer";
+        String sql = "SELECT DISTINCT keyboard_manufacturer FROM keyboard_information ORDER BY keyboard_manufacturer"; // keyboard_info -> keyboard_information
         
         try {
             conn = getConnection();
@@ -960,7 +960,7 @@ public class KeyboardInfoDAO {
      */
     public List<String> getAllSwitchTypes() throws SQLException {
         List<String> switchTypes = new ArrayList<>();
-        String sql = "SELECT DISTINCT keyboard_switch_type FROM keyboard_info ORDER BY keyboard_switch_type";
+        String sql = "SELECT DISTINCT keyboard_switch_type FROM keyboard_information ORDER BY keyboard_switch_type"; // keyboard_info -> keyboard_information
         
         try {
             conn = getConnection();
@@ -982,7 +982,7 @@ public class KeyboardInfoDAO {
      */
     public List<String> getAllLayoutTypes() throws SQLException {
         List<String> layoutTypes = new ArrayList<>();
-        String sql = "SELECT DISTINCT keyboard_layout_type FROM keyboard_info ORDER BY keyboard_layout_type";
+        String sql = "SELECT DISTINCT keyboard_layout_type FROM keyboard_information ORDER BY keyboard_layout_type"; // keyboard_info -> keyboard_information
         
         try {
             conn = getConnection();
@@ -1004,7 +1004,7 @@ public class KeyboardInfoDAO {
      */
     public List<String> getAllConnectTypes() throws SQLException {
         List<String> connectTypes = new ArrayList<>();
-        String sql = "SELECT DISTINCT keyboard_connect_type FROM keyboard_info ORDER BY keyboard_connect_type";
+        String sql = "SELECT DISTINCT keyboard_connect_type FROM keyboard_information ORDER BY keyboard_connect_type"; // keyboard_info -> keyboard_information
         
         try {
             conn = getConnection();
@@ -1030,8 +1030,8 @@ public class KeyboardInfoDAO {
         String sql = "SELECT k.*, " +
                     "(SELECT AVG(score_value) FROM keyboard_score WHERE keyboard_uid = k.keyboard_uid) AS avg_score, " +
                     "s.scrap_date " +
-                    "FROM keyboard_info k " +
-                    "JOIN keyboard_scrap s ON k.keyboard_uid = s.keyboard_uid " +
+                    "FROM keyboard_information k " + // keyboard_info -> keyboard_information
+                    "JOIN scrap s ON k.keyboard_uid = s.keyboard_uid " + // keyboard_scrap -> scrap
                     "WHERE s.user_uid = ? " +
                     "ORDER BY s.scrap_date DESC " +
                     "LIMIT ? OFFSET ?";
@@ -1069,7 +1069,7 @@ public class KeyboardInfoDAO {
      */
     public int getTotalScrapCountByUserId(long userId) throws SQLException {
         String sql = "SELECT COUNT(*) " +
-                    "FROM keyboard_scrap " +
+                    "FROM scrap " + // keyboard_scrap -> scrap
                     "WHERE user_uid = ?";
         
         try {
@@ -1098,7 +1098,7 @@ public class KeyboardInfoDAO {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT s.*, k.keyboard_name, u.nickname ");
         sql.append("FROM keyboard_score s ");
-        sql.append("JOIN keyboard_info k ON s.keyboard_uid = k.keyboard_uid ");
+        sql.append("JOIN keyboard_information k ON s.keyboard_uid = k.keyboard_uid "); // keyboard_info -> keyboard_information
         sql.append("JOIN user u ON s.user_uid = u.user_id ");
         sql.append("WHERE s.user_uid = ? ");
         
