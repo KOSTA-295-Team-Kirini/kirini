@@ -218,6 +218,26 @@ class ApiClient {
     return ApiClient.request(fullUrl, { method: "GET" }, withAuth);
   }
 
+  /**
+   * GET 요청을 JSON으로 응답받는 메소드
+   * @param {string} url - API URL
+   * @param {Object} params - 쿼리 파라미터
+   * @param {boolean} withAuth - 인증 필요 여부
+   * @returns {Promise<Object>} JSON 응답
+   */
+  static async getJson(url, params = {}, withAuth = true) {
+    const query = new URLSearchParams(params).toString();
+    const fullUrl = query ? `${url}?${query}` : url;
+    return ApiClient.request(
+      fullUrl,
+      {
+        method: "GET",
+        headers: { Accept: "application/json" },
+      },
+      withAuth
+    );
+  }
+
   static async post(url, data, withAuth = false) {
     const body = new URLSearchParams();
     for (const key in data) {

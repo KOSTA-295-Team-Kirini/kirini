@@ -76,8 +76,15 @@ public class KeyboardScoreDTO {
     public String getKeyboardName() {
         return keyboardName;
     }
-    
-    public void setKeyboardName(String keyboardName) {
+      public void setKeyboardName(String keyboardName) {
         this.keyboardName = keyboardName;
+    }
+    
+    /**
+     * getScoreTime 메서드 - 마이페이지 컨트롤러 호환용
+     * createdAt 필드를 반환합니다.
+     */
+    public LocalDateTime getScoreTime() {
+        return createdAt;
     }
 }

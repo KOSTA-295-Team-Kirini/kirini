@@ -1,201 +1,829 @@
-document.addEventListener('DOMContentLoaded', function() {
+// ApiClient 객체 참조
+const apiClient = window.ApiClient;
+const userService = window.UserService;
+
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("마이페이지 JavaScript 로드됨");
+
   // 탭 전환 기능
-  document.querySelectorAll('.mypage-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
+  document.querySelectorAll(".mypage-tab").forEach((tab) => {
+    tab.addEventListener("click", () => {
       // 활성화된 탭 변경
-      document.querySelectorAll('.mypage-tab').forEach(t => {
-        t.classList.remove('active');
+      document.querySelectorAll(".mypage-tab").forEach((t) => {
+        t.classList.remove("active");
       });
-      tab.classList.add('active');
-      
+      tab.classList.add("active");
+
       // 해당 섹션 표시
       const tabId = tab.dataset.tab;
-      document.querySelectorAll('.mypage-section').forEach(section => {
-        section.classList.remove('active');
+      document.querySelectorAll(".mypage-section").forEach((section) => {
+        section.classList.remove("active");
       });
-      document.getElementById(tabId).classList.add('active');
+      document.getElementById(tabId).classList.add("active");
+
+      // 해당 탭의 데이터 로드
+      console.log(`${tabId} 탭 클릭됨`);
+      loadTabData(tabId);
     });
   });
 
   // 꾸미기 아이템 선택 기능
-  document.querySelectorAll('.customize-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const parent = item.parentElement;
-      parent.querySelectorAll('.customize-item').forEach(i => {
-        i.classList.remove('active');
-      });
-      item.classList.add('active');
-    });
-  });
-    
-  // 사용자 프로필 정보 로드 및 표시 함수
-  async function loadUserProfile() {
-    try {
-      // UserService를 사용하여 현재 사용자 프로필 정보 요청 (인증된 사용자 기준)
-      const userProfile = await UserService.getProfile(); // userId를 생략하면 현재 사용자 프로필을 가져옴
-
-      if (userProfile && userProfile.success) {
-        const userData = userProfile.data; // 실제 데이터 객체 키에 따라 수정 (예: userProfile.user)
-
-        // 프로필 정보 표시 영역 업데이트
-        const usernameDisplay = document.getElementById('profile-username-display');
-        const emailDisplay = document.getElementById('profile-email-display');
-        const postCountDisplay = document.getElementById('profile-post-count');
-        const scrapCountDisplay = document.getElementById('profile-scrap-count');
-        const pointCountDisplay = document.getElementById('profile-point-count');
-
-        if (usernameDisplay) usernameDisplay.textContent = userData.name ? `${userData.name}님` : '이름 정보 없음';
-        if (emailDisplay) emailDisplay.textContent = userData.email || '이메일 정보 없음';
-        // 아래 통계 수치는 userData 객체에 해당 필드가 있어야 합니다. (예: userData.postCount)
-        // 실제 필드명으로 수정해주세요.
-        if (postCountDisplay) postCountDisplay.textContent = userData.postCount !== undefined ? userData.postCount : '-'; 
-        if (scrapCountDisplay) scrapCountDisplay.textContent = userData.scrapCount !== undefined ? userData.scrapCount : '-';
-        if (pointCountDisplay) pointCountDisplay.textContent = userData.points !== undefined ? userData.points.toLocaleString() : '-';
-
-        // 내 정보 수정 폼 필드 채우기
-        const usernameInput = document.getElementById('username');
-        const emailInput = document.getElementById('email');
-        const bioInput = document.getElementById('bio');
-
-        if (usernameInput) usernameInput.value = userData.name || '';
-        if (emailInput) emailInput.value = userData.email || '';
-        if (bioInput) bioInput.value = userData.bio || '';
-
-      } else {
-        console.error('프로필 정보 로드 실패:', userProfile ? userProfile.message : '알 수 없는 오류');
-        alert('프로필 정보를 불러오는데 실패했습니다. 다시 시도해주세요.');
-        // 로그인 페이지로 리디렉션 또는 다른 오류 처리
-        // window.location.href = '/login.html'; 
+  // 이벤트 위임 방식으로 변경 (동적 생성 요소에도 적용되도록)
+  document
+    .querySelector(".mypage-content")
+    .addEventListener("click", function (e) {
+      const item = e.target.closest(".customize-item");
+      if (item) {
+        const parent = item.parentElement;
+        parent.querySelectorAll(".customize-item").forEach((i) => {
+          i.classList.remove("active");
+        });
+        item.classList.add("active");
+        console.log(`꾸미기 아이템 선택: ${item.dataset.itemId}`);
       }
-    } catch (error) {
-      console.error('프로필 정보 로드 중 오류 발생:', error);
-      alert('프로필 정보를 불러오는 중 오류가 발생했습니다.');
-    }
-  }
+    });
 
-  // 페이지 로드 시 사용자 프로필 정보 로드
-  loadUserProfile();
-
-  // 내 정보 수정 기능
-  const profileForm = document.querySelector('#profile form');
+  // 프로필 수정 폼 제출 이벤트
+  const profileForm = document.querySelector("#profile form");
   if (profileForm) {
-    profileForm.addEventListener('submit', async (event) => {
-      event.preventDefault(); // 폼 기본 제출 동작 방지
+    profileForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      updateProfile();
+    });
+  }
 
-      const usernameInput = document.getElementById('username');
-      const emailInput = document.getElementById('email');
-      const passwordInput = document.getElementById('password');
-      const passwordConfirmInput = document.getElementById('password-confirm');
-      const bioInput = document.getElementById('bio');
-
-      const username = usernameInput ? usernameInput.value : '';
-      const email = emailInput ? emailInput.value : '';
-      const password = passwordInput ? passwordInput.value : '';
-      const passwordConfirm = passwordConfirmInput ? passwordConfirmInput.value : '';
-      const bio = bioInput ? bioInput.value : '';
-
-      if (password && password !== passwordConfirm) {
-        alert('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.');
-        return;
-      }
-
-      const profileData = {
-        name: username, // 서버에서 받는 필드명에 맞춰야 할 수 있습니다. (예: name 또는 username)
-        email,
-        bio
-      };
-
-      // 비밀번호 필드가 채워져 있고, 일치하는 경우에만 profileData에 추가
-      if (password) {
-        // UserService.updateProfile은 전체 프로필을 업데이트하므로,
-        // 비밀번호 변경은 별도의 API(UserService.changePassword)를 사용하거나
-        // updateProfile API가 비밀번호 필드를 선택적으로 받도록 해야 합니다.
-        // 여기서는 profileData에 password를 포함시켜서 보내고,
-        // 서버 API가 이를 처리한다고 가정합니다.
-        // 만약 비밀번호 변경 API가 분리되어 있다면, 별도 UI와 로직이 필요합니다.
-        profileData.newPassword = password; // 서버에서 받는 필드명에 맞춰야 합니다.
-      }
-
-      try {
-        // UserService를 사용하여 프로필 업데이트 요청
-        const result = await UserService.updateProfile(profileData);
-        
-        // api-client.js의 UserService.updateProfile는 이미 JSON 파싱을 처리하고,
-        // 성공/실패에 따라 resolve/reject를 반환하거나, 특정 구조의 객체를 반환할 것으로 예상됩니다.
-        // 실제 UserService.updateProfile의 반환 값 구조에 맞춰 처리해야 합니다.
-        // 예를 들어, 성공 시 { success: true, message: "..." } 형태를 반환한다고 가정합니다.
-
-        if (result && (result.success || result.status === 'success')) { // 실제 응답 구조에 따라 조건 변경
-          alert(result.message || '정보가 성공적으로 수정되었습니다.');
-          // 필요하다면 페이지를 새로고침하거나 UI를 업데이트합니다.
-          // window.location.reload(); 
-        } else {
-          // 실패 메시지가 result 객체 안에 있을 경우
-          alert('정보 수정에 실패했습니다.\\n' + (result.message || '알 수 없는 오류가 발생했습니다.'));
-        }
-      } catch (error) {
-        console.error('정보 수정 중 오류 발생:', error);
-        // error 객체에 서버에서 보낸 메시지가 포함되어 있을 수 있습니다.
-        alert('정보 수정 중 오류가 발생했습니다.\\n' + (error.message || ''));
+  // 회원 탈퇴 버튼 이벤트
+  const deleteAccountBtn = document.querySelector(".btn-danger");
+  if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener("click", function () {
+      if (confirm("정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+        deleteAccount();
       }
     });
   }
 
-  // 스크랩 정보 로드 함수
-  async function loadScrappedKeyboards() {
-    const scrapKeyboardGrid = document.getElementById('scrap-keyboard-grid');
-    if (!scrapKeyboardGrid) return;
+  // 꾸미기 변경사항 저장 버튼 이벤트
+  const saveCustomizeBtn = document.querySelector("#customize .btn");
+  if (saveCustomizeBtn) {
+    saveCustomizeBtn.addEventListener("click", function () {
+      saveCustomization();
+    });
+  }
 
-    try {
-      // ApiClient를 사용하여 스크랩 목록을 가져오는 API 호출 (엔드포인트는 확인 필요)
-      // api-client.js에 스크랩 전용 함수가 없다면, ApiClient.get을 직접 사용할 수 있습니다.
-      // UserService.getProfile() 등이 스크랩 정보를 포함할 수도 있습니다.
-      // 여기서는 기존 엔드포인트를 ApiClient.get으로 호출하는 예시를 보여줍니다.
-      // 실제 엔드포인트는 /user/scraps.do 또는 유사한 형태일 가능성이 높습니다.
-      const result = await ApiClient.get('/user/scraps.do'); // 또는 '/mypage.do?api=true&endpoint=scraps'가 맞다면 그대로 사용
+  // 초기 데이터 로드 (프로필 탭)
+  loadTabData("profile");
+});
 
-      // ApiClient.get은 이미 JSON 파싱을 처리합니다.
-      // 응답 구조가 { items: [...] } 형태라고 가정합니다.
-      scrapKeyboardGrid.innerHTML = ''; // 기존 내용 초기화
+/**
+ * 탭 데이터 로드 함수
+ * @param {string} tabId - 탭 ID (profile, scraps, posts, ratings, points, customize)
+ * @param {number} page - 페이지 번호 (기본값: 1)
+ */
+async function loadTabData(tabId, page = 1) {
+  console.log(`${tabId} 탭 데이터 로드 시작 (페이지: ${page})`);
 
-      const scraps = result.items || result; // 실제 응답 구조에 따라 scraps 배열을 가져옵니다.
+  // 로딩 표시 시작
+  showLoading(tabId);
 
-      if (!scraps || scraps.length === 0) {
-        scrapKeyboardGrid.innerHTML = '<p>스크랩한 키보드가 아직 없습니다. 첫 스크랩을 해보세요!</p>';
-        return;
+  try {
+    const response = await apiClient.get(
+      `/mypage/api?endpoint=${tabId}&page=${page}`
+    );
+    console.log(`${tabId} 데이터 응답:`, response);
+
+    // 응답이 없거나 invalid한 경우 처리
+    if (!response) {
+      throw new Error("서버로부터 응답을 받지 못했습니다.");
+    }
+
+    // 데이터 렌더링 (탭별로 다른 함수 호출)
+    switch (tabId) {
+      case "profile":
+        renderProfile(response);
+        break;
+      case "scraps":
+        renderScraps(response);
+        break;
+      case "posts":
+        renderPosts(response);
+        break;
+      case "ratings":
+        renderRatings(response);
+        break;
+      case "points":
+        renderPoints(response);
+        break;
+      case "customize":
+        renderCustomize(response);
+        break;
+    }
+
+    // 로딩 표시 종료
+    hideLoading(tabId);
+  } catch (error) {
+    console.error(`${tabId} 데이터 로드 중 오류 발생:`, error);
+    // 오류 메시지 표시
+    showError(tabId, "데이터 로드 중 오류가 발생했습니다.");
+    // 로딩 표시 종료
+    hideLoading(tabId);
+  }
+}
+
+/**
+ * 프로필 데이터 렌더링
+ * @param {Object} data - 프로필 데이터
+ */
+function renderProfile(data) {
+  console.log("프로필 데이터 렌더링:", data);
+
+  // 프로필 기본 정보 표시
+  const profileName = document.querySelector(".profile-details h3");
+  const profileEmail = document.querySelector(".profile-details p");
+
+  if (profileName) profileName.textContent = `${data.userName}님`;
+  if (profileEmail) profileEmail.textContent = data.userEmail;
+
+  // 폼 필드에 값 설정
+  document.getElementById("username").value = data.userName || "";
+  document.getElementById("email").value = data.userEmail || "";
+  document.getElementById("bio").value = data.userIntroduce || "";
+
+  // 비밀번호 필드 초기화
+  document.getElementById("password").value = "";
+  document.getElementById("password-confirm").value = "";
+}
+
+/**
+ * 스크랩 데이터 렌더링
+ * @param {Object} data - 스크랩 데이터 (items: 키보드 배열, pagination: 페이징 정보)
+ */
+function renderScraps(data) {
+  console.log("스크랩 데이터 렌더링:", data);
+
+  const container = document.querySelector("#scraps .keyboard-grid");
+
+  // 컨테이너가 없으면 중단
+  if (!container) {
+    console.error("스크랩 컨테이너를 찾을 수 없습니다.");
+    return;
+  }
+
+  // 컨테이너 내용 비우기
+  container.innerHTML = "";
+
+  // 데이터가 없는 경우
+  if (!data.items || data.items.length === 0) {
+    container.innerHTML = '<p class="no-data">스크랩한 키보드가 없습니다.</p>';
+    return;
+  }
+
+  // 각 키보드 아이템 렌더링
+  data.items.forEach((keyboard) => {
+    const keyboardCard = document.createElement("div");
+    keyboardCard.className = "keyboard-card";
+    keyboardCard.innerHTML = `
+      <img src="${
+        keyboard.imageUrl || "../img/keyboard-placeholder.jpg"
+      }" alt="${keyboard.name}" 
+           class="keyboard-image" onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
+      <div class="keyboard-content">
+        <h3>${keyboard.name}</h3>
+        <p>${keyboard.description || "설명 없음"}</p>
+        <div class="keyboard-tags">
+          ${
+            keyboard.tags
+              ? keyboard.tags
+                  .map((tag) => `<span class="tag">${tag}</span>`)
+                  .join("")
+              : ""
+          }
+        </div>
+        <div class="keyboard-actions">
+          <a href="/keyboard/detail.do?id=${
+            keyboard.id
+          }" class="btn btn-small">상세보기</a>
+        </div>
+      </div>
+    `;
+    container.appendChild(keyboardCard);
+  });
+
+  // 페이징 컨트롤 생성
+  renderPagination("scraps", data.pagination);
+}
+
+/**
+ * 내가 쓴 글 데이터 렌더링
+ * @param {Object} data - 글 데이터 (items: 게시글 배열, pagination: 페이징 정보)
+ */
+function renderPosts(data) {
+  console.log("내가 쓴 글 데이터 렌더링:", data);
+
+  const container = document.querySelector("#posts .item-list");
+
+  if (!container) {
+    console.error("게시글 컨테이너를 찾을 수 없습니다.");
+    return;
+  }
+
+  // 컨테이너 내용 비우기
+  container.innerHTML = "";
+
+  // 데이터가 없는 경우
+  if (!data.items || data.items.length === 0) {
+    container.innerHTML = '<p class="no-data">작성한 게시글이 없습니다.</p>';
+    return;
+  }
+
+  // 각 게시글 아이템 렌더링
+  data.items.forEach((post) => {
+    const postItem = document.createElement("li");
+    postItem.className = "item-card";
+
+    // 게시판 종류에 따른 URL 생성
+    const boardUrl = getBoardUrl(post.boardType, post.postId);
+
+    postItem.innerHTML = `
+      <div class="item-info">
+        <h3><a href="${boardUrl}">${post.title}</a></h3>
+        <p class="item-meta">
+          <span>${post.boardName || "게시판"}</span> | 
+          <span>조회 ${post.viewCount}</span> | 
+          <span>${formatDate(post.createdAt)}</span>
+        </p>
+      </div>
+      <div class="item-actions">
+        <a href="${boardUrl}" class="btn btn-small">보기</a>
+      </div>
+    `;
+    container.appendChild(postItem);
+  });
+
+  // 페이징 컨트롤 생성
+  renderPagination("posts", data.pagination);
+}
+
+/**
+ * 별점 내역 데이터 렌더링
+ * @param {Object} data - 별점 데이터 (items: 별점 배열, pagination: 페이징 정보)
+ */
+function renderRatings(data) {
+  console.log("별점 내역 데이터 렌더링:", data);
+
+  const container = document.querySelector("#ratings .rating-list");
+
+  if (!container) {
+    console.error("별점 컨테이너를 찾을 수 없습니다.");
+    return;
+  }
+
+  // 컨테이너 내용 비우기
+  container.innerHTML = "";
+
+  // 데이터가 없는 경우
+  if (!data.items || data.items.length === 0) {
+    container.innerHTML = '<p class="no-data">별점 평가 내역이 없습니다.</p>';
+    return;
+  }
+
+  // 각 별점 아이템 렌더링
+  data.items.forEach((rating) => {
+    const ratingItem = document.createElement("div");
+    ratingItem.className = "rating-item";
+
+    // 별점 표시 (★☆)
+    const stars = getStarRating(rating.score);
+
+    ratingItem.innerHTML = `
+      <div class="rating-info">
+        <h3><a href="/keyboard/detail.do?id=${rating.keyboardId}">${
+      rating.keyboardName
+    }</a></h3>
+        <p>${rating.comment || "평가 코멘트 없음"}</p>
+        <p class="rating-date">${formatDate(rating.ratedAt)}</p>
+      </div>
+      <div class="rating-stars">${stars}</div>
+    `;
+    container.appendChild(ratingItem);
+  });
+
+  // 페이징 컨트롤 생성
+  renderPagination("ratings", data.pagination);
+}
+
+/**
+ * 활동 포인트 데이터 렌더링
+ * @param {Object} data - 포인트 데이터 (currentPoints: 현재 포인트, history: {items: 포인트 내역 배열, pagination: 페이징 정보})
+ */
+function renderPoints(data) {
+  console.log("활동 포인트 데이터 렌더링:", data);
+
+  // 현재 포인트 표시
+  const pointValue = document.querySelector(".point-value");
+  if (pointValue) {
+    pointValue.textContent = data.currentPoints.toLocaleString();
+  }
+
+  // 포인트 내역 컨테이너
+  const container = document.querySelector(".point-history");
+
+  if (!container) {
+    console.error("포인트 내역 컨테이너를 찾을 수 없습니다.");
+    return;
+  }
+
+  // 컨테이너 내용 비우기
+  container.innerHTML = "";
+
+  // 데이터가 없는 경우
+  if (!data.history || !data.history.items || data.history.items.length === 0) {
+    container.innerHTML = '<p class="no-data">포인트 내역이 없습니다.</p>';
+    return;
+  }
+
+  // 각 포인트 내역 아이템 렌더링
+  data.history.items.forEach((item) => {
+    const pointItem = document.createElement("div");
+    pointItem.className = "point-item";
+
+    // 포인트 증감에 따른 클래스 설정
+    const changeClass = item.pointAmount > 0 ? "plus" : "minus";
+    const pointText =
+      item.pointAmount > 0 ? `+${item.pointAmount}` : `${item.pointAmount}`;
+
+    pointItem.innerHTML = `
+      <div class="point-desc">${item.description}</div>
+      <div class="point-change ${changeClass}">${pointText}</div>
+      <div class="point-date">${formatDate(item.createdAt)}</div>
+    `;
+    container.appendChild(pointItem);
+  });
+
+  // 페이징 컨트롤 생성
+  renderPagination("points", data.history.pagination);
+}
+
+/**
+ * 꾸미기 데이터 렌더링
+ * @param {Object} data - 꾸미기 데이터 (items: 아이템 배열, userSettings: 사용자 설정)
+ */
+function renderCustomize(data) {
+  console.log("꾸미기 데이터 렌더링:", data);
+
+  // 아이콘 영역 렌더링
+  renderCustomizeSection(
+    "icons",
+    data.items.icons,
+    data.userSettings.selectedIconId
+  );
+
+  // 테마 영역 렌더링
+  renderCustomizeSection(
+    "themes",
+    data.items.themes,
+    data.userSettings.selectedThemeId
+  );
+}
+
+/**
+ * 꾸미기 섹션 렌더링 (아이콘 또는 테마)
+ * @param {string} type - 섹션 타입 ('icons' 또는 'themes')
+ * @param {Array} items - 아이템 배열
+ * @param {string} selectedId - 현재 선택된 아이템 ID
+ */
+function renderCustomizeSection(type, items, selectedId) {
+  // 컨테이너 선택 (아이콘 또는 테마)
+  const container = document.querySelector(
+    type === "icons"
+      ? "#customize .item-customize:nth-child(1) .customize-options"
+      : "#customize .item-customize:nth-child(2) .customize-options"
+  );
+
+  if (!container) {
+    console.error(`${type} 컨테이너를 찾을 수 없습니다.`);
+    return;
+  }
+
+  // 컨테이너 내용 비우기
+  container.innerHTML = "";
+
+  // 데이터가 없는 경우
+  if (!items || items.length === 0) {
+    container.innerHTML =
+      '<p class="no-data">사용 가능한 아이템이 없습니다.</p>';
+    return;
+  }
+
+  // 각 아이템 렌더링
+  items.forEach((item) => {
+    const customizeItem = document.createElement("div");
+    customizeItem.className = "customize-item";
+    customizeItem.dataset.itemId = item.id;
+
+    // 현재 선택된 아이템인 경우 active 클래스 추가
+    if (item.id === selectedId) {
+      customizeItem.classList.add("active");
+    }
+
+    // 아이템 타입에 따라 내용 다르게 구성
+    if (type === "icons") {
+      customizeItem.innerHTML = `
+        <div class="icon-preview">${item.iconHtml || "👤"}</div>
+        <p>${item.name}</p>
+        <p class="item-cost">${
+          item.cost > 0 ? `${item.cost} 포인트` : "기본"
+        }</p>
+      `;
+    } else {
+      customizeItem.innerHTML = `
+        <div class="theme-preview" style="background-color: ${
+          item.previewColor || "#f0f0f0"
+        }"></div>
+        <p>${item.name}</p>
+        <p class="item-cost">${
+          item.cost > 0 ? `${item.cost} 포인트` : "기본"
+        }</p>
+      `;
+    }
+
+    container.appendChild(customizeItem);
+  });
+}
+
+/**
+ * 페이징 컨트롤 렌더링
+ * @param {string} tabId - 탭 ID
+ * @param {Object} pagination - 페이징 정보 (currentPage, pageSize, totalItems, totalPages)
+ */
+function renderPagination(tabId, pagination) {
+  console.log(`${tabId} 페이징 렌더링:`, pagination);
+
+  // 페이징 컨트롤 컨테이너
+  let container = document.querySelector(`#${tabId} .pagination-controls`);
+
+  // 컨테이너가 없으면 생성
+  if (!container) {
+    container = document.createElement("div");
+    container.className = "pagination-controls";
+    document.getElementById(tabId).appendChild(container);
+  }
+
+  // 컨테이너 내용 비우기
+  container.innerHTML = "";
+
+  // 페이징이 필요 없는 경우 중단
+  if (!pagination || pagination.totalPages <= 1) {
+    return;
+  }
+
+  // 페이징 UI 생성
+  const currentPage = pagination.currentPage;
+  const totalPages = pagination.totalPages;
+
+  // 이전 페이지 버튼
+  const prevBtn = document.createElement("button");
+  prevBtn.className = "pagination-btn prev";
+  prevBtn.textContent = "이전";
+  prevBtn.disabled = currentPage <= 1;
+  prevBtn.addEventListener("click", () => loadTabData(tabId, currentPage - 1));
+  container.appendChild(prevBtn);
+
+  // 페이지 번호 버튼들
+  const startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, startPage + 4);
+
+  for (let i = startPage; i <= endPage; i++) {
+    const pageBtn = document.createElement("button");
+    pageBtn.className = "pagination-btn page-num";
+    pageBtn.textContent = i;
+
+    if (i === currentPage) {
+      pageBtn.classList.add("active");
+    } else {
+      pageBtn.addEventListener("click", () => loadTabData(tabId, i));
+    }
+
+    container.appendChild(pageBtn);
+  }
+
+  // 다음 페이지 버튼
+  const nextBtn = document.createElement("button");
+  nextBtn.className = "pagination-btn next";
+  nextBtn.textContent = "다음";
+  nextBtn.disabled = currentPage >= totalPages;
+  nextBtn.addEventListener("click", () => loadTabData(tabId, currentPage + 1));
+  container.appendChild(nextBtn);
+}
+
+/**
+ * 프로필 정보 업데이트
+ */
+async function updateProfile() {
+  console.log("프로필 정보 업데이트 시작");
+
+  // 폼 데이터 가져오기
+  const username = document.getElementById("username").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const passwordConfirm = document.getElementById("password-confirm").value;
+  const bio = document.getElementById("bio").value;
+
+  // 유효성 검사
+  if (!username.trim()) {
+    alert("이름을 입력해주세요.");
+    return;
+  }
+
+  if (!email.trim() || !email.includes("@")) {
+    alert("유효한 이메일 주소를 입력해주세요.");
+    return;
+  }
+
+  // 비밀번호 변경 시 검증
+  if (password) {
+    if (password !== passwordConfirm) {
+      alert("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
+      return;
+    }
+
+    if (password.length < 8) {
+      alert("비밀번호는 8자 이상이어야 합니다.");
+      return;
+    }
+  }
+  // 프로필 데이터 객체 생성
+  const profileData = {
+    username,
+    email,
+    bio,
+  };
+
+  // 비밀번호가 입력된 경우에만 추가
+  if (password) {
+    profileData.password = password;
+    profileData.passwordConfirm = passwordConfirm;
+  }
+
+  try {
+    // 로딩 표시
+    showLoading("profile");
+
+    // API 요청
+    const response = await apiClient.postJson(
+      "/mypage/api?endpoint=updateProfile",
+      profileData
+    );
+    console.log("프로필 업데이트 응답:", response);
+
+    if (response && response.success) {
+      alert("프로필 정보가 성공적으로 업데이트되었습니다.");
+      // 프로필 데이터 다시 로드
+      loadTabData("profile");
+    } else {
+      alert(
+        `프로필 업데이트 실패: ${
+          response && response.message
+            ? response.message
+            : "알 수 없는 오류가 발생했습니다."
+        }`
+      );
+    }
+  } catch (error) {
+    console.error("프로필 업데이트 중 오류 발생:", error);
+    alert("프로필 정보 업데이트 중 오류가 발생했습니다.");
+  } finally {
+    // 로딩 표시 해제
+    hideLoading("profile");
+  }
+}
+
+/**
+ * 꾸미기 설정 저장
+ */
+async function saveCustomization() {
+  console.log("꾸미기 설정 저장 시작");
+
+  // 선택된 아이템 ID 가져오기
+  const selectedIconItem = document.querySelector(
+    "#customize .item-customize:nth-child(1) .customize-item.active"
+  );
+  const selectedThemeItem = document.querySelector(
+    "#customize .item-customize:nth-child(2) .customize-item.active"
+  );
+
+  if (!selectedIconItem || !selectedThemeItem) {
+    alert("아이콘과 테마를 모두 선택해주세요.");
+    return;
+  }
+
+  const selectedIconId = selectedIconItem.dataset.itemId;
+  const selectedThemeId = selectedThemeItem.dataset.itemId;
+
+  console.log(
+    `선택된 아이콘 ID: ${selectedIconId}, 테마 ID: ${selectedThemeId}`
+  );
+
+  try {
+    // 로딩 표시
+    showLoading("customize");
+
+    // API 요청
+    const response = await apiClient.postJson(
+      "/mypage/api?endpoint=saveCustomization",
+      {
+        selectedIconId,
+        selectedThemeId,
       }
+    );
 
-      scraps.forEach(keyboard => {
-        const card = document.createElement('div');
-        card.classList.add('keyboard-card');
-        card.innerHTML = `
-          <img src="${keyboard.imagePath || keyboard.image || '../img/default_keyboard.png'}" alt="${keyboard.name}" class="keyboard-image" onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">            <div class="keyboard-content">
-            <h3 class="keyboard-title">${keyboard.name}</h3>
-            <div class="keyboard-price">${keyboard.price ? (typeof keyboard.price === 'number' ? keyboard.price.toLocaleString() : keyboard.price) + '원' : '가격 정보 없음'}</div>
-            <button class="btn" style="margin-top: 0.5rem; padding: 0.5rem;" onclick="location.href='/keyboard.do?action=view&id=${keyboard.id || keyboard.keyboardId}'">상세보기</button>
-          </div>
-        `;
-        scrapKeyboardGrid.appendChild(card);
-      });
-    } catch (error) {
-      console.error('스크랩 정보 로드 중 오류 발생:', error);
-      scrapKeyboardGrid.innerHTML = '<p>스크랩 정보 로드 중 오류가 발생했습니다.</p>';
+    console.log("꾸미기 설정 저장 응답:", response);
+
+    if (response.success) {
+      alert("꾸미기 설정이 저장되었습니다.");
+    } else {
+      alert(
+        `꾸미기 설정 저장 실패: ${
+          response.message || "알 수 없는 오류가 발생했습니다."
+        }`
+      );
+    }
+  } catch (error) {
+    console.error("꾸미기 설정 저장 중 오류 발생:", error);
+    alert("꾸미기 설정 저장 중 오류가 발생했습니다.");
+  } finally {
+    // 로딩 표시 해제
+    hideLoading("customize");
+  }
+}
+
+/**
+ * 회원 탈퇴 요청
+ */
+async function deleteAccount() {
+  console.log("회원 탈퇴 요청 시작");
+
+  // 비밀번호 확인
+  const confirmPassword = prompt("계정 삭제를 위해 비밀번호를 입력해주세요.");
+
+  if (!confirmPassword) {
+    return; // 취소함
+  }
+
+  try {
+    // 로딩 표시
+    showLoading("profile"); // API 요청
+    const response = await apiClient.postJson(
+      "/mypage/api?endpoint=deleteAccount",
+      {
+        confirmPassword,
+      }
+    );
+
+    console.log("회원 탈퇴 응답:", response);
+
+    if (response && response.success) {
+      alert("계정이 성공적으로 삭제되었습니다.");
+      // 로그아웃 처리 후 메인 페이지로 이동
+      if (window.UserService && window.UserService.logout) {
+        window.UserService.logout();
+      } else {
+        // UserService가 없는 경우 직접 로그아웃 처리
+        ApiClient.clearAuthToken();
+      }
+      window.location.href = "/";
+    } else {
+      alert(
+        `계정 삭제 실패: ${
+          response && response.message
+            ? response.message
+            : "알 수 없는 오류가 발생했습니다."
+        }`
+      );
+    }
+  } catch (error) {
+    console.error("회원 탈퇴 중 오류 발생:", error);
+    alert("회원 탈퇴 처리 중 오류가 발생했습니다.");
+  } finally {
+    // 로딩 표시 해제
+    hideLoading("profile");
+  }
+}
+
+/**
+ * 로딩 인디케이터 표시
+ * @param {string} tabId - 탭 ID
+ */
+function showLoading(tabId) {
+  // 기존 로딩 인디케이터가 있는지 확인
+  let loadingEl = document.querySelector(`#${tabId} .loading-indicator`);
+
+  // 없으면 생성
+  if (!loadingEl) {
+    loadingEl = document.createElement("div");
+    loadingEl.className = "loading-indicator";
+    loadingEl.innerHTML = "<p>로딩 중...</p>";
+
+    // 탭 컨텐츠 영역의 상단에 추가
+    const tabSection = document.getElementById(tabId);
+    if (tabSection) {
+      tabSection.insertBefore(loadingEl, tabSection.firstChild);
     }
   }
 
-  // 스크랩 탭이 활성화될 때 또는 페이지 로드 시 스크랩 정보 로드
-  const scrapsTab = document.querySelector('.mypage-tab[data-tab="scraps"]');
-  if (scrapsTab && scrapsTab.classList.contains('active')) {
-    loadScrappedKeyboards();
+  // 표시
+  loadingEl.style.display = "block";
+}
+
+/**
+ * 로딩 인디케이터 숨기기
+ * @param {string} tabId - 탭 ID
+ */
+function hideLoading(tabId) {
+  const loadingEl = document.querySelector(`#${tabId} .loading-indicator`);
+  if (loadingEl) {
+    loadingEl.style.display = "none";
   }
-  if(scrapsTab){
-    scrapsTab.addEventListener('click', () => {
-        if(document.getElementById('scraps').classList.contains('active')){
-            loadScrappedKeyboards();
-        }
-    });
+}
+
+/**
+ * 오류 메시지 표시
+ * @param {string} tabId - 탭 ID
+ * @param {string} message - 오류 메시지
+ */
+function showError(tabId, message) {
+  // 기존 오류 메시지가 있으면 제거
+  const existingError = document.querySelector(`#${tabId} .error-message`);
+  if (existingError) {
+    existingError.remove();
   }
-  // 페이지 최초 로드 시 프로필 탭이 기본 활성화 상태라면, 그때는 스크랩 정보를 미리 로드하지 않아도 됨.
-  // 만약 스크랩 탭이 기본 활성화라면 위에서 처리됨.
-  // 사용자가 스크랩 탭을 클릭했을 때 로드하도록 이벤트 리스너는 유지.
-});
+
+  // 새 오류 메시지 요소 생성
+  const errorEl = document.createElement("div");
+  errorEl.className = "error-message";
+  errorEl.textContent = message;
+
+  // 탭 컨텐츠 영역에 추가
+  const tabSection = document.getElementById(tabId);
+  if (tabSection) {
+    tabSection.insertBefore(errorEl, tabSection.firstChild);
+  }
+
+  // 5초 후 자동으로 사라지게 설정
+  setTimeout(() => {
+    errorEl.style.opacity = "0";
+    setTimeout(() => errorEl.remove(), 500);
+  }, 5000);
+}
+
+/**
+ * 별점을 ★☆ 형태로 변환
+ * @param {number} score - 별점 (1-5)
+ * @returns {string} 별 문자열
+ */
+function getStarRating(score) {
+  const roundedScore = Math.round(score);
+  const fullStars = "★".repeat(roundedScore);
+  const emptyStars = "☆".repeat(5 - roundedScore);
+  return fullStars + emptyStars;
+}
+
+/**
+ * 게시판 타입에 따른 URL 생성
+ * @param {string} boardType - 게시판 타입
+ * @param {number} postId - 게시글 ID
+ * @returns {string} 게시글 URL
+ */
+function getBoardUrl(boardType, postId) {
+  switch (boardType) {
+    case "free":
+      return `/freeboard/view.do?postId=${postId}`;
+    case "news":
+      return `/news/view.do?postId=${postId}`;
+    case "qna":
+      return `/qna/view.do?postId=${postId}`;
+    default:
+      return `/board/view.do?type=${boardType}&postId=${postId}`;
+  }
+}
+
+/**
+ * 날짜 포맷팅
+ * @param {string} dateString - 날짜 문자열
+ * @returns {string} 포맷된 날짜
+ */
+function formatDate(dateString) {
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+
+  // 유효한 날짜인지 확인
+  if (isNaN(date.getTime())) {
+    return dateString;
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
