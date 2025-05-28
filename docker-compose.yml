@@ -2,7 +2,7 @@ services:
 #CI/CD 솔루션 도입 전까지 사용할 임시 docker-compose
 #docker-compose를 통해 docker 컨테이너 자동 세팅
 #git pull로 main 브랜치 최신화 (바인드 마운트로 프론트는 자동 갱신)
-#docker compose 컨테이너를 재기동해주면
+
   mysql:
     image: mysql:8.4.4
     #container_name: kirini-mysql
@@ -44,7 +44,7 @@ services:
       - ./src/main/webapp/view:/usr/local/tomcat/webapps/view:ro   # tomcat용
       - ./src/main/webapp/view:/usr/share/nginx/html:ro            # nginx용
       # tomcat, nginx가 공유할 리소스 업로드 경로 바인드 마운트
-      - /home/ubuntu/kirini/uploads:/usr/local/tomcat/webapps/uploads    # tomcat용
+      - /homes/service/kirini/uploads:/usr/local/tomcat/webapps/uploads    # tomcat용
       #- ./src/main/webapp/uploads:/usr/share/nginx/html/uploads:ro     # nginx/html이 읽기전용이라 이거 안 됨
       - ./src/main/webapp/uploads:/usr/share/nginx/uploads:ro     
 
@@ -55,45 +55,20 @@ services:
     networks:
       - kirini-network
 
-  haproxy:
-    image: haproxy:latest
-    ports:
-      - "80:80"
-      - "443:443"
-      - "3307:3307"
-    volumes:
-      - ./docker-settings/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-      - ./docker-settings/haproxy/certs:/usr/local/etc/haproxy/certs:ro
-      - ./docker-settings/certbot/conf:/etc/letsencrypt:ro
-    depends_on:
-      - service1-tomcat
-      # tomcat이 안 떠있으면 nginx가 올라가도 tomcat을 통해 동작하는 페이지가 정상적으로 동작하지 않음 (502 bad gateway)
-      # 순서 지정을 통해 service1-tomcat을 먼저 올리고 nginx를 올림
-    networks:
-      - kirini-network
-
-  certbot:
-    image: certbot/certbot:latest
-    container_name: certbot
-    volumes:
-      - ./docker-settings/certbot/conf:/etc/letsencrypt
-      - ./docker-settings/certbot/www:/var/www/html
-    command: ["renew", "--webroot", "-w", "/var/www/html"]
-
   nginx:
     image: nginx:latest
     #container_name: nginx
     volumes:
       # nginx 설정 파일
-      - ./docker-settings/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${NGINX_CONF_PATH}
       #certbot well-known 경로
-      - ./docker-settings/certbot/www:/var/www/html:ro
+      - ${CERTBOT_WELL_KNOWN_PATH}
       # tomcat, nginx가 공유할 Static 리소스 경로 바인드 마운트
-      - ./src/main/webapp/view:/usr/local/tomcat/webapps/view:ro   # tomcat용
-      - ./src/main/webapp/view:/usr/share/nginx/html:ro            # nginx용
+      - ${TOMCAT_DEFAULT_BIND_MOUNT_PATH}
+      - ${NGINX_DEFAULT_BIND_MOUNT_PATH}
       # tomcat, nginx가 공유할 리소스 업로드 경로 바인드 마운트
-      - /home/ubuntu/kirini/uploads:/usr/local/tomcat/webapps/uploads    # tomcat용
-      - ./src/main/webapp/uploads:/usr/share/nginx/uploads:ro     
+      - ${TOMCAT_UPLOAD_BIND_MOUNT_PATH}
+      - ${NGINX_UPLOAD_BIND_MOUNT_PATH}
 
     depends_on:
       - service1-tomcat 
@@ -101,6 +76,34 @@ services:
       # 순서 지정을 통해 service1-tomcat을 먼저 올리고 nginx를 올림
     networks:
       - kirini-network
+
+  #HAPROXY 및 CERTBOT은 Synology 내장 리버스 프록시를 사용하면 없어도 무방해 제거
+  #이하 주석처리된 내용은 AWS EC2 환경에서 사용할 때는 주석을 풀고 적절한 경로로 변경해 사용
+  # haproxy:
+  #  image: haproxy:latest
+  #  ports:
+  #    - "80:80"
+  #    - "443:443"
+  #    - "3307:3307"
+  #  volumes:
+  #    - ${HAPROXY_CFG_PATH}
+  #    - ${HAPROXY_CERTS_PATH}
+  #    - ${HAPROXY_LETSENCRYPT_PATH}
+  #  depends_on:
+  #    - service1-tomcat
+  #    # tomcat이 안 떠있으면 nginx가 올라가도 tomcat을 통해 동작하는 페이지가 정상적으로 동작하지 않음 (502 bad gateway)
+  #    # 순서 지정을 통해 service1-tomcat을 먼저 올리고 nginx를 올림
+  #  networks:
+  #    - kirini-network
+
+  # certbot:
+  #  image: certbot/certbot:latest
+  #  container_name: certbot
+  #  volumes:
+  #    - ${CERTBOT_CONF_PATH}
+  #    - ${CERTBOT_WWW_PATH}
+  #  command: ["renew", "--webroot", "-w", "/var/www/html"]
+
 
 volumes:
   #static-assets: #더이상 사용하지 않음
