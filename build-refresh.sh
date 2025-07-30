@@ -2,7 +2,7 @@
 
 echo "Kirini 반자동 배포 Script"
 
-cd /home/ubuntu/kirini || exit 1
+cd /volume1/docker/kirini || exit 1
 
 echo "[STEP] Git 저장소에서 최신 main 브랜치 강제 pull"
 sudo git fetch origin
