@@ -22,7 +22,7 @@ services:
 
     volumes:
       - mysql-data:/var/lib/mysql #db 저장소
-      - /volume1/homes/service/kirini/docker-settings/mysql-init:/docker-entrypoint-initdb.d #스크립트를 자동 실행할 폴더
+      - /volume1/docker/kirini/docker-settings/mysql-init:/docker-entrypoint-initdb.d #스크립트를 자동 실행할 폴더
       - /etc/localtime:/etc/localtime:ro # 호스트의 시간 설정을 컨테이너에 반영
     networks:
       - kirini-network
@@ -42,15 +42,15 @@ services:
     volumes:
       # 전부 NAS 기준 절대경로로 세팅
       # tomcat, nginx가 공유할 Static 리소스 경로 바인드 마운트
-      - /volume1/homes/service/kirini/src/main/webapp/view:/usr/local/tomcat/webapps/view:ro   # tomcat용
-      - /volume1/homes/service/kirini/src/main/webapp/view:/usr/share/nginx/html:ro            # nginx용
+      - /volume1/docker/kirini/src/main/webapp/view:/usr/local/tomcat/webapps/view:ro   # tomcat용
+      - /volume1/docker/kirini/src/main/webapp/view:/usr/share/nginx/html:ro            # nginx용
       # tomcat, nginx가 공유할 리소스 업로드 경로 바인드 마운트
-      - /volume1/homes/service/kirini/uploads:/usr/local/tomcat/webapps/uploads    # tomcat용
-      #- /volume1/homes/service/kirini/src/main/webapp/uploads:/usr/share/nginx/html/uploads:ro     # nginx/html이 읽기전용이라 이거 안 됨
-      - /volume1/homes/service/kirini/src/main/webapp/uploads:/usr/share/nginx/uploads:ro     
+      - /volume1/docker/kirini/uploads:/usr/local/tomcat/webapps/uploads    # tomcat용
+      #- /volume1/docker/kirini/src/main/webapp/uploads:/usr/share/nginx/html/uploads:ro     # nginx/html이 읽기전용이라 이거 안 됨
+      - /volume1/docker/kirini/src/main/webapp/uploads:/usr/share/nginx/uploads:ro
 
-      - /volume1/homes/service/kirini/docker-settings/certbot/www:/var/www/html:ro
-      - /volume1/homes/service/kirini/service1-tomcat/logs:/usr/local/tomcat/logs # 로그 저장소를 bind로
+      - /volume1/docker/kirini/docker-settings/certbot/www:/var/www/html:ro
+      - /volume1/docker/kirini/service1-tomcat/logs:/usr/local/tomcat/logs # 로그 저장소를 bind로
     depends_on:
       - mysql
     networks:
