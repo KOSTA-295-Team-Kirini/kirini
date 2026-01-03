@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>키보드 상세정보 - KIRINI</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/keyboard_tag.css">
+    <link rel="stylesheet" href="../css/keyboard_detail.css">
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/keyboard_detail.js"></script>
+</head>
+<body>
+<!-- 헤더 플레이스홀더 -->
+<div id="header-placeholder"></div>
+
+<div class="detail-container">
+    <div class="keyboard-detail" id="keyboardDetail">
+        <div class="detail-images">
+            <img src="../img/keyboard1.png" alt="키보드 메인 이미지" class="main-image" id="mainImage"
+                 onerror="this.src='https://via.placeholder.com/500x300?text=키보드+이미지'">
+            <div class="image-gallery">
+                <img src="../img/keyboard1.png" alt="키보드 이미지 1" class="gallery-image active"
+                     onerror="this.src='https://via.placeholder.com/80x80?text=1'"
+                     onclick="changeImage(this, '../img/keyboard1.png')">
+                <img src="../img/keyboard2.png" alt="키보드 이미지 2" class="gallery-image"
+                     onerror="this.src='https://via.placeholder.com/80x80?text=2'"
+                     onclick="changeImage(this, '../img/keyboard2.png')">
+                <img src="../img/keyboard3.png" alt="키보드 이미지 3" class="gallery-image"
+                     onerror="this.src='https://via.placeholder.com/80x80?text=3'"
+                     onclick="changeImage(this, '../img/keyboard3.png')">
+                <img src="../img/keyboard4.png" alt="키보드 이미지 4" class="gallery-image"
+                     onerror="this.src='https://via.placeholder.com/80x80?text=4'"
+                     onclick="changeImage(this, '../img/keyboard4.png')">
+            </div>
+        </div>
+
+        <div class="detail-info">
+            <h1 class="keyboard-title" id="keyboardName">스틸시리즈 에이펙스 프로</h1>
+            <div class="keyboard-price" id="keyboardPrice">199,000원</div>
+
+            <div class="keyboard-rate">
+                <div class="stars">★★★★☆</div>
+                <div class="rate-count">(4.7/5, 리뷰 483개)</div>
+            </div>
+
+            <div class="keyboard-tags">
+                <span class="keyboard-tag tag-admin" data-tag="게이밍">게이밍</span>
+                <span class="keyboard-tag tag-admin" data-tag="기계식">기계식</span>
+                <span class="keyboard-tag tag-user" data-tag="텐키리스">텐키리스<span class="tag-count">24</span></span>
+                <span class="keyboard-tag-add" onclick="openTagModal('스틸시리즈 에이펙스 프로')">태그 설정<i>+</i></span>
+            </div>
+
+            <div class="spec-list">
+                <div class="spec-item">
+                    <div class="spec-label">타입</div>
+                    <div class="spec-value">기계식, 텐키리스(TKL)</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">스위치</div>
+                    <div class="spec-value">옴니포인트 자기식 스위치 (조절 가능 1.5mm ~ 3.8mm)</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">폴링 레이트</div>
+                    <div class="spec-value">최대 8,000Hz</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">키캡</div>
+                    <div class="spec-value">PBT 더블샷</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">연결 방식</div>
+                    <div class="spec-value">유선 (탈착식 USB-C 케이블)</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">RGB</div>
+                    <div class="spec-value">풀 RGB, 개별 키 프로그래밍 가능</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">특징</div>
+                    <div class="spec-value">OLED 스마트 디스플레이, 마그네틱 손목 받침대, 5단계 높이 조절</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">크기</div>
+                    <div class="spec-value">355.44 x 137.17 x 40.44 mm</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">무게</div>
+                    <div class="spec-value">약 780g</div>
+                </div>
+            </div>
+
+            <div class="purchase-links">
+                <a href="#" class="purchase-link primary">공식 스토어에서 구매하기</a>
+                <a href="#" class="purchase-link">쿠팡에서 보기</a>
+                <a href="#" class="purchase-link">11번가에서 보기</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-tabs">
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="description">상세설명</button>
+            <button class="tab-btn" data-tab="reviews">리뷰</button>
+            <button class="tab-btn" data-tab="qa">문의</button>
+        </div>
+
+        <div class="tab-content active" id="tab-description">
+            <h3>스틸시리즈 에이펙스 프로 상세설명</h3>
+            <p>스틸시리즈 에이펙스 프로는 이스포츠 프로 선수들의 요구사항에 맞게 설계된 프리미엄 게이밍 키보드입니다. 독점적인 옴니포인트 자기식 스위치를 사용하여 키 별로 작동점을 조절할 수 있으며,
+                최대 8,000Hz의 폴링 레이트로 초저지연 응답속도를 자랑합니다.</p>
+
+            <h4>옴니포인트 스위치</h4>
+            <p>옴니포인트 스위치는 그 어느 기계식 스위치보다 40% 빠른 반응 속도와 최대 11배 빠른 트리거 포인트를 제공합니다. 각 키의 작동점을 1.5mm부터 3.8mm까지 0.1mm 단위로 조절할
+                수 있어, 게임 스타일과 타이핑 선호도에 맞게 완벽하게 커스터마이징할 수 있습니다.</p>
+
+            <h4>OLED 스마트 디스플레이</h4>
+            <p>내장된 OLED 디스플레이를 통해 게임 정보, 디스코드 메시지, 시스템 설정 등을 실시간으로 확인할 수 있습니다. 또한 자신만의 애니메이션과 로고를 설정하여 키보드를 더욱 개성있게 꾸밀 수
+                있습니다.</p>
+
+            <h4>프리즘 RGB 조명</h4>
+            <p>개별 키 RGB 백라이트 조명으로 무한한 커스터마이징이 가능합니다. 1,680만 색상과 다양한 효과를 지원하며, 게임과 연동되는 다이나믹 라이팅 효과를 즐길 수 있습니다.</p>
+
+            <h4>견고한 알루미늄 합금 프레임</h4>
+            <p>항공기급 알루미늄 합금 상판으로 제작되어 내구성이 뛰어나며 프리미엄 디자인을 자랑합니다. 또한 탈착식 마그네틱 손목 받침대가 제공되어 장시간 게임에도 편안한 타이핑 경험을
+                제공합니다.</p>
+        </div>
+
+        <div class="tab-content" id="tab-reviews">
+            <h3>사용자 리뷰</h3>
+
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="review-author">게이머킴</div>
+                    <div class="review-date">2025.04.15</div>
+                </div>
+                <div class="stars">★★★★★</div>
+                <div class="review-content">
+                    옴니포인트 스위치의 작동점 조절 기능이 정말 획기적입니다. FPS 게임에서는 민감한 반응을 위해 1.5mm로 설정하고, 타이핑할 때는 3.0mm로 설정해서 오타를 줄일 수 있어요.
+                    게이머라면 무조건 추천합니다.
+                </div>
+            </div>
+
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="review-author">기계식매니아</div>
+                    <div class="review-date">2025.03.22</div>
+                </div>
+                <div class="stars">★★★★☆</div>
+                <div class="review-content">
+                    스위치 조절 기능과 OLED 디스플레이는 좋지만 가격이 조금 부담스럽습니다. PBT 키캡의 품질은 훌륭하고 타건감도 좋지만, 비슷한 가격대의 다른 프리미엄 키보드와 비교했을 때
+                    가성비는 조금 떨어지는 것 같아요.
+                </div>
+            </div>
+
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="review-author">타이핑고수</div>
+                    <div class="review-date">2025.02.10</div>
+                </div>
+                <div class="stars">★★★★★</div>
+                <div class="review-content">
+                    프로그래머로서 하루 종일 코딩을 하는데 손목 통증이 많이 줄었어요. 손목 받침대가 정말 편안하고 높이 조절도 가능해서 자세 교정에도 도움이 됩니다. 옴니포인트 스위치를 2.8mm로
+                    설정하니 타이핑이 정말 쾌적해요.
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-qa">
+            <h3>질문 & 답변</h3>
+
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="review-author">키보드초보</div>
+                    <div class="review-date">2025.05.01</div>
+                </div>
+                <div class="review-content">
+                    <strong>Q: 맥북과 호환이 잘 되나요?</strong><br>
+                    A: 네, 맥OS와 완벽하게 호환됩니다. 스틸시리즈 GG 소프트웨어를 통해 맥에서도 모든 기능을 사용할 수 있습니다. 다만 일부 맥 전용 단축키는 별도 설정이 필요합니다.
+                </div>
+            </div>
+
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="review-author">소음걱정</div>
+                    <div class="review-date">2025.04.18</div>
+                </div>
+                <div class="review-content">
+                    <strong>Q: 기숙사에서 사용하기에 소음이 심한가요?</strong><br>
+                    A: 옴니포인트 스위치는 일반 청축보다는 소음이 적은 편입니다. 작동점을 3.0mm 이상으로 설정하면 더 조용한 타이핑이 가능하며, 옵션으로 O링을 추가 설치하면 소음을 더 줄일
+                    수 있습니다.
+                </div>
+            </div>
+
+            <div class="review-item">
+                <div class="review-header">
+                    <div class="review-author">게임매니아</div>
+                    <div class="review-date">2025.03.05</div>
+                </div>
+                <div class="review-content">
+                    <strong>Q: RGB 조명을 게임과 연동할 수 있나요?</strong><br>
+                    A: 네, 스틸시리즈 GG 소프트웨어를 통해 CSGO, DOTA2, 마인크래프트 등 300개 이상의 게임과 RGB 조명을 연동할 수 있습니다. 게임 내 상황에 따라 자동으로 조명
+                    색상과 패턴이 변경됩니다.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="similar-keyboards">
+        <h2 class="similar-title">비슷한 키보드</h2>
+        <div class="similar-grid">
+            <a href="keyboard_detail.html?id=3" class="similar-card">
+                <img src="../img/keyboard7.png" alt="GMMK Pro" class="similar-image"
+                     onerror="this.src='https://via.placeholder.com/250x150?text=키보드+이미지'">
+                <div class="similar-content">
+                    <div class="similar-name">GMMK Pro</div>
+                    <div class="similar-price">249,000원</div>
+                </div>
+            </a>
+
+            <a href="keyboard_detail.html?id=4" class="similar-card">
+                <img src="../img/keyboard8.png" alt="레이저 블랙위도우 V3 Pro" class="similar-image"
+                     onerror="this.src='https://via.placeholder.com/250x150?text=키보드+이미지'">
+                <div class="similar-content">
+                    <div class="similar-name">레이저 블랙위도우 V3 Pro</div>
+                    <div class="similar-price">279,000원</div>
+                </div>
+            </a>
+
+            <a href="keyboard_detail.html?id=6" class="similar-card">
+                <img src="../img/keyboard9.png" alt="ToFu60 DIY 키트" class="similar-image"
+                     onerror="this.src='https://via.placeholder.com/250x150?text=키보드+이미지'">
+                <div class="similar-content">
+                    <div class="similar-name">ToFu60 DIY 키트</div>
+                    <div class="similar-price">189,000원</div>
+                </div>
+            </a>
+
+            <a href="#" class="similar-card">
+                <img src="../img/keyboard5.png" alt="키크론 K8 Pro" class="similar-image"
+                     onerror="this.src='https://via.placeholder.com/250x150?text=키보드+이미지'">
+                <div class="similar-content">
+                    <div class="similar-name">키크론 K8 Pro</div>
+                    <div class="similar-price">159,000원</div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- 태그 모달 -->
+<div class="tag-modal" id="tagModal">
+    <div class="tag-modal-content">
+        <div class="tag-modal-header">
+            <h3 class="tag-modal-title">태그 설정</h3>
+            <button class="close-tag-modal" onclick="closeTagModal()">&times;</button>
+        </div>
+
+        <p><span id="currentKeyboard"></span> 키보드의 태그를 평가하세요.</p>
+
+        <!-- 태그 평가 목록 -->
+        <div class="tag-list">
+            <h4 class="tag-section-title">태그 추천/비추천</h4>
+            <div class="tag-list-items">
+                <div class="tag-list-item">
+                    <div class="tag-list-name">
+                        <span class="tag-type-indicator admin-tag-indicator"></span>
+                        게이밍
+                    </div>
+                    <div class="tag-actions">
+                        <button class="tag-vote-btn upvote" onclick="voteTag('게이밍', 'up')"><i>👍</i> 추천</button>
+                        <span class="vote-count" id="vote-gaming">24</span>
+                        <button class="tag-vote-btn downvote" onclick="voteTag('게이밍', 'down')"><i>👎</i> 비추천</button>
+                    </div>
+                </div>
+                <div class="tag-list-item">
+                    <div class="tag-list-name">
+                        <span class="tag-type-indicator admin-tag-indicator"></span>
+                        기계식
+                    </div>
+                    <div class="tag-actions">
+                        <button class="tag-vote-btn upvote" onclick="voteTag('기계식', 'up')"><i>👍</i> 추천</button>
+                        <span class="vote-count" id="vote-mechanical">32</span>
+                        <button class="tag-vote-btn downvote" onclick="voteTag('기계식', 'down')"><i>👎</i> 비추천</button>
+                    </div>
+                </div>
+                <div class="tag-list-item">
+                    <div class="tag-list-name">
+                        <span class="tag-type-indicator user-tag-indicator"></span>
+                        텐키리스
+                    </div>
+                    <div class="tag-actions">
+                        <button class="tag-vote-btn upvote" onclick="voteTag('텐키리스', 'up')"><i>👍</i> 추천</button>
+                        <span class="vote-count" id="vote-tenkeyless">24</span>
+                        <button class="tag-vote-btn downvote" onclick="voteTag('텐키리스', 'down')"><i>👎</i> 비추천</button>
+                    </div>
+                </div>
+                <div class="tag-list-item">
+                    <div class="tag-list-name">
+                        <span class="tag-type-indicator user-tag-indicator"></span>
+                        저소음
+                    </div>
+                    <div class="tag-actions">
+                        <button class="tag-vote-btn upvote" onclick="voteTag('저소음', 'up')"><i>👍</i> 추천</button>
+                        <span class="vote-count" id="vote-quiet">18</span>
+                        <button class="tag-vote-btn downvote" onclick="voteTag('저소음', 'down')"><i>👎</i> 비추천</button>
+                    </div>
+                </div>
+                <div class="tag-list-item">
+                    <div class="tag-list-name">
+                        <span class="tag-type-indicator user-tag-indicator"></span>
+                        고급형
+                    </div>
+                    <div class="tag-actions">
+                        <button class="tag-vote-btn upvote" onclick="voteTag('고급형', 'up')"><i>👍</i> 추천</button>
+                        <span class="vote-count" id="vote-premium">15</span>
+                        <button class="tag-vote-btn downvote" onclick="voteTag('고급형', 'down')"><i>👎</i> 비추천</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 태그 신청 폼 -->
+        <div class="tag-form-section">
+            <h4 class="tag-section-title">새로운 태그 신청</h4>
+            <p class="tag-section-desc">원하는 태그가 없으신가요? 새로운 태그를 직접 제안해보세요.</p>
+            <form class="tag-form" id="tagForm">
+                <div class="tag-form-group">
+                    <label for="tagName">태그명 <span style="color: #f44336;">*</span></label>
+                    <input type="text" id="tagName" placeholder="예: 저소음, 입문용, 브렌드맨" required>
+                </div>
+                <div class="tag-form-group">
+                    <label for="tagReason">신청 사유 <span style="color: #f44336;">*</span></label>
+                    <textarea id="tagReason" placeholder="이 태그가 필요한 이유를 적어주세요." required></textarea>
+                </div>
+                <button type="submit" class="tag-submit-btn">태그 신청하기</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 푸터 플레이스홀더 -->
+<div id="footer-placeholder"></div>
+</body>
+</html>

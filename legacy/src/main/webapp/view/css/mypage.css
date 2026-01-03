@@ -1,0 +1,360 @@
+.page-title {
+    background: #fff3e0;
+    padding: 2rem;
+    text-align: center;
+}
+
+.page-title h1 {
+    color: #ff7043;
+    margin-bottom: 1rem;
+}
+
+/* 마이페이지 스타일 */
+.mypage-container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.mypage-tabs {
+    display: flex;
+}
+
+.mypage-tab {
+    padding: 1rem 1.5rem;
+    background: #ffecb3;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    border-radius: 8px 8px 0 0; /* 위쪽 둥근 모서리 추가 */
+}
+
+.mypage-tab.active {
+    background: #ffcc80;
+    color: #333;
+}
+
+.mypage-content {
+    background: white;
+    border-radius: 0 8px 8px 8px; /* 위쪽 테두리와 자연스럽게 이어지도록 수정 */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    border: 2px solid #ffcc80; /* 테두리 추가 */
+}
+
+.mypage-section {
+    display: none;
+}
+
+.mypage-section.active {
+    display: block;
+}
+
+.mypage-section h2 {
+    color: #ff7043;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    max-width: 1000px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.form-group textarea {
+    resize: none;
+    max-width: 100%;
+    min-height: 150px;
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    background: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #ff7043;
+}
+
+.btn-danger {
+    background: #f44336;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+.item-list {
+    list-style: none;
+    padding: 0;
+}
+
+.item-card {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.item-info {
+    flex: 1;
+}
+
+.item-title {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.item-meta {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #ffecb3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    margin-right: 2rem;
+}
+
+.profile-details h3 {
+    margin: 0 0 0.5rem 0;
+    color: #ff7043;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ff9800;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.keyboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.keyboard-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.keyboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.keyboard-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+}
+
+.keyboard-content {
+    padding: 1rem;
+}
+
+.keyboard-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: #ff7043;
+}
+
+.keyboard-price {
+    font-weight: bold;
+    color: #ff5722;
+}
+
+.rating-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.rating-info {
+    flex: 1;
+}
+
+.rating-title {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.rating-date {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.rating-stars {
+    color: #ffc107;
+    font-size: 1.2rem;
+}
+
+.point-card {
+    background: linear-gradient(135deg, #ff9800, #ff7043);
+    color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 10px rgba(255, 152, 0, 0.3);
+}
+
+.point-value {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.point-label {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.point-history {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.point-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.point-item:last-child {
+    border-bottom: none;
+}
+
+.point-desc {
+    flex: 1;
+}
+
+.point-change {
+    font-weight: bold;
+}
+
+.point-change.plus {
+    color: #4caf50;
+}
+
+.point-change.minus {
+    color: #f44336;
+}
+
+.point-date {
+    color: #666;
+    font-size: 0.9rem;
+    margin-left: 1rem;
+}
+
+.item-customize {
+    margin-top: 2rem;
+}
+
+.customize-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.customize-item {
+    border: 2px solid #eee;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.customize-item.active {
+    border-color: #ff9800;
+    background: #ffecb3;
+}
+
+.customize-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.customize-name {
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+/* mypage.css */
+.mypage-wrapper {
+    flex: 1 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    max-width: 1000px;
+}

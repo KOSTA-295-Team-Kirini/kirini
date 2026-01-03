@@ -1,0 +1,35 @@
+<!-- KIRINI 사이트 공통 헤더: 권한별로 다르게 표시됨 -->
+<link rel="stylesheet" href="../css/header.css">
+<script src="../js/auth.js"></script>
+<!-- <script src="../js/header.js"></script> --> <!-- components.js에서 처리하므로 삭제 -->
+
+<header>
+    <div class="header-top-row">
+        <div class="logo"><a href="../pages/index.html">🦒 KIRINI</a></div>
+        <nav class="top-nav">
+            <div class="auth-section guest-section">
+                <a href="../pages/login.html" class="login-btn guest-only" id="login-btn">로그인</a>
+            </div>
+
+            <div class="auth-section logged-in-only" id="user-greeting-section">
+                <span class="user-greeting"><span id="username-display"></span>님</span>
+            </div>
+
+            <div class="auth-section logout-common-section">
+                <a href="javascript:void(0)" class="logout-btn logged-in-only" id="logout-btn">로그아웃</a>
+            </div>
+        </nav>
+    </div>
+    <div class="header-bottom-row">
+        <nav class="bottom-nav">
+            <!-- 모든 사용자에게 공통으로 표시되는 메뉴 -->
+            <a href="../pages/dictionary.html">용어집</a>
+            <a href="../pages/keyboard_info.html">키보드정보</a>
+            <a href="../pages/board.html">소식/게시판</a>
+            <a href="../pages/qna.html">Q&A</a>      <!-- 마이페이지 - 모든 로그인 사용자에게 표시 -->
+            <a href="../pages/mypage.html" class="logged-in-only">마이페이지</a>
+            <!-- 관리 내역 - 매니저와 관리자에게만 표시 -->
+            <a href="../pages/admin.html" class="manager-admin-only">관리 내역</a>
+        </nav>
+    </div>
+</header>

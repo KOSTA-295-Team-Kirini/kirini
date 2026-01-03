@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>키보드 정보 - KIRINI</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/keyboard_tag.css">
+    <script src="../js/main.js" defer></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/keyboard_info.js" defer></script>
+</head>
+<body>
+<!-- 헤더 플레이스홀더 -->
+<div id="header-placeholder"></div>
+
+<section class="page-title">
+    <h1>⌨️ 키보드 정보</h1>
+    <p>키보드 유형별 특징과 추천 제품을 알아보세요</p>
+</section>
+
+<div class="filter-container">
+    <div class="filter-title">카테고리별 필터링</div>
+    <div class="filter-options">
+        <button class="filter-btn active" data-filter="all">전체보기</button>
+        <button class="filter-btn" data-filter="gaming">게이밍</button>
+        <button class="filter-btn" data-filter="office">사무용</button>
+        <button class="filter-btn" data-filter="mechanical">기계식</button>
+        <button class="filter-btn" data-filter="wireless">무선</button>
+        <button class="filter-btn" data-filter="custom">커스텀</button>
+    </div>
+</div>
+
+<div class="keyboard-grid">
+    <div class="keyboard-card" data-categories="gaming mechanical">
+        <img src="../img/keyboard1.png" alt="게이밍 키보드" class="keyboard-image"
+             onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
+        <div class="keyboard-content">
+            <h3 class="keyboard-title">스틸시리즈 에이펙스 프로</h3>
+            <div class="keyboard-tags">
+                <span class="keyboard-tag tag-admin" data-tag="게이밍">게이밍</span>
+                <span class="keyboard-tag tag-admin" data-tag="기계식">기계식</span>
+                <span class="keyboard-tag tag-user" data-tag="텐키리스">텐키리스<span class="tag-count">14</span></span>
+            </div>
+            <div class="keyboard-price">199,000원</div>
+            <p class="keyboard-description">
+                옴니포인트 스위치를 사용한 프리미엄 게이밍 키보드. 키별로 작동점을 조절할 수 있으며, OLED 스마트 디스플레이 포함.
+            </p>
+            <div class="keyboard-actions">
+                <a href="keyboard_detail.html?id=1" class="keyboard-detail-btn">상세정보 보기</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="keyboard-card" data-categories="office wireless">
+        <img src="../img/keyboard2.png" alt="무선 사무용 키보드" class="keyboard-image"
+             onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
+        <div class="keyboard-content">
+            <h3 class="keyboard-title">로지텍 MX Keys</h3>
+            <div class="keyboard-tags">
+                <span class="keyboard-tag tag-admin" data-tag="사무용">사무용</span>
+                <span class="keyboard-tag tag-admin" data-tag="무선">무선</span>
+                <span class="keyboard-tag tag-user" data-tag="멤브레인">멤브레인<span class="tag-count">21</span></span>
+            </div>
+            <div class="keyboard-price">129,000원</div>
+            <p class="keyboard-description">
+                완벽한 타이핑 경험을 위한 고급 무선 키보드. 백라이트와 인체공학적 설계로 장시간 사용에도 편안함 제공.
+            </p>
+            <div class="keyboard-actions">
+                <a href="keyboard_detail.html?id=2" class="keyboard-detail-btn">상세정보 보기</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="keyboard-card" data-categories="mechanical custom">
+        <img src="../img/keyboard3.png" alt="커스텀 기계식 키보드" class="keyboard-image"
+             onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
+        <div class="keyboard-content">
+            <h3 class="keyboard-title">GMMK Pro</h3>
+            <div class="keyboard-tags">
+                <span class="keyboard-tag tag-admin" data-tag="커스텀">커스텀</span>
+                <span class="keyboard-tag tag-admin" data-tag="기계식">기계식</span>
+                <span class="keyboard-tag tag-user" data-tag="75%">75%<span class="tag-count">18</span></span>
+            </div>
+            <div class="keyboard-price">249,000원</div>
+            <p class="keyboard-description">
+                알루미늄 바디와 가스켓 마운트를 적용한 프리미엄 커스텀 키보드. 핫스왑 소켓과 QMK/VIA 지원으로 완벽한 커스터마이징.
+            </p>
+            <div class="keyboard-actions">
+                <a href="keyboard_detail.html?id=3" class="keyboard-detail-btn">상세정보 보기</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="keyboard-card" data-categories="gaming wireless">
+        <img src="../img/keyboard4.png" alt="무선 게이밍 키보드" class="keyboard-image"
+             onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
+        <div class="keyboard-content">
+            <h3 class="keyboard-title">레이저 블랙위도우 V3 Pro</h3>
+            <div class="keyboard-tags">
+                <span class="keyboard-tag tag-admin" data-tag="게이밍">게이밍</span>
+                <span class="keyboard-tag tag-admin" data-tag="무선">무선</span>
+                <span class="keyboard-tag tag-admin" data-tag="기계식">기계식</span>
+                <span class="keyboard-tag tag-user" data-tag="RGB">RGB<span class="tag-count">32</span></span>
+            </div>
+            <div class="keyboard-price">279,000원</div>
+            <p class="keyboard-description">
+                레이저 그린 스위치가 적용된 프리미엄 무선 기계식 게이밍 키보드. 초저지연 무선 연결과 RGB 백라이팅 제공.
+            </p>
+            <div class="keyboard-actions">
+                <a href="keyboard_detail.html?id=4" class="keyboard-detail-btn">상세정보 보기</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="keyboard-card" data-categories="mechanical office">
+        <img src="../img/keyboard5.png" alt="사무용 기계식 키보드" class="keyboard-image"
+             onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
+        <div class="keyboard-content">
+            <h3 class="keyboard-title">레오폴드 FC900R</h3>
+            <div class="keyboard-tags">
+                <span class="keyboard-tag tag-admin" data-tag="사무용">사무용</span>
+                <span class="keyboard-tag tag-admin" data-tag="기계식">기계식</span>
+                <span class="keyboard-tag tag-user" data-tag="풀사이즈">풀사이즈<span class="tag-count">27</span></span>
+            </div>
+            <div class="keyboard-price">149,000원</div>
+            <p class="keyboard-description">
+                체리 갈축이 적용된 고급 PBT 키캡 기계식 키보드. 소음이 적고 내구성이 뛰어나 사무용으로 인기가 많음.
+            </p>
+            <div class="keyboard-actions">
+                <a href="keyboard_detail.html?id=5" class="keyboard-detail-btn">상세정보 보기</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="keyboard-card" data-categories="custom mechanical">
+        <img src="../img/keyboard6.png" alt="커스텀 키보드 키트" class="keyboard-image"
+             onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
+        <div class="keyboard-content">
+            <h3 class="keyboard-title">ToFu60 DIY 키트</h3>
+            <div class="keyboard-tags">
+                <span class="keyboard-tag tag-admin" data-tag="기계식">기계식</span>
+                <span class="keyboard-tag tag-admin" data-tag="커스텀">커스텀</span>
+                <span class="keyboard-tag tag-user" data-tag="60%">60%<span class="tag-count">19</span></span>
+            </div>
+            <div class="keyboard-price">189,000원</div>
+            <p class="keyboard-description">
+                알루미늄 케이스와 PCB가 포함된 DIY 키보드 키트. 원하는 스위치와 키캡을 선택하여 나만의 키보드를 제작할 수 있음.
+            </p>
+            <div class="keyboard-actions">
+                <a href="keyboard_detail.html?id=6" class="keyboard-detail-btn">상세정보 보기</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 푸터 플레이스홀더 -->
+<div id="footer-placeholder"></div>
+</body>
+</html>

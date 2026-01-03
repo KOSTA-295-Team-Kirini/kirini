@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>핫스왑 (Hot-swap) - KIRINI</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/keyboard_terms.css">
+    <script src="../js/main.js" defer></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+</head>
+<body>
+<!-- 헤더 플레이스홀더 -->
+<div id="header-placeholder"></div>
+
+<div class="page-title">
+    <h1>핫스왑 (Hot-swap)</h1>
+    <p>납땜 없이 스위치를 교체할 수 있는 키보드 기술</p>
+</div>
+
+<div class="dictionary-container">
+    <div class="toc">
+        <strong>목차</strong>
+        <ul>
+            <li><a href="#intro">1. 개요</a></li>
+            <li><a href="#mechanism">2. 작동 원리</a></li>
+            <li><a href="#pros-cons">3. 장단점</a></li>
+            <li><a href="#compatibility">4. 호환성</a></li>
+            <li><a href="#related">5. 관련 용어</a></li>
+        </ul>
+    </div>
+
+    <div class="section" id="intro">
+        <h2>1. 개요</h2>
+        <p>
+            <strong>핫스왑(Hot-swap)</strong>은 납땜 작업 없이 키보드 스위치를 쉽게 교체할 수 있는 기술입니다. 일반적인 기계식 키보드는 PCB에 스위치를 납땜으로 고정하지만, 핫스왑
+            소켓이 장착된 키보드는 특수 소켓을 통해 스위치를 손쉽게 탈부착할 수 있습니다. 이 기술은 키보드 커스터마이징을 더욱 쉽게 만들어 다양한 스위치를 시도해볼 수 있게 해줍니다.
+        </p>
+    </div>
+
+    <div class="section" id="mechanism">
+        <h2>2. 작동 원리</h2>
+        <p>핫스왑 소켓은 다음과 같은 방식으로 작동합니다:</p>
+        <ul>
+            <li>PCB에 특수 소켓이 미리 설치되어 있음</li>
+            <li>스위치의 핀이 소켓에 끼워지는 방식으로 연결됨</li>
+            <li>스위치 교체 시 전용 도구(스위치 풀러)를 사용하여 쉽게 제거 가능</li>
+            <li>새 스위치는 소켓에 맞춰 눌러 끼우기만 하면 됨</li>
+        </ul>
+        <p>주요 핫스왑 소켓 종류:</p>
+        <ul>
+            <li><strong>Kailh 핫스왑 소켓</strong>: 가장 널리 사용되는 소켓 중 하나</li>
+            <li><strong>Outemu 핫스왑 소켓</strong>: 일부 스위치와의 호환성 제한이 있음</li>
+            <li><strong>Gateron 핫스왑 소켓</strong>: Kailh과 유사한 디자인</li>
+        </ul>
+        <div class="img-placeholder">[핫스왑 소켓 및 작동 원리 이미지]</div>
+    </div>
+
+    <div class="section" id="pros-cons">
+        <h2>3. 장단점</h2>
+        <h3>장점</h3>
+        <ul>
+            <li>납땜 기술이나 도구 없이도 스위치 교체 가능</li>
+            <li>다양한 스위치를 쉽게 테스트할 수 있음</li>
+            <li>손상된 스위치만 교체 가능하여 유지보수가 쉬움</li>
+            <li>키보드 커스터마이징 진입 장벽 낮춤</li>
+            <li>스위치 교체 시간이 크게 단축됨</li>
+        </ul>
+
+        <h3>단점</h3>
+        <ul>
+            <li>일반 PCB보다 가격이 비싼 편</li>
+            <li>소켓이 손상될 가능성이 있음</li>
+            <li>일부 소켓은 특정 스위치와만 호환됨</li>
+            <li>소켓으로 인해 PCB가 두꺼워질 수 있음</li>
+            <li>납땜된 스위치보다 접촉 안정성이 떨어질 수 있음</li>
+        </ul>
+    </div>
+
+    <div class="section" id="compatibility">
+        <h2>4. 호환성</h2>
+        <p>핫스왑 소켓 호환성에 관한 주요 사항:</p>
+        <ul>
+            <li>대부분의 핫스왑 소켓은 3핀(플레이트 마운트) 또는 5핀(PCB 마운트) 스위치와 호환됨</li>
+            <li>5핀 소켓은 3핀 스위치도 사용 가능하지만, 3핀 소켓에는 5핀 스위치의 플라스틱 핀 2개를 잘라내야 함</li>
+            <li>Outemu 소켓은 일반적으로 Outemu 스위치와만 완벽하게 호환됨</li>
+            <li>Kailh 소켓은 Cherry MX, Gateron, Kailh 등 대부분의 MX 스타일 스위치와 호환됨</li>
+            <li>광축 스위치는 일반 핫스왑 소켓과 호환되지 않으며 전용 소켓이 필요함</li>
+        </ul>
+    </div>
+
+    <div class="section" id="related">
+        <h2>5. 관련 용어</h2>
+        <div class="related">
+            <a href="switch.html">스위치</a>, <a href="axis.html">축</a>, <a href="keyboard_60.html">60% 키보드</a>, <a
+                href="keyboard_tkl.html">TKL</a>
+        </div>
+    </div>
+
+    <p><a href="../pages/dictionary.html">← 용어집으로 돌아가기</a></p>
+</div>
+
+<!-- 푸터 플레이스홀더 -->
+<div id="footer-placeholder"></div>
+</body>
+</html>

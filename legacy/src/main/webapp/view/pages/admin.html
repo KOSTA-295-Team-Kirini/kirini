@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>관리 내역 - KIRINI</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <script src="../js/main.js" defer></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/admin.js" defer></script>
+</head>
+<body>
+<!-- 헤더 플레이스홀더 -->
+<div id="header-placeholder"></div>
+<section class="page-title">
+    <h1>🔧 관리 내역</h1>
+    <p>KIRINI 웹사이트의 관리 기능을 권한에 따라 이용할 수 있습니다.</p>
+</section>
+
+<div class="admin-container">
+    <div class="admin-tabs">
+        <!-- 관리자만 볼 수 있는 탭 -->
+        <button class="admin-tab admin-only active" data-tab="terms">키보드 용어 관리</button>
+        <button class="admin-tab admin-only" data-tab="keyboard-info">키보드 정보 관리</button>
+        <button class="admin-tab admin-only" data-tab="categories">키보드 카테고리 관리</button>
+        <button class="admin-tab admin-only" data-tab="tags">키보드 태그 관리</button>
+        <button class="admin-tab admin-only" data-tab="tag-requests">태그 승인 요청</button>
+
+        <!-- 매니저와 관리자가 모두 볼 수 있는 탭 -->
+        <button class="admin-tab manager-admin-only" data-tab="users">불량 이용자 관리</button>
+        <button class="admin-tab manager-admin-only" data-tab="reports">신고 내역</button>
+        <button class="admin-tab manager-admin-only" data-tab="deleted-posts">삭제된 게시글 관리</button>
+    </div>
+
+    <!-- 키보드 용어 관리 섹션 -->
+    <div class="admin-section active" id="terms">
+        <h2>키보드 용어 관리</h2>
+
+        <div class="admin-form">
+            <h3>용어 등록/수정</h3>
+            <form id="term-form">
+                <div class="form-group">
+                    <label for="term-name">용어명</label>
+                    <input type="text" id="term-name" placeholder="예: 적축, 갈축, 청축 등">
+                </div>
+                <div class="form-group">
+                    <label for="term-category">카테고리</label>
+                    <select id="term-category">
+                        <option value="">카테고리 선택</option>
+                        <option value="switch">스위치</option>
+                        <option value="keycap">키캡</option>
+                        <option value="layout">레이아웃</option>
+                        <option value="connection">연결 방식</option>
+                        <option value="etc">기타</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="term-description">설명</label>
+                    <textarea id="term-description" placeholder="용어에 대한 상세 설명을 입력하세요."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="term-image">이미지 URL (선택)</label>
+                    <input type="text" id="term-image" placeholder="이미지 URL을 입력하세요.">
+                </div>
+                <div class="form-group">
+                    <label for="term-related">관련 용어 (선택, 콤마로 구분)</label>
+                    <input type="text" id="term-related" placeholder="예: 적축, 갈축, 청축">
+                </div>
+                <button type="submit" class="btn">용어 등록</button>
+                <button type="button" class="btn btn-secondary">초기화</button>
+            </form>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="term-search" placeholder="용어 검색">
+            <button type="button">검색</button>
+        </div>
+
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>용어명</th>
+                    <th>카테고리</th>
+                    <th>등록일</th>
+                    <th>액션</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>적축 (Red Switch)</td>
+                    <td>스위치</td>
+                    <td>2025-04-10</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">수정</button>
+                            <button class="btn btn-danger">삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>갈축 (Brown Switch)</td>
+                    <td>스위치</td>
+                    <td>2025-04-10</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">수정</button>
+                            <button class="btn btn-danger">삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>청축 (Blue Switch)</td>
+                    <td>스위치</td>
+                    <td>2025-04-10</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">수정</button>
+                            <button class="btn btn-danger">삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 키보드 정보 관리 섹션 -->
+    <div class="admin-section" id="keyboard-info">
+        <h2>키보드 정보 관리</h2>
+
+        <div class="admin-form">
+            <h3>키보드 정보 등록/수정</h3>
+            <form id="keyboard-form">
+                <div class="form-group">
+                    <label for="keyboard-name">키보드 이름</label>
+                    <input type="text" id="keyboard-name" placeholder="키보드 모델명을 입력하세요.">
+                </div>
+                <div class="form-group">
+                    <label for="keyboard-brand">브랜드</label>
+                    <input type="text" id="keyboard-brand" placeholder="제조사/브랜드명을 입력하세요.">
+                </div>
+                <div class="form-group">
+                    <label for="keyboard-type">유형</label>
+                    <select id="keyboard-type">
+                        <option value="">유형 선택</option>
+                        <option value="mechanical">기계식</option>
+                        <option value="membrane">멤브레인</option>
+                        <option value="scissor">가위식</option>
+                        <option value="topre">토프레</option>
+                        <option value="optical">광축</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="keyboard-layout">레이아웃</label>
+                    <select id="keyboard-layout">
+                        <option value="">레이아웃 선택</option>
+                        <option value="full">풀 사이즈 (100%)</option>
+                        <option value="tkl">텐키리스 (80%)</option>
+                        <option value="75">75%</option>
+                        <option value="65">65%</option>
+                        <option value="60">60%</option>
+                        <option value="40">40%</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="keyboard-image">이미지 URL</label>
+                    <input type="text" id="keyboard-image" placeholder="키보드 이미지 URL을 입력하세요.">
+                </div>
+                <div class="form-group">
+                    <label for="keyboard-price">가격 (원)</label>
+                    <input type="number" id="keyboard-price" placeholder="가격을 입력하세요.">
+                </div>
+                <div class="form-group">
+                    <label for="keyboard-description">상세 설명</label>
+                    <textarea id="keyboard-description" placeholder="키보드에 대한 상세 설명을 입력하세요."></textarea>
+                </div>
+                <button type="submit" class="btn">키보드 정보 등록</button>
+                <button type="button" class="btn btn-secondary">초기화</button>
+            </form>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="keyboard-search" placeholder="키보드 검색">
+            <button type="button">검색</button>
+        </div>
+
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>모델명</th>
+                    <th>브랜드</th>
+                    <th>유형</th>
+                    <th>가격</th>
+                    <th>액션</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>MX Keys</td>
+                    <td>Logitech</td>
+                    <td>가위식</td>
+                    <td>139,000원</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">수정</button>
+                            <button class="btn btn-danger">삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Ducky One 3</td>
+                    <td>Ducky</td>
+                    <td>기계식</td>
+                    <td>189,000원</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">수정</button>
+                            <button class="btn btn-danger">삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 키보드 카테고리 관리 섹션 -->
+    <div class="admin-section" id="categories">
+        <h2>키보드 카테고리 관리</h2>
+
+        <div class="admin-form">
+            <h3>카테고리 등록/수정</h3>
+            <form id="category-form">
+                <div class="form-group">
+                    <label for="category-name">카테고리명</label>
+                    <input type="text" id="category-name" placeholder="예: 스위치, 키캡, 레이아웃 등">
+                </div>
+                <div class="form-group">
+                    <label for="category-description">설명 (선택)</label>
+                    <textarea id="category-description" placeholder="카테고리에 대한 간략한 설명을 입력하세요."></textarea>
+                </div>
+                <button type="submit" class="btn">카테고리 등록</button>
+                <button type="button" class="btn btn-secondary">초기화</button>
+            </form>
+        </div>
+
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>카테고리명</th>
+                    <th>설명</th>
+                    <th>생성일</th>
+                    <th>액션</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>스위치</td>
+                    <td>키보드 스위치 관련 카테고리</td>
+                    <td>2025-04-10</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">수정</button>
+                            <button class="btn btn-danger">삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>키캡</td>
+                    <td>키보드 키캡 관련 카테고리</td>
+                    <td>2025-04-10</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">수정</button>
+                            <button class="btn btn-danger">삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 키보드 태그 관리 섹션 -->
+    <div class="admin-section" id="tags">
+        <h2>키보드 태그 관리</h2>
+
+        <div class="admin-form">
+            <h3>태그 등록/수정</h3>
+            <form id="tag-form">
+                <div class="form-group">
+                    <label for="tag-name">태그명</label>
+                    <input type="text" id="tag-name" placeholder="예: 게이밍, 저소음, 무선 등">
+                </div>
+                <div class="form-group">
+                    <label for="tag-category">카테고리</label>
+                    <select id="tag-category">
+                        <option value="">카테고리 선택</option>
+                        <option value="usage">용도</option>
+                        <option value="feature">특징</option>
+                        <option value="price">가격대</option>
+                        <option value="etc">기타</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">태그 등록</button>
+                <button type="button" class="btn btn-secondary">초기화</button>
+            </form>
+        </div>
+
+        <div class="search-container">
+            <input type="text" id="tag-search" placeholder="태그 검색">
+            <button type="button">검색</button>
+        </div>
+
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>태그명</th>
+                    <th>카테고리</th>
+                    <th>사용 횟수</th>
+                    <th>등록일</th>
+                    <th>액션</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>게이밍</td>
+                    <td>용도</td>
+                    <td>42</td>
+                    <td>2025-04-15</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">수정</button>
+                            <button class="btn btn-danger">삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>무선</td>
+                    <td>특징</td>
+                    <td>38</td>
+                    <td>2025-04-15</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">수정</button>
+                            <button class="btn btn-danger">삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 태그 승인 요청 섹션 -->
+    <div class="admin-section" id="tag-requests">
+        <h2>태그 승인 요청</h2>
+
+        <div class="search-container">
+            <input type="text" id="tag-request-search" placeholder="태그 요청 검색">
+            <button type="button">검색</button>
+        </div>
+
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>태그명</th>
+                    <th>요청자</th>
+                    <th>요청 사유</th>
+                    <th>요청일</th>
+                    <th>상태</th>
+                    <th>액션</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>입문자 추천</td>
+                    <td>키보드마스터</td>
+                    <td>입문자에게 추천하는 키보드를 분류하기 위함</td>
+                    <td>2025-05-07</td>
+                    <td><span class="status status-pending">대기중</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-success">승인</button>
+                            <button class="btn btn-danger">거부</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>사무용</td>
+                    <td>키보드팬</td>
+                    <td>사무실에서 사용하기 적합한 키보드를 분류하기 위함</td>
+                    <td>2025-05-06</td>
+                    <td><span class="status status-pending">대기중</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-success">승인</button>
+                            <button class="btn btn-danger">거부</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 불량 이용자 관리 섹션 -->
+    <div class="admin-section" id="users">
+        <h2>불량 이용자 관리</h2>
+
+        <div class="search-container">
+            <input type="text" id="user-search" placeholder="사용자 검색 (아이디, 이메일)">
+            <button type="button">검색</button>
+        </div>
+
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>아이디</th>
+                    <th>이메일</th>
+                    <th>가입일</th>
+                    <th>신고 횟수</th>
+                    <th>상태</th>
+                    <th>액션</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>baduser123</td>
+                    <td>baduser123@example.com</td>
+                    <td>2025-01-15</td>
+                    <td>5</td>
+                    <td><span class="status status-reported">신고됨</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary">경고</button>
+                            <button class="btn btn-danger">차단</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>spammer456</td>
+                    <td>spammer456@example.com</td>
+                    <td>2025-03-20</td>
+                    <td>3</td>
+                    <td><span class="status status-reported">신고됨</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-secondary">경고</button>
+                            <button class="btn btn-danger">차단</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 신고 내역 섹션 -->
+    <div class="admin-section" id="reports">
+        <h2>신고 내역</h2>
+
+        <div class="search-container">
+            <input type="text" id="report-search" placeholder="신고 내역 검색">
+            <button type="button">검색</button>
+        </div>
+
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>신고 대상</th>
+                    <th>카테고리</th>
+                    <th>신고자</th>
+                    <th>신고 사유</th>
+                    <th>신고일</th>
+                    <th>액션</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><a href="#">게시글: 키보드 추천 부탁드립니다</a></td>
+                    <td>게시판</td>
+                    <td>키린이</td>
+                    <td>스팸 홍보</td>
+                    <td>2025-05-07</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">상세보기</button>
+                            <button class="btn btn-danger">삭제</button>
+                            <button class="btn btn-secondary">무시</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td><a href="#">댓글: "이 키보드는 사지 마세요"</a></td>
+                    <td>댓글</td>
+                    <td>키보드마스터</td>
+                    <td>불건전 발언</td>
+                    <td>2025-05-06</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">상세보기</button>
+                            <button class="btn btn-danger">삭제</button>
+                            <button class="btn btn-secondary">무시</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 삭제된 게시글 관리 섹션 -->
+    <div class="admin-section" id="deleted-posts">
+        <h2>삭제된 게시글 관리</h2>
+
+        <div class="search-container">
+            <input type="text" id="deleted-post-search" placeholder="삭제된 게시글 검색">
+            <button type="button">검색</button>
+        </div>
+
+        <div class="admin-table-container">
+            <table class="admin-table">
+                <thead>
+                <tr>
+                    <th>제목</th>
+                    <th>카테고리</th>
+                    <th>작성자</th>
+                    <th>삭제 사유</th>
+                    <th>삭제일</th>
+                    <th>액션</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>광고글입니다. 클릭해주세요!</td>
+                    <td>자유게시판</td>
+                    <td>spammer456</td>
+                    <td>스팸 홍보</td>
+                    <td>2025-05-05</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">상세보기</button>
+                            <button class="btn btn-success">복구</button>
+                            <button class="btn btn-danger">영구삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>키보드 구매 여부에 대한 논쟁글</td>
+                    <td>Q&A</td>
+                    <td>baduser123</td>
+                    <td>불건전 발언</td>
+                    <td>2025-05-03</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn">상세보기</button>
+                            <button class="btn btn-success">복구</button>
+                            <button class="btn btn-danger">영구삭제</button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 푸터 플레이스홀더 -->
+<div id="footer-placeholder"></div>
+</body>
+</html>

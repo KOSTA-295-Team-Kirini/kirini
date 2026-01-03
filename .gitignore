@@ -1,140 +1,128 @@
-# Created by https://www.toptal.com/developers/gitignore/api/java,eclipse
-# Edit at https://www.toptal.com/developers/gitignore?templates=java,eclipse
-# modify for Java Jsp & Servlet by Jake.Park (2025-04-14)
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
 
-
-##Eclipse-egit auto generated .gitignore
-**/.gitignore
-.github/
-
-### Eclipse ###
-.metadata
-bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-*~.nib
-.settings
-local.properties
-.loadpath
-.recommenders
-
-
-# External tool builders
-.externalToolBuilders/
-
-# Locally stored "Eclipse launch configurations"
-*.launch
-
-# PyDev specific (Python IDE for Eclipse)
-*.pydevproject
-
-# CDT-specific (C/C++ Development Tooling)
-.cproject
-
-# CDT- autotools
-.autotools
-
-# Java annotation processor (APT)
-.factorypath
-
-# PDT-specific (PHP Development Tools)
-.buildpath
-
-# sbteclipse plugin
-.target
-
-# Tern plugin
-.tern-project
-
-# TeXlipse plugin
-.texlipse
-
-# STS (Spring Tool Suite)
-.springBeans
-
-# Code Recommenders
-.recommenders/
-
-# Annotation Processing
-.apt_generated/
-.apt_generated_test/
-
-# Scala IDE specific (Scala & Java development for Eclipse)
-.cache-main
-.scala_dependencies
-.worksheet
-
-# Uncomment this line if you wish to ignore the project description file.
-# Typically, this file would be tracked if it contains build/dependency configurations:
-.project
-
-# JDT-specific (Eclipse Java Development Tools)
+### STS ###
+.apt_generated
 .classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
 
-# Java ###
-*.class
-*.log
-.mtj.tmp/
-*.jar
-#*.war # 배포를 위해 임시 허용
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-hs_err_pid*
-replay_pid*
-
-# VSCode specific (for Tomcat & project settings)
-.vscode/
-.tomcat/
-
-# Eclipse local server configurations
-Servers/
-
-# Build outputs
-/build/
-/out/
-/deploy/
-
-# Ensure WebContent folder is tracked (JSP, CSS, JS, etc.)
-!WebContent/
-!WebContent/**
-
-# Local Tomcat Folder
-/tomcat/
-
-# Added by Claude Task Master
-# Logs
-logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-dev-debug.log
-# Dependency directories
-node_modules/
-# Environment variables
-.env
-# Editor directories and files
+### IntelliJ IDEA ###
 .idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-# OS specific
-.DS_Store
+*.iws
+*.iml
+*.ipr
 
-# Task files
-tasks.json
-tasks/ 
-.cursor/
-.roo/
-scripts/
-.roomodes
-.taskmasterconfig
-.windsurfrules
-.env.example
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# === OS별 ===
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# === Maven ===
+target/
+dependency-reduced-pom.xml
+release.properties
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+# === Spring Boot 민감 설정 ===
+.env
+.env.*
+!.env.example
+src/main/resources/application.yml
+#src/main/resources/application.properties
+src/main/resources/application-*.yml
+src/main/resources/application-*.properties
+
+# === React (frontend) ===
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+frontend/
+
+# === Docker 관련 ===
+docker/logs/
+docker/data/
+**/.env
+
+# === VSCode (혹시 누가 쓰면) ===
+.vscode/
+
+# === 테스트 및 리포트 ===
+**/coverage/
+**/test-results/
+**/reports/
+
+# === log 파일 ===
+logs/
+*.log
+
+# === 개인 파일 ===
+teammate-app-v2.0/
+setting_information/
+
+# dotenv files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# === IntelliJ IDEA & Spring Boot 권장 추가 항목 ===
+# 기존 내용 및 주석은 변경하지 않고 하단에 안전하게 추가합니다.
+
+# IntelliJ 설정/워크스페이스 파일
+.idea/
+*.iml
+*.iws
+
+# IntelliJ가 생성하는 아웃/빌드 디렉터리
+out/
+
+# Gradle 관련 (캐시 등)
+.gradle/
+# Gradle wrapper jar은 보통 커밋하지만 환경에 따라 제외할 수 있습니다 (여기서는 제외하지 않음).
+
+# 빌드 산출물
+build/
+
+# 컴파일된 클래스 파일
+**/*.class
+
+# 자동 생성된 소스/헤더
+**/generated/
+
+# Spring Boot 관련 산출물(실행 가능한 JAR/WAR 등)
+*.jar
+*.war
+*.ear
+
+# 임시/캐시/로그
+tmp/
+*.log
+
+# 로컬 환경 설정(개발자 개인 설정용) - 프로덕션 설정 파일은 커밋하지 마세요
+application-local.properties
+application-*.local.properties
+
+# IDE/OS 특화 로그 및 임시 파일 (중복이더라도 안전하게 명시)
+.idea/*.log
+
+# 끝: IntelliJ & Spring Boot 권장 추가

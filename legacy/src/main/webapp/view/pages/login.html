@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>로그인 - KIRINI</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/login.css">
+    <script src="../js/main.js" defer></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/login.js" defer></script>
+</head>
+<body>
+<!-- 헤더 플레이스홀더 -->
+<div id="header-placeholder"></div>
+
+<div class="login-container">
+    <h2 class="login-title">로그인</h2>
+    <form class="login-form" id="login-form">
+        <div>
+            <label for="email">이메일</label>
+            <input type="text" id="email" name="email" placeholder="이메일 주소 입력" required>
+        </div>
+        <div>
+            <label for="password">비밀번호</label>
+            <input type="password" id="password" name="password" placeholder="비밀번호 입력" required>
+        </div>
+        <div class="remember-me">
+            <input type="checkbox" id="remember-me" name="remember-me">
+            <label for="remember-me">로그인 상태 유지</label>
+        </div>
+        <button type="submit" class="login-button">로그인</button>
+    </form>
+
+    <div class="login-options">
+        <a href="#">아이디 찾기</a>
+        <a href="#">비밀번호 찾기</a>
+    </div>
+
+    <div class="signup-prompt">
+        <p>아직 계정이 없으신가요? <a href="signup.html">회원가입</a></p>
+    </div>
+</div>
+
+<!-- 푸터 플레이스홀더 -->
+<div id="footer-placeholder"></div>
+</body>
+</html>

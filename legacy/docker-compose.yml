@@ -1,0 +1,116 @@
+services:
+  #CI/CD 솔루션 도입 전까지 사용할 임시 docker-compose
+  #docker-compose를 통해 docker 컨테이너 자동 세팅
+  #git pull로 main 브랜치 최신화 (바인드 마운트로 프론트는 자동 갱신)
+
+  mysql:
+    image: mysql:8.4.4
+    #container_name: kirini-mysql
+    #ports:
+    #  - "3307:3306"
+    # 여기서 포트를 직접 열지 않고 haproxy에서 3307로 진입한 뒤 내부 네트워크를 통해 mysql에 접근하도록 변경
+    environment:
+      #환경변수의 값을 사용하도록 리팩토링
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+      - TZ=${TZ}
+      - LANG=${DB_LANG}
+      - LC_ALL=${DB_LC_ALL}
+      - MYSQL_INIT_CONNECT=${DB_MYSQL_INIT_CONNECT}
+      - MYSQL_CHARACTER_SET_SERVER=${DB_MYSQL_CHARACTER_SET_SERVER}
+      - MYSQL_COLLATION_SERVER=${DB_MYSQL_COLLATION_SERVER}
+
+    volumes:
+      - mysql-data:/var/lib/mysql #db 저장소
+      - /volume1/docker/kirini/docker-settings/mysql-init:/docker-entrypoint-initdb.d #스크립트를 자동 실행할 폴더
+      - /etc/localtime:/etc/localtime:ro # 호스트의 시간 설정을 컨테이너에 반영
+    networks:
+      - kirini-network
+
+  service1-tomcat:
+    build: docker-settings/service1-tomcat
+    #container_name: service1-tomcat
+    environment:
+      #환경변수의 값을 사용하도록 리팩토링
+      - DB_DRIVER=${DB_DRIVER}
+      - DB_URL=${DB_URL}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+
+    ports:
+      - "8080:8080"
+    volumes:
+      # 전부 NAS 기준 절대경로로 세팅
+      # tomcat, nginx가 공유할 Static 리소스 경로 바인드 마운트
+      - /volume1/docker/kirini/src/main/webapp/view:/usr/local/tomcat/webapps/view:ro   # tomcat용
+      - /volume1/docker/kirini/src/main/webapp/view:/usr/share/nginx/html:ro            # nginx용
+      # tomcat, nginx가 공유할 리소스 업로드 경로 바인드 마운트
+      - /volume1/docker/kirini/uploads:/usr/local/tomcat/webapps/uploads    # tomcat용
+      #- /volume1/docker/kirini/src/main/webapp/uploads:/usr/share/nginx/html/uploads:ro     # nginx/html이 읽기전용이라 이거 안 됨
+      - /volume1/docker/kirini/src/main/webapp/uploads:/usr/share/nginx/uploads:ro
+
+      - /volume1/docker/kirini/docker-settings/certbot/www:/var/www/html:ro
+      - /volume1/docker/kirini/service1-tomcat/logs:/usr/local/tomcat/logs # 로그 저장소를 bind로
+    depends_on:
+      - mysql
+    networks:
+      - kirini-network
+
+  nginx:
+    image: nginx:latest
+    #container_name: nginx
+    volumes:
+      # nginx 설정 파일
+      - ${NGINX_CONF_PATH}
+      #certbot well-known 경로
+      - ${CERTBOT_WELL_KNOWN_PATH}
+      # tomcat, nginx가 공유할 Static 리소스 경로 바인드 마운트
+      - ${TOMCAT_DEFAULT_BIND_MOUNT_PATH}
+      - ${NGINX_DEFAULT_BIND_MOUNT_PATH}
+      # tomcat, nginx가 공유할 리소스 업로드 경로 바인드 마운트
+      - ${TOMCAT_UPLOAD_BIND_MOUNT_PATH}
+      - ${NGINX_UPLOAD_BIND_MOUNT_PATH}
+
+    depends_on:
+      - service1-tomcat
+      # tomcat이 안 떠있으면 nginx가 올라가도 tomcat을 통해 동작하는 페이지가 정상적으로 동작하지 않음 (502 bad gateway)
+      # 순서 지정을 통해 service1-tomcat을 먼저 올리고 nginx를 올림
+    networks:
+      - kirini-network
+
+  #HAPROXY 및 CERTBOT은 Synology 내장 리버스 프록시를 사용하면 없어도 무방해 제거
+  #이하 주석처리된 내용은 AWS EC2 환경에서 사용할 때는 주석을 풀고 적절한 경로로 변경해 사용
+  # haproxy:
+  #  image: haproxy:latest
+  #  ports:
+  #    - "80:80"
+  #    - "443:443"
+  #    - "3307:3307"
+  #  volumes:
+  #    - ${HAPROXY_CFG_PATH}
+  #    - ${HAPROXY_CERTS_PATH}
+  #    - ${HAPROXY_LETSENCRYPT_PATH}
+  #  depends_on:
+  #    - service1-tomcat
+  #    # tomcat이 안 떠있으면 nginx가 올라가도 tomcat을 통해 동작하는 페이지가 정상적으로 동작하지 않음 (502 bad gateway)
+  #    # 순서 지정을 통해 service1-tomcat을 먼저 올리고 nginx를 올림
+  #  networks:
+  #    - kirini-network
+
+  # certbot:
+  #  image: certbot/certbot:latest
+  #  container_name: certbot
+  #  volumes:
+  #    - ${CERTBOT_CONF_PATH}
+  #    - ${CERTBOT_WWW_PATH}
+  #  command: ["renew", "--webroot", "-w", "/var/www/html"]
+
+
+volumes:
+  #static-assets: #더이상 사용하지 않음
+  #external: true # 외부 볼륨을 사용하려면 주석 해제
+  mysql-data:
+  #external: true # 외부 볼륨을 사용하려면 주석 해제
+
+networks:
+  kirini-network:

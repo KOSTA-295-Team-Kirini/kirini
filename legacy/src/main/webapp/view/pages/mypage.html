@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>마이페이지 - KIRINI</title>
+    <link rel="stylesheet" href="/view/css/style.css"/>
+    <link rel="stylesheet" href="/view/css/mypage.css"/>
+    <link rel="stylesheet" href="/view/css/mypage-additions.css"/>
+    <script src="/view/js/main.js" defer></script>
+    <script src="/view/js/auth.js"></script>
+    <script src="/view/js/components.js"></script>
+    <script src="/view/js/api-client.js"></script>
+    <script src="/view/js/mypage.js" defer></script>
+</head>
+<body>
+<!-- 헤더 플레이스홀더 -->
+<div id="header-placeholder"></div>
+
+<section class="page-title">
+    <h1>마이페이지</h1>
+    <p>나의 회원 정보와 활동 내역을 관리할 수 있습니다.</p>
+</section>
+
+<div class="mypage-wrapper">
+    <div class="mypage-container">
+        <div class="mypage-tabs">
+            <button class="mypage-tab active" data-tab="profile">내 정보</button>
+            <button class="mypage-tab" data-tab="scraps">스크랩</button>
+            <button class="mypage-tab" data-tab="posts">내가 쓴 글</button>
+            <button class="mypage-tab" data-tab="ratings">별점 내역</button>
+            <button class="mypage-tab" data-tab="points">활동 포인트</button>
+            <button class="mypage-tab" data-tab="customize">꾸미기</button>
+        </div>
+
+        <div class="mypage-content">
+            <!-- 내 정보 섹션 -->
+            <div class="mypage-section active" id="profile">
+                <div class="profile-info">
+                    <div class="profile-avatar">👤</div>
+                    <div class="profile-details">
+                        <h3></h3>
+                        <p></p>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <div class="stat-value"></div>
+                                <div class="stat-label">작성글</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value"></div>
+                                <div class="stat-label">스크랩</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value"></div>
+                                <div class="stat-label">포인트</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>내 정보 수정</h2>
+                <form>
+                    <div class="form-group">
+                        <label for="username">이름</label>
+                        <input type="text" id="username" value=""/>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">이메일</label>
+                        <input type="email" id="email" value=""/>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">비밀번호</label>
+                        <input
+                                type="password"
+                                id="password"
+                                placeholder="새 비밀번호 입력"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="password-confirm">비밀번호 확인</label>
+                        <input
+                                type="password"
+                                id="password-confirm"
+                                placeholder="비밀번호 확인"
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="bio">자기소개</label>
+                        <textarea id="bio"></textarea>
+                    </div>
+                    <button type="submit" class="btn">정보 수정</button>
+                </form>
+
+                <h2 style="margin-top: 3rem">회원 탈퇴</h2>
+                <p>회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.</p>
+                <button class="btn btn-danger">회원 탈퇴</button>
+            </div>
+
+            <!-- 스크랩 섹션 -->
+            <div class="mypage-section" id="scraps">
+                <h2>스크랩한 키보드</h2>
+                <div class="keyboard-grid">
+                    <!-- 스크랩 데이터는 JavaScript로 동적 로드됩니다 -->
+                </div>
+            </div>
+
+            <!-- 내가 쓴 글 섹션 -->
+            <div class="mypage-section" id="posts">
+                <h2>내가 쓴 글</h2>
+                <ul class="item-list">
+                    <!-- 게시글 데이터는 JavaScript로 동적 로드됩니다 -->
+                </ul>
+            </div>
+
+            <!-- 별점 내역 섹션 -->
+            <div class="mypage-section" id="ratings">
+                <h2>내 별점 내역</h2>
+                <div class="rating-list">
+                    <!-- 별점 데이터는 JavaScript로 동적 로드됩니다 -->
+                </div>
+            </div>
+
+            <!-- 활동 포인트 섹션 -->
+            <div class="mypage-section" id="points">
+                <h2>나의 활동 포인트</h2>
+                <div class="point-card">
+                    <div class="point-value"></div>
+                    <div class="point-label">현재 포인트</div>
+                </div>
+
+                <h3>포인트 내역</h3>
+                <div class="point-history">
+                    <!-- 포인트 내역 데이터는 JavaScript로 동적 로드됩니다 -->
+                </div>
+            </div>
+
+            <!-- 꾸미기 섹션 -->
+            <div class="mypage-section" id="customize">
+                <h2>프로필 꾸미기</h2>
+                <p>포인트를 사용하여 프로필을 꾸밀 수 있는 아이템을 구매하세요.</p>
+
+                <div class="item-customize">
+                    <h3>프로필 아이콘</h3>
+                    <div class="customize-options">
+                        <!-- 아이콘 아이템은 JavaScript로 동적 로드됩니다 -->
+                    </div>
+                </div>
+
+                <div class="item-customize">
+                    <h3>배경 테마</h3>
+                    <div class="customize-options">
+                        <!-- 테마 아이템은 JavaScript로 동적 로드됩니다 -->
+                    </div>
+                </div>
+
+                <button class="btn" style="margin-top: 2rem">변경사항 저장</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 푸터 플레이스홀더 -->
+<div id="footer-placeholder"></div>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>적축 (Red Switch) - KIRINI</title>
+    <!-- 경로 문제 해결을 위한 스크립트 추가 -->
+    <script>
+        // 이클립스 환경과 일반 환경에서 모두 작동하도록 base 설정
+        (function () {
+            // 현재 경로가 이클립스 서버인지 확인 (URL에 kirini가 포함되어 있는지)
+            if (window.location.pathname.includes('/kirini/')) {
+                // 이클립스 환경일 경우 base href 설정
+                document.write('<base href="/kirini/view/">');
+            } else {
+                // 로컬 개발 환경일 경우 상대 경로 유지
+                document.write('<base href="">');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/keyboard_terms.css">
+    <script src="../js/main.js" defer></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+</head>
+<body>
+<!-- 헤더 플레이스홀더 -->
+<div id="header-placeholder"></div>
+
+<div class="page-title">
+    <h1>적축 (Red Switch)</h1>
+    <p>리니어 타입의 부드럽고 조용한 키감을 가진 스위치</p>
+</div>
+
+<div class="dictionary-container">
+    <div class="toc">
+        <strong>목차</strong>
+        <ul>
+            <li><a href="#intro">1. 개요</a></li>
+            <li><a href="#feature">2. 특징</a></li>
+            <li><a href="#usage">3. 용도 및 예시</a></li>
+            <li><a href="#related">4. 관련 용어</a></li>
+        </ul>
+    </div>
+
+    <div class="section" id="intro">
+        <h2>1. 개요</h2>
+        <p>
+            <strong>적축</strong>은 기계식 키보드 스위치의 한 종류로, 영어로는 <b>Red Switch</b>라고 부릅니다. 리니어(Linear) 타입으로, 눌렀을 때 걸림이 거의 없고
+            부드럽게 움직이는 것이 특징입니다.
+        </p>
+    </div>
+
+    <div class="section" id="feature">
+        <h2>2. 특징</h2>
+        <ul>
+            <li>리니어 타입: 눌림이 매우 부드럽고, 구분감(클릭감)이 없음</li>
+            <li>소음이 적고, 연타에 적합</li>
+            <li>키압(누르는 힘)이 가벼운 편 (보통 45g 내외)</li>
+            <li>장시간 타이핑 시 손가락 피로도가 적음</li>
+        </ul>
+        <div class="img-placeholder">[적축 스위치 예시 이미지]</div>
+    </div>
+
+    <div class="section" id="usage">
+        <h2>3. 용도 및 예시</h2>
+        <ul>
+            <li>빠른 타이핑이 필요한 상황</li>
+            <li>게임(특히 연타가 많은 게임)에 적합</li>
+            <li>조용한 환경에서 사용하기 좋음</li>
+        </ul>
+    </div>
+
+    <div class="section" id="related">
+        <h2>4. 관련 용어</h2>
+        <div class="related">
+            <a href="axis.html">축</a>, <a href="axis_brown.html">갈축</a>, <a href="#">청축</a>
+        </div>
+    </div>
+
+    <p><a href="../pages/dictionary.html">← 용어집으로 돌아가기</a></p>
+</div>
+
+<!-- 푸터 플레이스홀더 -->
+<div id="footer-placeholder"></div>
+</body>
+</html>

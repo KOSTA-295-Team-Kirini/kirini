@@ -1,0 +1,667 @@
+/* 키보드 태그 관련 스타일 */
+.keyboard-tags {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.keyboard-tag {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    margin-right: 0.3rem;
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    position: relative;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.keyboard-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 돋보기 아이콘 제거 */
+.keyboard-tag::after {
+    content: none;
+}
+
+/* 태그 클릭 시 포인터 커서 표시 */
+.keyboard-tag {
+    cursor: pointer;
+}
+
+.tag-admin {
+    background: #ffe082; /* 더 진한 노란색으로 변경 */
+    border: 2px solid #ffb300; /* 테두리 더 굵고 진하게 */
+    color: #e65100; /* 텍스트 색상 변경 - 주황색 */
+}
+
+.tag-user {
+    background: #c8e6c9; /* 더 진한 연두색으로 변경 */
+    border: 2px solid #66bb6a; /* 테두리 더 굵고 진하게 */
+    color: #1b5e20; /* 텍스트 색상 변경 - 녹색 */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* 태그 추천 수 스타일 */
+.tag-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.5rem;
+    padding: 0 0.4rem;
+    min-width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.7rem;
+    font-weight: bold;
+    background: #66bb6a;
+    color: white;
+    border-radius: 1rem;
+}
+
+.tag-badge {
+    font-size: 0.7rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    margin-left: 0.2rem;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.admin-badge-tag {
+    background: #ffcc80;
+    color: #333;
+}
+
+.user-badge-tag {
+    background: #a5d6a7;
+    color: #333;
+}
+
+/* 태그 투표 시스템 */
+.tag-vote {
+    margin-left: 0.4rem;
+    display: flex;
+    align-items: center;
+    border-left: 1px solid rgba(0, 0, 0, 0.1);
+    padding-left: 0.4rem;
+}
+
+.vote-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.vote-btn:hover {
+    color: #333;
+}
+
+.vote-count {
+    margin: 0 0.2rem;
+    font-size: 0.8rem;
+    color: #666;
+    min-width: 1.2rem;
+    text-align: center;
+}
+
+/* 투표한 태그 스타일 */
+.tag-voted-up .vote-up {
+    color: #4caf50;
+}
+
+.tag-voted-down .vote-down {
+    color: #f44336;
+}
+
+/* 태그 모달 */
+.tag-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.tag-modal.active {
+    display: flex;
+}
+
+.tag-modal-content {
+    max-width: 500px;
+    width: 90%;
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.tag-modal-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tag-modal-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ff7043;
+}
+
+.close-tag-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+    transition: color 0.2s;
+}
+
+.close-tag-modal:hover {
+    color: #333;
+}
+
+/* 태그 목록 */
+.tag-list {
+    margin-bottom: 1.5rem;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
+.tag-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.tag-list-item:last-child {
+    border-bottom: none;
+}
+
+.tag-list-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tag-type-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.admin-tag-indicator {
+    background: #ffcc80;
+}
+
+.user-tag-indicator {
+    background: #a5d6a7;
+}
+
+.tag-vote-count {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.tag-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tag-action-btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-tag-btn {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-color: #c8e6c9;
+}
+
+.add-tag-btn:hover {
+    background: #c8e6c9;
+}
+
+/* 태그 추가 버튼 */
+.keyboard-tag-add {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: #f5f5f5;
+    color: #616161;
+    border: 1px dashed #bdbdbd;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 0.3rem;
+}
+
+.keyboard-tag-add:hover {
+    background: #eeeeee;
+    color: #424242;
+    border-color: #9e9e9e;
+}
+
+.keyboard-tag-add i {
+    font-style: normal;
+    margin-right: 4px;
+    font-weight: bold;
+}
+
+/* 태그 신청 폼 */
+.tag-form-section {
+    margin-top: 1.5rem;
+    border-top: 1px solid #eee;
+    padding-top: 1.5rem;
+}
+
+.tag-form-title {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: #ff7043;
+}
+
+.tag-form-group {
+    margin-bottom: 1rem;
+}
+
+.tag-form-group label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.tag-form-group input,
+.tag-form-group textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 0.6rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+}
+
+.tag-form-group textarea {
+    min-height: 80px;
+    resize: none; /* 크기 조절 기능 제거 */
+}
+
+.tag-form-group input:focus,
+.tag-form-group textarea:focus {
+    border-color: #ff7043;
+    outline: none;
+}
+
+.tag-submit-btn {
+    background: #ff7043;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.tag-submit-btn:hover {
+    background: #f4511e;
+}
+
+/* 태그 신청 폼 */
+.tag-form-section {
+    border-top: 1px solid #eee;
+    padding-top: 1.5rem;
+}
+
+.tag-form-title {
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.tag-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.tag-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tag-form-group label {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.tag-form-group input,
+.tag-form-group textarea {
+    padding: 0.7rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.tag-form-group textarea {
+    min-height: 80px;
+}
+
+.tag-submit-btn {
+    background: #ff9800;
+    color: white;
+    border: none;
+    padding: 0.7rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 0.5rem;
+    transition: background 0.3s;
+}
+
+.tag-submit-btn:hover {
+    background: #ff7043;
+}
+
+/* 태그 추가 버튼 */
+.keyboard-tag-add {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    background: #f0f0f0;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+    color: #666;
+    font-size: 0.85rem;
+    margin-right: 0.3rem;
+    margin-bottom: 0.3rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.keyboard-tag-add:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.keyboard-tag-add i {
+    margin-right: 0.3rem;
+    font-size: 0.9rem;
+}
+
+/* 태그 추천/비추천 버튼 스타일 */
+.tag-vote-btn {
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 0.3rem 0.5rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.tag-vote-btn i {
+    font-style: normal;
+    font-size: 0.9rem;
+}
+
+.tag-vote-btn.upvote:hover {
+    background: #e8f5e9;
+    border-color: #a5d6a7;
+}
+
+.tag-vote-btn.downvote:hover {
+    background: #ffebee;
+    border-color: #ef9a9a;
+}
+
+.tag-vote-btn.upvote.active {
+    background: #c8e6c9;
+    border-color: #81c784;
+    color: #2e7d32;
+}
+
+.tag-vote-btn.downvote.active {
+    background: #ffcdd2;
+    border-color: #ef5350;
+    color: #c62828;
+}
+
+.vote-count {
+    min-width: 1.5rem;
+    text-align: center;
+    font-weight: bold;
+    color: #555;
+    font-size: 0.9rem;
+    padding: 0.2rem;
+}
+
+.tag-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.tag-section-title {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    color: #ff7043;
+}
+
+.tag-section-desc {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 600px) {
+    .tag-modal-content {
+        width: 95%;
+        padding: 1.5rem;
+    }
+
+    .tag-list {
+        max-height: 180px;
+    }
+
+    .tag-list-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .tag-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* 키보드 정보 페이지 스타일 */
+body {
+    margin: 0;
+    font-family: 'Pretendard', sans-serif;
+    background: #fffceb;
+    color: #333;
+}
+
+.page-title {
+    background: #fff3e0;
+    padding: 2rem;
+    text-align: center;
+}
+
+.page-title h1 {
+    color: #ff7043;
+    margin-bottom: 1rem;
+}
+
+.filter-container {
+    max-width: 900px;
+    margin: 2rem auto 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-title {
+    margin-bottom: 1rem;
+    font-weight: bold;
+    color: #ff7043;
+}
+
+.filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    background: #ffecb3;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.filter-btn.active {
+    background: #ff9800;
+    color: white;
+}
+
+.keyboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.keyboard-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.keyboard-card:hover {
+    transform: translateY(-5px);
+}
+
+.keyboard-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-bottom: 1px solid #eee;
+}
+
+.keyboard-content {
+    padding: 1.5rem;
+}
+
+.keyboard-title {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: #ff7043;
+}
+
+.keyboard-price {
+    font-weight: bold;
+    color: #ff5722;
+    margin-bottom: 1rem;
+}
+
+.keyboard-description {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.keyboard-button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: #ff9800;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.keyboard-button:hover {
+    background: #ff7043;
+}
+
+.keyboard-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.keyboard-detail-btn {
+    padding: 0.5rem 1rem;
+    background: #ff9800;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background 0.3s;
+    display: inline-block;
+}
+
+.keyboard-detail-btn:hover {
+    background: #ff7043;
+}
+
+@media (max-width: 600px) {
+    /* 모바일 대응 스타일 */
+    .filter-options {
+        justify-content: center;
+    }
+
+    .keyboard-grid {
+        grid-template-columns: 1fr;
+    }
+}

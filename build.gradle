@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'dev.earlydreamer'
+version = '0.0.1-SNAPSHOT'
+description = 'kirini-spring'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+// 리소스 및 컴파일 인코딩을 UTF-8로 설정합니다. 한국어 주석이 포함된 properties 파일을 안전하게 처리하기 위함입니다.
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+tasks.processResources {
+    // 리소스 필터링 문자셋을 UTF-8로 지정
+    filteringCharset = 'UTF-8'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+
+    // BCrypt 비밀번호 암호화를 위한 Spring Security Crypto
+    implementation 'org.springframework.security:spring-security-crypto'
+
+    // .env 파일 로드를 위한 라이브러리
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    runtimeOnly 'org.postgresql:postgresql'
+    implementation 'com.h2database:h2' // H2를 개발(IDE) 환경에서도 인식되도록 implementation으로 변경
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

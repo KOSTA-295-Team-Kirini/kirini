@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>용어집 - KIRINI</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/dictionary.css">
+    <link rel="stylesheet" href="../css/dictionary-extras.css">
+    <script src="../js/main.js" defer></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/dictionary.js" defer></script>
+    <script>
+        // HTML에 있는 정적 링크도 이클립스 환경에서 동작하도록 수정
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.location.pathname.includes('/kirini/')) {
+                document.querySelectorAll('a.term-link').forEach(link => {
+                    if (link.href.includes('/keyboard_terms/')) {
+                        let newHref = link.href.replace(/\/keyboard_terms\//, '/kirini/view/keyboard_terms/');
+                        link.href = newHref;
+                    }
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+<!-- 헤더 플레이스홀더 -->
+<div id="header-placeholder"></div>
+
+<section class="page-title">
+    <h1>🔤 키보드 용어집</h1>
+    <p>키보드 세계에서 사용되는 용어들을 쉽게 이해할 수 있도록 정리했습니다.</p>
+</section>
+
+<div class="search-container">
+    <input type="text" id="search-input" placeholder="용어 검색">
+    <button type="button" id="search-button">검색</button> <!-- 검색 버튼에 ID 추가 -->
+</div>
+
+<div class="dictionary-wrapper">
+    <div class="dictionary-container">
+        <h2 class="term">검색 결과</h2>
+        <ul id="search-results">
+            <!-- 검색 결과가 여기에 동적으로 추가됩니다. -->
+        </ul>
+    </div>
+</div>
+
+<!-- 푸터 플레이스홀더 -->
+<div id="footer-placeholder"></div>
+</body>
+</html>

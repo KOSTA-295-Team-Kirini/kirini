@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>축 (Switch) - KIRINI</title>
+    <!-- 경로 문제 해결을 위한 스크립트 추가 -->
+    <script>
+        // 이클립스 환경과 일반 환경에서 모두 작동하도록 base 설정
+        (function () {
+            // 현재 경로가 이클립스 서버인지 확인 (URL에 kirini가 포함되어 있는지)
+            if (window.location.pathname.includes('/kirini/')) {
+                // 이클립스 환경일 경우 base href 설정
+                document.write('<base href="/kirini/view/">');
+            } else {
+                // 로컬 개발 환경일 경우 상대 경로 유지
+                document.write('<base href="">');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/keyboard_terms.css">
+    <script src="../js/main.js" defer></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+</head>
+<body>
+<!-- 헤더 플레이스홀더 -->
+<div id="header-placeholder"></div>
+
+<div class="page-title">
+    <h1>축 (Switch)</h1>
+    <p>기계식 키보드의 핵심 부품, 키보드 스위치</p>
+</div>
+
+<div class="dictionary-container">
+    <div class="toc">
+        <strong>목차</strong>
+        <ul>
+            <li><a href="#intro">1. 개요</a></li>
+            <li><a href="#types">2. 종류</a></li>
+            <li><a href="#choose">3. 선택 방법</a></li>
+            <li><a href="#related">4. 관련 용어</a></li>
+        </ul>
+    </div>
+
+    <div class="section" id="intro">
+        <h2>1. 개요</h2>
+        <p>
+            <strong>축</strong>은 기계식 키보드의 핵심 부품인 스위치를 의미합니다. 영어로는 <b>Switch</b>라고 부릅니다. 키보드의 각 키 아래에 위치하며, 키를 누르면 스위치가
+            작동하여 입력이 전달됩니다. 축의 종류에 따라 키보드의 타건감, 소음, 내구성 등이 달라집니다.
+        </p>
+    </div>
+
+    <div class="section" id="types">
+        <h2>2. 종류</h2>
+        <p>축은 크게 세 가지 타입으로 나눌 수 있습니다:</p>
+        <ul>
+            <li><strong>리니어(Linear) 타입</strong>: 적축, 은축, 흑축 등이 해당되며, 누를 때 구분감 없이 부드럽게 눌리는 것이 특징</li>
+            <li><strong>택타일(Tactile) 타입</strong>: 갈축, 클리어축 등이 해당되며, 누를 때 약간의 구분감(턱)이 있는 것이 특징</li>
+            <li><strong>클릭(Click) 타입</strong>: 청축, 백축 등이 해당되며, 누를 때 '딸깍' 소리와 함께 확실한 구분감이 있는 것이 특징</li>
+        </ul>
+        <div class="img-placeholder">[다양한 축 종류 이미지]</div>
+    </div>
+
+    <div class="section" id="choose">
+        <h2>3. 선택 방법</h2>
+        <p>자신에게 맞는 축을 선택하는 방법:</p>
+        <ul>
+            <li>타이핑이 주 용도라면: 갈축, 청축 등 구분감이 있는 축 추천</li>
+            <li>게임이 주 용도라면: 적축, 은축 등 부드러운 축 추천</li>
+            <li>조용한 환경에서 사용한다면: 적축, 갈축 등 소음이 적은 축 추천</li>
+            <li>가능하다면 실제로 타건해보고 결정하는 것이 가장 좋음</li>
+        </ul>
+    </div>
+
+    <div class="section" id="related">
+        <h2>4. 관련 용어</h2>
+        <div class="related">
+            <a href="axis_red.html">적축</a>, <a href="axis_brown.html">갈축</a>, <a href="#">청축</a>, <a href="#">은축</a>
+        </div>
+    </div>
+
+    <p><a href="../pages/dictionary.html">← 용어집으로 돌아가기</a></p>
+</div>
+
+<!-- 푸터 플레이스홀더 -->
+<div id="footer-placeholder"></div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+body {
+    margin: 0;
+    font-family: 'Pretendard', sans-serif;
+    background: #fffceb;
+    color: #333;
+}
+
+/* 헤더 관련 스타일 제거 - 이제 외부 컴포넌트 사용 */
+.hero {
+    padding: 4rem 2rem;
+    text-align: center;
+    background: #fff3e0;
+}
+
+.hero h1 {
+    font-size: 2rem;
+    color: #ff7043;
+}
+
+.sections {
+    display: flex;
+    justify-content: space-around;
+    padding: 2rem;
+    gap: 1rem;
+}
+
+.card {
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    text-align: center;
+    flex: 1;
+}
+
+.card h2 {
+    font-size: 1.2rem;
+    color: #ff8a65;
+}
+
+/* 푸터 관련 스타일 제거 - 이제 외부 컴포넌트 사용 */

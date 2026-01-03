@@ -1,0 +1,63 @@
+/* 기본 스타일 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Noto Sans KR', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #fffceb;
+    color: #333;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* viewport height의 100%를 최소 높이로 설정 */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #333;
+    margin: 20px 0 10px;
+}
+
+a {
+    color: #ff7043;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+a:hover {
+    color: #ff9e80;
+}
+
+.container {
+    margin: 0 auto;
+    padding: 0 20px;
+    width: 100%;
+    flex: 1 0 auto; /* flex-grow: 1, flex-shrink: 0, flex-basis: auto */
+}
+
+/* 버튼 기본 스타일 */
+.btn {
+    display: inline-block;
+    background: #ffcc80;
+    color: #333;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    background: #ffb74d;
+    transform: scale(1.05);
+}
+
+/* Utility Classes */
+.element-hidden {
+    display: none !important;
+}

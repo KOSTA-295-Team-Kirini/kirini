@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>커뮤니티 - KIRINI</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/board.css">
+    <script src="../js/main.js" defer></script>
+    <script src="../js/api-client.js" defer></script>
+    <script src="../js/auth.js" defer></script>
+    <script src="../js/components.js" defer></script>
+    <script src="../js/board.js" defer></script>
+</head>
+<body>
+<!-- 헤더 플레이스홀더 -->
+<div id="header-placeholder"></div>
+
+<div class="container">
+    <div class="board-wrapper">
+        <div class="board-header">
+            <h1>키린이 커뮤니티</h1>
+            <button class="btn" id="write-btn">글쓰기</button>
+        </div>
+
+        <div class="board-nav">
+            <a href="#" class="active" data-board="news">키보드 소식</a>
+            <a href="#" data-board="free">자유게시판</a>
+            <a href="#" data-board="anonymous">익명게시판</a>
+        </div>
+
+        <!-- 게시글 상세 보기 영역을 여기로 이동 -->
+        <div id="post-detail-view" class="post-detail-section" style="display: none;">
+            <button class="post-detail-close">&times;</button>
+            <div class="post-detail-header">
+                <h2 id="detail-title">게시글 제목이 여기에 표시됩니다.</h2>
+                <div class="post-detail-meta">
+                    <div class="post-detail-meta-left">
+                        <div class="post-detail-author">
+                            <span class="post-detail-label">작성자:</span>
+                            <span id="detail-author"></span>
+                        </div>
+                    </div>
+                    <div class="post-detail-meta-right">
+                        <div class="post-detail-date">
+                            <span class="post-detail-label">작성일:</span>
+                            <span id="detail-date"></span>
+                        </div>
+                        <div class="post-detail-views">
+                            <span class="post-detail-label">조회수:</span>
+                            <span id="detail-views">0</span>
+                        </div>
+                        <div class="post-detail-likes">
+                            <span class="post-detail-label">추천수:</span>
+                            <span id="detail-likes" class="post-detail-likes-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="post-detail-content-wrapper">
+                <div id="detail-content" class="post-detail-body">
+                    <!-- 게시글 본문이 여기에 동적으로 채워집니다. -->
+                </div>
+                <!-- 추천 버튼 추가 -->
+                <div class="post-like-section">
+                    <button id="post-like-button" class="post-like-button">
+                        <i>👍</i> 추천하기 (<span id="post-like-count-display">0</span>)
+                    </button>
+                    <!-- 삭제 버튼 위치 수정 -->
+                    <button id="post-delete-button" class="post-delete-button">게시글 삭제</button>
+                </div>
+            </div>
+            <div class="post-detail-comments">
+                <h3>댓글 (<span id="detail-comment-count">0</span>)</h3>
+                <div id="detail-comment-list" class="comment-list">
+                    <!-- 댓글 목록이 여기에 동적으로 채워집니다. -->
+                </div>
+                <div class="comment-form">
+                    <textarea id="detail-comment-input" placeholder="댓글을 입력하세요..."></textarea>
+                    <button id="detail-comment-submit" class="btn">댓글 등록</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 키보드 소식 게시판 -->
+        <div id="news-board" class="board-content active">
+            <div class="notice-area">
+                <h3>공지사항</h3>
+                <div class="notice-list">
+                    <!-- 공지사항이 동적으로 로드됩니다 -->
+                </div>
+            </div>
+
+            <table class="board-table">
+                <thead>
+                <tr>
+                    <th width="8%">번호</th>
+                    <th>제목</th>
+                    <th width="12%">작성자</th>
+                    <th width="12%">작성일</th>
+                    <th width="8%">조회</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- 게시글 목록이 동적으로 로드됩니다 -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 자유게시판 -->
+        <div id="free-board" class="board-content" style="display: none;">
+            <table class="board-table">
+                <thead>
+                <tr>
+                    <th width="8%">번호</th>
+                    <th>제목</th>
+                    <th width="12%">작성자</th>
+                    <th width="12%">작성일</th>
+                    <th width="8%">조회</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- 게시글 목록이 동적으로 로드됩니다 -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 익명게시판 (한줄 게시판 형태) -->
+        <div id="anonymous-board" class="board-content" style="display: none;">
+            <div class="anonymous-notice">
+                <p>✓ 익명 게시판은 닉네임이 무작위로 지정됩니다.</p>
+                <p>✓ 비방, 욕설, 광고성 게시글은 제재 대상이 됩니다.</p>
+            </div>
+
+            <div class="oneline-board">
+                <!-- 익명 게시글이 동적으로 로드됩니다 -->
+            </div>
+        </div>      <!-- 일반 게시판에만 페이지네이션과 검색 표시 -->
+        <div id="board-bottom-container">
+            <div class="board-bottom">
+                <div class="board-pagination">
+                    <!-- 페이지네이션은 동적으로 로드됩니다 -->
+                </div>
+                <div class="search-bar">
+                    <input type="text" placeholder="질문 검색하기">
+                    <button class="btn">검색</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 글쓰기 모달 -->
+    <div id="write-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>게시글 작성</h2>
+            <div class="write-form">
+                <div class="form-group">
+                    <label for="board-select">게시판 선택</label>
+                    <select id="board-select">
+                        <option value="news">키보드 소식</option>
+                        <option value="free">자유게시판</option>
+                        <option value="anonymous">익명게시판</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="post-title">제목</label>
+                    <input type="text" id="post-title" placeholder="제목을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="post-content">내용</label>
+                    <textarea id="post-content" rows="10" placeholder="내용을 입력하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="post-file">파일 첨부</label>
+                    <input type="file" id="post-file">
+                </div>
+                <div class="form-buttons">
+                    <button class="btn" id="submit-post">등록하기</button>
+                    <button class="btn cancel">취소하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 익명 게시글 상세보기 모달 -->
+    <div id="post-detail-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="post-detail-content">
+                <div class="post-detail-header">
+                    <h2 class="post-detail-title"></h2>
+                    <div class="post-detail-meta">
+                        <div class="post-detail-meta-left">
+                            <div class="post-detail-author">
+                                <span class="post-detail-label">닉네임:</span>
+                                <span class="post-detail-nickname"></span>
+                            </div>
+                        </div>
+                        <div class="post-detail-meta-right">
+                            <div class="post-detail-date">
+                                <span class="post-detail-label">작성일:</span>
+                                <span class="post-detail-date-value"></span>
+                            </div>
+                            <div class="post-detail-views">
+                                <span class="post-detail-label">조회수:</span>
+                                <span class="post-detail-views-value"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="post-detail-body">
+                    <!-- 게시글 내용이 동적으로 로드됩니다 -->
+                </div>
+
+                <div class="post-like-section">
+                    <button class="post-like-button">
+                        <i>👍</i> 추천하기 (<span class="post-like-count">0</span>)
+                    </button>
+                </div>
+
+                <div class="post-comments">
+                    <h3>댓글 (<span class="comment-count-value">0</span>)</h3>
+                    <div class="comment-list">
+                        <!-- 댓글이 동적으로 로드됩니다 -->
+                        <div class="comment-more">
+                            <button class="btn">댓글 더보기</button>
+                        </div>
+                    </div>
+                    <div class="comment-form">
+                        <textarea placeholder="댓글을 작성해주세요" rows="3"></textarea>
+                        <button class="btn">등록</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- 푸터 플레이스홀더 -->
+    <div id="footer-placeholder"></div>
+</body>
+</html>

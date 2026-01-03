@@ -9,6 +9,7 @@
 - 기계식 키보드에 입문하고 싶은데 무엇부터 시작해야 할지 모르는 사람을 위한 입문서
 - 기계식 키보드에 대한 정보, 소식을 한곳에서 제공
 - 키보드에 대한 대화를 나눌 수 있는 커뮤니티 기능 제공
+
 </aside>
 
 ## 무슨 프로젝트인가요?
@@ -47,20 +48,20 @@
 
 ## 기술 Stack
 
-| 구분 | 사용 기술 |
-| --- | --- |
-| 로컬 운영체제 | Windows 10 / Windows 11 |
-| Jdk Version | JDK 17 (OpenJDK zulu) |
-| Server Environment | Amazon AWS EC2 |
-| Web Server + WAS | Nginx+ Tomcat 10.1 |
-| Frontend | HTML5 + CSS3 + Vanilla Javascript |
-| Backend | Servlet API |
-| Database | MySQL 8.4.4 LTS |
-| IDE | Eclipse 2024 + MySQL Workbench |
-| 협업 Tool | Slack / Notion / Trello / ERDCloud |
-| 형상관리 | Github + git bash(CLI) + Fork(GUI) |
-| 브랜치 전략 | [**Github Flow 기반**](https://docs.github.com/ko/get-started/using-github/github-flow) 브랜치 관리 |
-| 가상화 환경 | Docker Compose |
+| 구분                 | 사용 기술                                                                                        |
+|--------------------|----------------------------------------------------------------------------------------------|
+| 로컬 운영체제            | Windows 10 / Windows 11                                                                      |
+| Jdk Version        | JDK 17 (OpenJDK zulu)                                                                        |
+| Server Environment | Amazon AWS EC2                                                                               |
+| Web Server + WAS   | Nginx+ Tomcat 10.1                                                                           |
+| Frontend           | HTML5 + CSS3 + Vanilla Javascript                                                            |
+| Backend            | Servlet API                                                                                  |
+| Database           | MySQL 8.4.4 LTS                                                                              |
+| IDE                | Eclipse 2024 + MySQL Workbench                                                               |
+| 협업 Tool            | Slack / Notion / Trello / ERDCloud                                                           |
+| 형상관리               | Github + git bash(CLI) + Fork(GUI)                                                           |
+| 브랜치 전략             | [**Github Flow 기반**](https://docs.github.com/ko/get-started/using-github/github-flow) 브랜치 관리 |
+| 가상화 환경             | Docker Compose                                                                               |
 
 ---
 

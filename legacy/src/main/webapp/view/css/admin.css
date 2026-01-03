@@ -1,0 +1,501 @@
+/* 관리자 페이지 스타일 */
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.admin-nav {
+    display: flex;
+    gap: 1rem;
+    background: #f5f5f5;
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+.admin-nav a {
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    color: #333;
+}
+
+.admin-nav a.active, .admin-nav a:hover {
+    background: #ffcc80;
+}
+
+.admin-section {
+    margin-bottom: 2rem;
+}
+
+/* 관리자 페이지 특정 스타일 */
+.logo a {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-decoration: none;
+    color: #333;
+}
+
+nav a {
+    margin: 0 1rem;
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+}
+
+.admin-badge {
+    background: #ff5722;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+}
+
+.page-title {
+    background: #fff3e0;
+    padding: 2rem;
+    text-align: center;
+}
+
+.page-title h1 {
+    color: #ff7043;
+    margin-bottom: 1rem;
+}
+
+footer {
+    margin-top: 2rem;
+    background: #ffe0b2;
+    padding: 1.2rem 2.2rem 0.2rem 2.2rem;
+    font-size: 0.93rem;
+    color: #555;
+    border: none;
+    box-shadow: none;
+}
+
+.footer-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 1rem;
+}
+
+.footer-left {
+    text-align: left;
+    line-height: 1.6;
+    font-size: 0.97rem;
+}
+
+.footer-right {
+    text-align: right;
+    min-width: 210px;
+}
+
+.footer-links {
+    margin: 0.3rem 0 0.1rem 0;
+}
+
+.footer-links a {
+    color: #555;
+    text-decoration: underline;
+    margin: 0 0.5rem;
+    font-size: 0.93rem;
+}
+
+.footer-copy {
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+    color: #888;
+}
+
+.admin-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.admin-tabs {
+    display: flex;
+    overflow-x: auto; /* 필요시 가로 스크롤 허용 */
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+    /* border-bottom: 2px solid #ffcc80; */ /* 기존 하단 테두리 제거 */
+    margin-bottom: 0; /* admin-section과 간격 없애기 위해 0으로 설정 */
+    padding-bottom: 0; /* 기존 패딩 제거 */
+    position: relative; /* ::after 요소 위치 기준 */
+}
+
+/* 드래그 가능함을 나타내는 시각적 표시 */
+.admin-tabs::after {
+    content: "← 드래그 →";
+    position: absolute;
+    right: 10px;
+    top: -20px;
+    font-size: 0.8rem;
+    color: #ff7043;
+    opacity: 0.7;
+    pointer-events: none; /* 마우스 이벤트 무시 */
+}
+
+.admin-tab {
+    padding: 0.6rem 0.8rem; /* 패딩 축소 */
+    background: #ffecb3;
+    border: 2px solid transparent; /* 기본 테두리 투명하게 설정 */
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    flex-shrink: 0; /* 축소 방지 */
+    font-size: 0.95rem; /* 글자 크기 약간 축소 */
+    border-radius: 8px 8px 0 0; /* 위쪽 모서리 둥글게 */
+}
+
+/* 마지막 탭은 오른쪽 마진 제거 */
+.admin-tab:last-child {
+    margin-right: 0;
+}
+
+.admin-tab.active {
+    background: #ffcc80;
+    color: #333;
+    border-bottom-color: transparent; /* 활성 탭 하단 테두리 제거 */
+}
+
+/* 권한별 활성화된 탭 색상 구분 */
+.admin-tab.admin-only.active {
+    background-color: #ff9800;
+    border-color: #ff5722; /* 주황색 테두리 */
+    border-bottom-color: transparent; /* 하단 테두리만 투명하게 */
+    box-shadow: none; /* 기존 그림자 제거 */
+}
+
+.admin-tab.manager-admin-only.active {
+    background-color: #42a5f5;
+    border-color: #2196f3; /* 파란색 테두리 */
+    border-bottom-color: transparent; /* 하단 테두리만 투명하게 */
+    color: white;
+    box-shadow: none; /* 기존 그림자 제거 */
+}
+
+/* 스크롤바 스타일 개선 */
+.admin-tabs::-webkit-scrollbar {
+    height: 5px;
+}
+
+.admin-tabs::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+.admin-tabs::-webkit-scrollbar-thumb {
+    background: #ffcc80;
+    border-radius: 5px;
+}
+
+.admin-tabs::-webkit-scrollbar-thumb:hover {
+    background: #ff9800;
+}
+
+.admin-section {
+    display: none;
+    background: white;
+    border-radius: 0 0 8px 8px; /* 위쪽 테두리와 자연스럽게 이어지도록 수정 */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 2px solid transparent; /* 기본 테두리 투명 */
+}
+
+.admin-section.active {
+    display: block;
+    border-color: #ffcc80; /* 활성 섹션 주황색 테두리 */
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+    max-width: 100%; /* 최대 너비 제한 */
+    box-sizing: border-box;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    box-sizing: border-box; /* 패딩을 너비에 포함 */
+    max-width: 100%; /* 최대 너비 제한 */
+}
+
+.form-group textarea {
+    min-height: 120px;
+    resize: none; /* 크기 조절 비활성화 */
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    background: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #ff7043;
+}
+
+.btn-danger {
+    background: #f44336;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+.btn-success {
+    background: #4caf50;
+}
+
+.btn-success:hover {
+    background: #388e3c;
+}
+
+.btn-secondary {
+    background: #757575;
+}
+
+.btn-secondary:hover {
+    background: #616161;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap; /* 필요시 줄바꿈 허용 */
+    justify-content: flex-start; /* 왼쪽 정렬 */
+}
+
+.action-buttons .btn {
+    padding: 0.4rem 0.8rem; /* 패딩 축소 */
+    font-size: 0.9rem; /* 글자 크기 축소 */
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+}
+
+/* 삭제된 게시글 관리 액션 버튼을 위한 특별 스타일 */
+#deleted-posts .action-buttons {
+    gap: 0.4rem; /* 버튼 간격 약간 축소 */
+}
+
+#deleted-posts .action-buttons .btn {
+    padding: 0.4rem 0.6rem; /* 패딩 약간 축소 */
+}
+
+.admin-table-container {
+    overflow-x: auto; /* 필요시 가로 스크롤 추가 */
+    max-width: 100%; /* 너비 제한 */
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    min-width: 600px; /* 최소 너비 설정으로 모바일에서도 표 구조 유지 */
+}
+
+.admin-table th, .admin-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+    overflow: hidden; /* 넘치는 콘텐츠 숨김 */
+    text-overflow: ellipsis; /* 넘치는 텍스트에 ... 표시 */
+    max-width: 200px; /* 최대 너비 제한 */
+}
+
+.admin-table th:last-child,
+.admin-table td:last-child {
+    min-width: 220px; /* 액션 열의 최소 너비 보장 */
+    width: auto; /* 필요시 더 넓게 확장 가능 */
+}
+
+/* 특별히 삭제된 게시글 관리의 액션 열은 더 넓게 */
+#deleted-posts .admin-table th:last-child,
+#deleted-posts .admin-table td:last-child {
+    min-width: 240px;
+}
+
+/* 특정 컬럼의 최대 너비 조정 */
+.admin-table th:nth-child(3), .admin-table td:nth-child(3) {
+    max-width: 250px; /* 요청 사유, 신고 사유 등이 있는 컬럼은 조금 더 넓게 */
+}
+
+/* 카테고리 컬럼 너비 조정 (신고 내역 테이블) */
+#reports .admin-table th:nth-child(2), #reports .admin-table td:nth-child(2) {
+    min-width: 80px; /* 카테고리 컬럼에 최소 너비 적용 */
+}
+
+.admin-table th {
+    background: #fff3e0;
+    color: #ff7043;
+}
+
+.search-container {
+    max-width: 100%; /* 검색 컨테이너 너비 최대화 */
+    margin: 1.5rem 0; /* 상하 간격 조정 */
+    display: flex;
+    justify-content: flex-end; /* 자식 요소들을 오른쪽으로 정렬 */
+}
+
+.search-container input {
+    width: 250px; /* 입력창 너비 고정 */
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px 0 0 4px;
+    font-size: 0.95rem;
+    height: 36px;
+    box-sizing: border-box;
+}
+
+.search-container button {
+    min-width: 80px; /* 버튼의 최소 너비 보장 */
+    padding: 0.5rem 1rem;
+    background: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    font-size: 0.95rem;
+    height: 36px;
+    box-sizing: border-box;
+    white-space: nowrap; /* 버튼 텍스트 줄바꿈 방지 */
+    display: flex;
+    justify-content: center; /* 가로 중앙 정렬 */
+    align-items: center; /* 세로 중앙 정렬 */
+    line-height: 1; /* 라인 높이 조정 */
+}
+
+.status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.status-pending {
+    background: #ffecb3;
+    color: #ff7043;
+}
+
+.status-approved {
+    background: #c8e6c9;
+    color: #388e3c;
+}
+
+.status-rejected {
+    background: #ffcdd2;
+    color: #d32f2f;
+}
+
+.status-reported {
+    background: #ffcdd2;
+    color: #d32f2f;
+}
+
+.admin-form {
+    background: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    max-width: 100%; /* 최대 너비 제한 */
+    box-sizing: border-box;
+}
+
+.keyboard-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.keyboard-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.keyboard-info {
+    padding: 1.5rem;
+}
+
+.keyboard-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ff7043;
+    margin-bottom: 0.5rem;
+}
+
+.keyboard-meta {
+    color: #757575;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.tag {
+    background: #ffecb3;
+    color: #ff7043;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+    .footer-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .footer-right {
+        text-align: left;
+        min-width: unset;
+    }
+
+    .admin-tabs {
+        flex-direction: column;
+    }
+
+    .admin-tab {
+        margin-right: 0;
+        margin-bottom: 0.2rem;
+    }
+}
+
+.admin-wrapper {
+    flex: 1 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    max-width: 1000px;
+}

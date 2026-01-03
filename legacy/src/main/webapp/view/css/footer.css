@@ -1,0 +1,135 @@
+/* footer.css - 푸터 스타일 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+/* 푸터 스타일 */
+footer {
+    margin-top: 2rem;
+    background: #ffe0b2;
+    padding: 1.2rem 2.2rem 0.2rem 2.2rem;
+    font-size: 0.93rem;
+    color: #555;
+    border: none;
+    box-shadow: none;
+}
+
+.footer-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 1rem;
+}
+
+.footer-left {
+    text-align: left;
+    line-height: 1.6;
+    font-size: 0.97rem;
+}
+
+.footer-right {
+    text-align: right;
+    min-width: 210px;
+}
+
+.footer-links {
+    margin: 0.3rem 0 0.1rem 0;
+}
+
+.footer-links a, .footer-link {
+    color: #555;
+    text-decoration: underline;
+    margin: 0 0.5rem;
+    font-size: 0.93rem;
+}
+
+.footer-copy {
+    margin-top: 0.2rem;
+    font-size: 0.78rem;
+    color: #888;
+}
+
+@media (max-width: 600px) {
+    .footer-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .footer-right {
+        text-align: left;
+        min-width: unset;
+    }
+}
+
+.footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.footer-section {
+    flex: 1;
+    min-width: 250px;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+}
+
+.footer-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.footer-section h3::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -5px;
+    width: 50px;
+    height: 2px;
+    background: #ff7043;
+}
+
+.footer-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-section ul li {
+    margin-bottom: 0.5rem;
+}
+
+.footer-section ul li a {
+    color: #555;
+}
+
+.footer-section ul li a:hover {
+    color: #ff7043;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e0e0e0;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+}
+
+/* 반응형 스타일 - 푸터 관련 */
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+    }
+}
+
+/* 푸터는 항상 콘텐츠 아래에 위치하도록 함 */
+#footer-placeholder {
+    flex-shrink: 0; /* 축소되지 않도록 설정 */
+    margin-top: auto; /* 가능한 한 아래쪽에 위치 */
+    width: 100%;
+}
