@@ -196,10 +196,10 @@ async function loadKeyboardList(filterKeyword = null) {
       // 키보드 카드 HTML
       const cardHtml = `
         <div class="keyboard-card" data-categories="${categoriesStr}">
-          <img src="${imageUrl}" alt="${keyboard.keyboardName}" class="keyboard-image" 
+          <img src="${imageUrl}" alt="${escapeHtml(keyboard.keyboardName)}" class="keyboard-image"
                onerror="this.src='${placeholderUrl}'">
           <div class="keyboard-content">
-            <h3 class="keyboard-title">${keyboard.keyboardName}</h3>
+            <h3 class="keyboard-title">${escapeHtml(keyboard.keyboardName)}</h3>
             <div class="keyboard-tags">
               ${tagsHtml}
             </div>
@@ -207,7 +207,7 @@ async function loadKeyboardList(filterKeyword = null) {
               <span class="stars">${starsText}</span>
               <span class="rating-count">(${keyboard.avgScore ? keyboard.avgScore.toFixed(1) : '0.0'}/5, ${keyboard.reviewCount || 0}개 리뷰)</span>
             </div>
-            <p class="keyboard-desc">${keyboard.keyboardDescription || ''}</p>
+            <p class="keyboard-desc">${escapeHtml(keyboard.keyboardDescription || '')}</p>
             <div class="keyboard-actions">
               <a href="keyboard_detail.html?id=${keyboard.keyboardId}" class="keyboard-detail-btn">상세정보 보기</a>
             </div>
@@ -272,7 +272,7 @@ function getTagsHtml(tags) {
     const tagClass = isAdmin ? 'tag-admin' : 'tag-user';
     const count = typeof tag === 'object' && tag.voteCount ? `<span class="tag-count">${tag.voteCount}</span>` : '';
     
-    return `<span class="keyboard-tag ${tagClass}" data-tag="${tagName}">${tagName}${count}</span>`;
+    return `<span class="keyboard-tag ${tagClass}" data-tag="${escapeHtml(tagName)}">${escapeHtml(tagName)}${count}</span>`;
   }).join('');
 }
 

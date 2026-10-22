@@ -184,16 +184,16 @@ function renderScraps(data) {
     keyboardCard.innerHTML = `
       <img src="${
         keyboard.imageUrl || "../img/keyboard-placeholder.jpg"
-      }" alt="${keyboard.name}" 
+      }" alt="${escapeHtml(keyboard.name)}"
            class="keyboard-image" onerror="this.src='https://via.placeholder.com/400x200?text=키보드+이미지'">
       <div class="keyboard-content">
-        <h3>${keyboard.name}</h3>
-        <p>${keyboard.description || "설명 없음"}</p>
+        <h3>${escapeHtml(keyboard.name)}</h3>
+        <p>${escapeHtml(keyboard.description || "설명 없음")}</p>
         <div class="keyboard-tags">
           ${
             keyboard.tags
               ? keyboard.tags
-                  .map((tag) => `<span class="tag">${tag}</span>`)
+                  .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
                   .join("")
               : ""
           }
@@ -245,9 +245,9 @@ function renderPosts(data) {
 
     postItem.innerHTML = `
       <div class="item-info">
-        <h3><a href="${boardUrl}">${post.title}</a></h3>
+        <h3><a href="${escapeHtml(boardUrl)}">${escapeHtml(post.title)}</a></h3>
         <p class="item-meta">
-          <span>${post.boardName || "게시판"}</span> | 
+          <span>${escapeHtml(post.boardName || "게시판")}</span> |
           <span>조회 ${post.viewCount}</span> | 
           <span>${formatDate(post.createdAt)}</span>
         </p>
@@ -296,10 +296,10 @@ function renderRatings(data) {
 
     ratingItem.innerHTML = `
       <div class="rating-info">
-        <h3><a href="/keyboard/detail.do?id=${rating.keyboardId}">${
+        <h3><a href="/keyboard/detail.do?id=${rating.keyboardId}">${escapeHtml(
       rating.keyboardName
-    }</a></h3>
-        <p>${rating.comment || "평가 코멘트 없음"}</p>
+    )}</a></h3>
+        <p>${escapeHtml(rating.comment || "평가 코멘트 없음")}</p>
         <p class="rating-date">${formatDate(rating.ratedAt)}</p>
       </div>
       <div class="rating-stars">${stars}</div>
@@ -352,7 +352,7 @@ function renderPoints(data) {
       item.pointAmount > 0 ? `+${item.pointAmount}` : `${item.pointAmount}`;
 
     pointItem.innerHTML = `
-      <div class="point-desc">${item.description}</div>
+      <div class="point-desc">${escapeHtml(item.description)}</div>
       <div class="point-change ${changeClass}">${pointText}</div>
       <div class="point-date">${formatDate(item.createdAt)}</div>
     `;
@@ -429,7 +429,7 @@ function renderCustomizeSection(type, items, selectedId) {
     if (type === "icons") {
       customizeItem.innerHTML = `
         <div class="icon-preview">${item.iconHtml || "👤"}</div>
-        <p>${item.name}</p>
+        <p>${escapeHtml(item.name)}</p>
         <p class="item-cost">${
           item.cost > 0 ? `${item.cost} 포인트` : "기본"
         }</p>
@@ -439,7 +439,7 @@ function renderCustomizeSection(type, items, selectedId) {
         <div class="theme-preview" style="background-color: ${
           item.previewColor || "#f0f0f0"
         }"></div>
-        <p>${item.name}</p>
+        <p>${escapeHtml(item.name)}</p>
         <p class="item-cost">${
           item.cost > 0 ? `${item.cost} 포인트` : "기본"
         }</p>
