@@ -226,16 +226,16 @@ async function loadReviews(keyboardId) {
       
       reviewElement.innerHTML = `
         <div class="review-header">
-          <div class="review-author">${review.authorName}</div>
+          <div class="review-author">${escapeHtml(review.authorName)}</div>
           <div class="review-date">${new Date(review.createdAt).toLocaleDateString()}</div>
         </div>
         <div class="review-rating">
           <span class="stars">${starsText}</span>
           <span class="score">${review.score}/5</span>
         </div>
-        <div class="review-content">${review.content}</div>
+        <div class="review-content">${escapeHtml(review.content)}</div>
         <div class="review-footer">
-          <button class="review-helpful" data-review-id="${review.id}">
+          <button class="review-helpful" data-review-id="${escapeHtml(review.id)}">
             도움됨 <span class="helpful-count">${review.helpfulCount || 0}</span>
           </button>
         </div>
@@ -331,8 +331,8 @@ async function loadKeyboardReviews() {
       reviewElement.innerHTML = `
         <div class="review-header">
           <div class="reviewer-info">
-            <span class="reviewer-name">${review.authorName || '익명'}</span>
-            <span class="review-date">${review.createdAt || '-'}</span>
+            <span class="reviewer-name">${escapeHtml(review.authorName || '익명')}</span>
+            <span class="review-date">${escapeHtml(review.createdAt || '-')}</span>
           </div>
           <div class="review-rating">
             <span class="stars">${starsText}</span>
@@ -340,15 +340,15 @@ async function loadKeyboardReviews() {
           </div>
         </div>
         <div class="review-content">
-          <p>${review.content || ''}</p>
+          <p>${escapeHtml(review.content || '')}</p>
         </div>
         <div class="review-footer">
           <div class="helpful-section">
             <span>이 리뷰가 도움이 되었나요?</span>
-            <button class="helpful-btn" data-review-id="${review.id}" data-helpful="true">
+            <button class="helpful-btn" data-review-id="${escapeHtml(review.id)}" data-helpful="true">
               <i class="icon-thumbs-up"></i> 예 (${review.helpfulCount || 0})
             </button>
-            <button class="helpful-btn" data-review-id="${review.id}" data-helpful="false">
+            <button class="helpful-btn" data-review-id="${escapeHtml(review.id)}" data-helpful="false">
               <i class="icon-thumbs-down"></i> 아니오 (${review.unhelpfulCount || 0})
             </button>
           </div>
@@ -436,11 +436,11 @@ async function loadRelatedKeyboards(keyboardId) {
       keyboardElement.className = 'related-keyboard-item';
       
       keyboardElement.innerHTML = `
-        <a href="keyboard_detail.html?id=${keyboard.id}">
+        <a href="keyboard_detail.html?id=${encodeURIComponent(keyboard.id)}">
           <img src="${keyboard.imageUrl || '../img/keyboard_default.jpg'}" alt="${keyboard.name}" 
                onerror="this.src='https://via.placeholder.com/200x100?text=${encodeURIComponent(keyboard.name)}'">
           <div class="related-keyboard-info">
-            <h4>${keyboard.name}</h4>
+            <h4>${escapeHtml(keyboard.name)}</h4>
             <div class="price">${keyboard.price.toLocaleString()}원</div>
           </div>
         </a>

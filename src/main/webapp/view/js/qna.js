@@ -74,11 +74,11 @@ document.addEventListener('DOMContentLoaded', function() {
           newAnswer.className = 'answer';
           newAnswer.innerHTML = `
             <div class="answer-meta">
-              <span>작성자: ${username}</span>
+              <span>작성자: ${escapeHtml(username)}</span>
               <span>작성일: ${dateString}</span>
             </div>
             <div class="answer-content">
-              <p>${content}</p>
+              <p>${escapeHtml(content)}</p>
             </div>
           `;
           
@@ -577,20 +577,20 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="qna-header">
               <div class="qna-status ${statusClass}">${statusText}</div>
               <h3 class="qna-title">
-                <a href="#" data-qna-id="${qna.id}">${qna.title}</a>
+                <a href="#" data-qna-id="${escapeHtml(qna.id)}">${escapeHtml(qna.title)}</a>
               </h3>
             </div>
             <div class="qna-meta">
-              <span>작성자: ${qna.author || '익명'}</span>
-              <span>작성일: ${qna.createdAt || '-'}</span>
+              <span>작성자: ${escapeHtml(qna.author || '익명')}</span>
+              <span>작성일: ${escapeHtml(qna.createdAt || '-')}</span>
               <span>조회수: ${qna.views || 0}</span>
             </div>
             <div class="qna-detail" style="display: none;">
-              <div class="qna-detail-content">${qna.content || ''}</div>
+              <div class="qna-detail-content">${escapeHtml(qna.content || '')}</div>
               <div class="qna-detail-answers">
                 <!-- 답변은 클릭 시 동적으로 로드됨 -->
               </div>
-              <div class="answer-form" data-question-id="${qna.id}">
+              <div class="answer-form" data-question-id="${escapeHtml(qna.id)}">
                 <textarea placeholder="답변을 입력하세요..."></textarea>
                 <button class="answer-submit-btn">답변 등록</button>
               </div>
@@ -701,11 +701,11 @@ document.addEventListener('DOMContentLoaded', function() {
           answerElement.className = 'answer';
           answerElement.innerHTML = `
             <div class="answer-meta">
-              <span>작성자: ${answer.author || '익명'}</span>
-              <span>작성일: ${answer.createdAt || '-'}</span>
+              <span>작성자: ${escapeHtml(answer.author || '익명')}</span>
+              <span>작성일: ${escapeHtml(answer.createdAt || '-')}</span>
             </div>
             <div class="answer-content">
-              <p>${answer.content || ''}</p>
+              <p>${escapeHtml(answer.content || '')}</p>
             </div>
           `;
           

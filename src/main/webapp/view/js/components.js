@@ -12,6 +12,17 @@
   console.log('환경 설정:', window.KIRINI_ENV);
 })();
 
+// 사용자 입력이 섞인 값을 innerHTML 템플릿에 넣기 전에 HTML 특수문자를 이스케이프한다 (XSS 방지)
+function escapeHtml(value) {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // 헤더 초기화 및 UI 처리 (기존 header.js의 내용)
 const Header = {
   // 헤더 UI 처리

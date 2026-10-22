@@ -459,11 +459,11 @@ document.addEventListener("DOMContentLoaded", function () {
           );
 
           row.innerHTML = `
-            <td>${post.newsId || post.freeboardUid || post.id}</td>
-            <td><a href="javascript:void(0)">${
+            <td>${escapeHtml(post.newsId || post.freeboardUid || post.id)}</td>
+            <td><a href="javascript:void(0)">${escapeHtml(
               post.newsTitle || post.freeboardTitle || post.title
-            }</a>${commentDisplay}</td>
-            <td>${post.userName || post.author || "익명"}</td>
+            )}</a>${commentDisplay}</td>
+            <td>${escapeHtml(post.userName || post.author || "익명")}</td>
             <td>${formattedDate}</td>
             <td>${post.newsRead || post.freeboardRead || post.views || 0}</td>
           `;
@@ -706,12 +706,12 @@ document.addEventListener("DOMContentLoaded", function () {
               postElement.dataset.boardType = "anonymous-board";
 
               postElement.innerHTML = `
-                <div class="oneline-author">${postData.author}</div>
-                <div class="oneline-content">${postData.content}</div>
+                <div class="oneline-author">${escapeHtml(postData.author)}</div>
+                <div class="oneline-content">${escapeHtml(postData.content)}</div>
                 <div class="oneline-date">${formattedDate}</div>
                 <div class="oneline-actions">
-                  <button class="oneline-reply-btn" data-post-id="${postData.id}">답글</button>
-                  <button class="oneline-report-btn" data-post-id="${postData.id}">신고</button>
+                  <button class="oneline-reply-btn" data-post-id="${escapeHtml(postData.id)}">답글</button>
+                  <button class="oneline-report-btn" data-post-id="${escapeHtml(postData.id)}">신고</button>
                 </div>
               `;
 
@@ -928,11 +928,11 @@ document.addEventListener("DOMContentLoaded", function () {
               row.dataset.postId = postData.id;
               row.dataset.boardType = boardType; // 게시판 타입도 데이터 속성으로 저장
               row.innerHTML = `
-                <td>${postData.id}</td>
-                <td><a href="javascript:void(0)">${postData.title}</a>${commentDisplay}${fileDisplay}</td>
-                <td>${postData.author}</td>
+                <td>${escapeHtml(postData.id)}</td>
+                <td><a href="javascript:void(0)">${escapeHtml(postData.title)}</a>${commentDisplay}${fileDisplay}</td>
+                <td>${escapeHtml(postData.author)}</td>
                 <td>${formattedDate}</td>
-                <td>${postData.views}</td>
+                <td>${escapeHtml(postData.views)}</td>
               `;
 
               postsTable.appendChild(row);
@@ -1180,7 +1180,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log(
               `게시글 내용 타입: ${apiType}, 내용길이: ${content.length}`
             );
-            detailContent.innerHTML = content;
+            detailContent.innerHTML = escapeHtml(content).replace(/\n/g, "<br>");
           }
 
           // 댓글 수 표시
@@ -1276,11 +1276,11 @@ document.addEventListener("DOMContentLoaded", function () {
           commentElement.className = "comment";
           commentElement.innerHTML = `
             <div class="comment-meta">
-              <span>${commentData.author}</span>
+              <span>${escapeHtml(commentData.author)}</span>
               <span>${formatDate(commentData.createdAt)}</span>
             </div>
             <div class="comment-content">
-              <p>${commentData.content}</p>
+              <p>${escapeHtml(commentData.content)}</p>
             </div>
           `;
           detailCommentList.appendChild(commentElement);
@@ -1462,11 +1462,11 @@ document.addEventListener("DOMContentLoaded", function () {
           commentElement.className = "comment";
           commentElement.innerHTML = `
             <div class="comment-meta">
-              <span>${commentData.author}</span>
+              <span>${escapeHtml(commentData.author)}</span>
               <span>${formatDate(commentData.createdAt)}</span>
             </div>
             <div class="comment-content">
-              <p>${commentData.content}</p>
+              <p>${escapeHtml(commentData.content)}</p>
             </div>
           `;
           detailCommentList.appendChild(commentElement);
