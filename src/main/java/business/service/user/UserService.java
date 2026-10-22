@@ -1,7 +1,5 @@
 package business.service.user;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +7,7 @@ import java.util.List;
 import dto.user.UserDTO;
 import exception.UserStatusException;
 import repository.dao.user.UserDAO;
+import util.SecurityUtil;
 
 /**
  * 사용자 관련 비즈니스 로직을 처리하는 서비스 클래스
@@ -35,13 +34,19 @@ public class UserService {
                 return null; // 사용자가 존재하지 않음
             }
             
-            // 2. 비밀번호 암호화 후 비교
-            String hashedPassword = hashPassword(password);
-            
-            // 3. 암호화된 비밀번호끼리 비교
-            if (hashedPassword.equals(user.getPassword())) {
+            // 2. 저장된 해시로 비밀번호 검증
+            if (SecurityUtil.verifyPassword(password, user.getPassword())) {
                 // 로그인 성공 처리 (마지막 로그인 시간 업데이트 등)
-                
+
+                // 기존 무솔트 SHA-256 해시는 로그인 성공 시 PBKDF2로 재저장
+                if (SecurityUtil.needsRehash(user.getPassword())) {
+                    try {
+                        userDAO.updatePassword(user.getUserId(), SecurityUtil.hashPassword(password));
+                    } catch (SQLException e) {
+                        e.printStackTrace(); // 재저장 실패는 로그인 결과에 영향 주지 않음
+                    }
+                }
+
                 // 프론트엔드와 일치하도록 userAuthority 값 설정
                 String userAuthority = "USER";
                 if (user.getUserLevel() == 3) {
@@ -124,7 +129,7 @@ public class UserService {
     public boolean registerUser(UserDTO user) {
         try {
             // 비밀번호 암호화 처리
-            String hashedPassword = hashPassword(user.getPassword());
+            String hashedPassword = SecurityUtil.hashPassword(user.getPassword());
             user.setPassword(hashedPassword);
             
             // DAO를 통해 사용자 등록
@@ -186,7 +191,7 @@ public class UserService {
     public boolean updatePassword(long userId, String newPassword) {
         try {
             // 비밀번호 암호화
-            String hashedPassword = hashPassword(newPassword);
+            String hashedPassword = SecurityUtil.hashPassword(newPassword);
             return userDAO.updatePassword(userId, hashedPassword);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -201,10 +206,7 @@ public class UserService {
      * @return 일치 여부
      */
     public boolean verifyPassword(String inputPassword, String storedPassword) {
-        // 입력 비밀번호 암호화
-        String hashedInput = hashPassword(inputPassword);
-        // 저장된 암호화 비밀번호와 비교
-        return hashedInput.equals(storedPassword);
+        return SecurityUtil.verifyPassword(inputPassword, storedPassword);
     }
       /**
      * 비밀번호 검증 (사용자 ID와 입력 비밀번호 기반)
@@ -269,27 +271,6 @@ public class UserService {
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
-        }
-    }
-    
-    /**
-     * 비밀번호 암호화 (SHA-256)
-     * @param password 평문 비밀번호
-     * @return 암호화된 비밀번호
-     */
-    private String hashPassword(String password) {
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = md.digest(password.getBytes());
-            
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hashBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return password; // 암호화 실패 시 원본 반환 (실제로는 더 나은 오류 처리 필요)
         }
     }
     
